@@ -810,7 +810,7 @@ function renderTable(d) {
       <td>${fmtSalary(row.s15)}</td>
       <td>${fmtSalary(row.s16)}</td>
       <td style="color:#a0aec0">${row.visits ? row.visits.toLocaleString() : '—'}</td>
-      <td style="color:#a0aec0;font-size:0.85rem">${row.pph != null ? row.pph + (row.pphEst ? '<span style="font-size:0.7rem;color:#718096"> 估算</span>' : '') : '—'}</td>
+      <td style="color:#a0aec0;font-size:0.85rem;line-height:1.4">${row.pph != null ? row.pph + (row.pphEst ? '<br><span style="font-size:0.7rem;color:#718096">估算</span>' : '') : '—'}</td>
       <td>
         ${row.public ? '<span class="tag tag-public">公立</span>' : ''}
         ${row.np === true ? '<span class="tag tag-np">NP支援</span>' : ''}
