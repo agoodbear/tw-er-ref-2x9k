@@ -261,6 +261,7 @@
           <th>15班/月</th>
           <th>16班/月</th>
           <th>月來診量</th>
+          <th title="每位醫師每小時看診量(估算)">PPH</th>
           <th>特色</th>
           <th>備註</th>
           <th>更新日期</th>
@@ -809,6 +810,7 @@ function renderTable(d) {
       <td>${fmtSalary(row.s15)}</td>
       <td>${fmtSalary(row.s16)}</td>
       <td style="color:#a0aec0">${row.visits ? row.visits.toLocaleString() : '—'}</td>
+      <td style="color:#a0aec0;font-size:0.85rem">${row.pph != null ? row.pph : '—'}</td>
       <td>
         ${row.public ? '<span class="tag tag-public">公立</span>' : ''}
         ${row.np === true ? '<span class="tag tag-np">NP支援</span>' : ''}
