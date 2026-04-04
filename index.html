@@ -385,7 +385,7 @@ const data = [
     visits: null, pph: null,
     public: false, np: true, shift: "12h",
     lastUpdated: "2026-01-27",
-    note: "40萬起/月+提成；15班；急診床位安排權；NP協助；每日33–36人次；徵4名；ACLS required；聯絡：行政處簡小姐 049-2225595#2112"
+    note: "40萬起/月+提成；急診床位安排權；班內NP協助；連休提供休息室"
   },
   {
     hospital: "衛福部台北醫院", region: "新北", area: "北部",
@@ -417,21 +417,21 @@ const data = [
   {
     hospital: "中壢長榮醫院", region: "桃園", area: "北部",
     level: "地區醫院",
-    s10: null, s14: null, s15: null, s16: null,
+    s10: null, s14: null, s15: 36, s16: null,
     hourly: 2000, visits: 400, pph: null,
-    public: false, np: false, shift: null,
-    lastUpdated: "2026-03-03",
-    note: "時薪2000；社區型小急診；重症少；無暫留；已待13年；班數彈性"
+    public: false, np: true, shift: 12,
+    lastUpdated: "2026-04-04",
+    note: "15班36萬；合法節稅；1-2級<5%；日班有NP；壓力低；社區型小急診"
   },
   /* ──────── 五年掃描補錄（2021–2026）──────── */
   {
     hospital: "台北榮總玉里分院", region: "花蓮", area: "東部",
     level: "醫學中心分院（公立）",
-    s10: null, s14: null, s15: 55.5, s16: null,
-    visits: null, pph: null,
-    public: true, np: false, shift: 12,
-    lastUpdated: "2025-10-xx",
-    note: "15班保障45萬；偏遠加給＋留任獎金10.5萬/月（前2年）≈55.5萬；可升公職；台東/花蓮東海岸偏鄉急診"
+    s10: null, s14: null, s15: 36, s16: null,
+    visits: 400, pph: null,
+    public: true, np: true, shift: 12,
+    lastUpdated: "2026-04-04",
+    note: "15班36萬；合法節稅；1-2級<5%；日班有NP；壓力低；社區型小急診"
   },
   {
     hospital: "台北榮總鳳林分院", region: "花蓮", area: "東部",
@@ -439,8 +439,8 @@ const data = [
     s10: null, s14: null, s15: null, s16: null,
     visits: null, pph: null,
     public: true, np: false, shift: 12,
-    lastUpdated: "2024-xx-xx",
-    note: "15班/月，專任或兼任均可；偏遠地區；花蓮縱谷；可與玉里分院搭配"
+    lastUpdated: "2026-04-04",
+    note: "平日日班10000/班；平日夜12000/班；假日20000/班；偏遠補助；住宿；花蓮唯一急救責任醫院"
   },
   {
     hospital: "台北榮總新竹分院", region: "新竹", area: "北部",
@@ -472,11 +472,11 @@ const data = [
   {
     hospital: "振興醫院", region: "台北", area: "北部",
     level: "準醫學中心",
-    s10: null, s14: null, s15: null, s16: null,
-    visits: null, pph: null,
-    public: false, np: null, shift: null,
-    lastUpdated: "2025-xx-xx",
-    note: "多次徵2-4名急診專科主治；具體薪資待確認；台北西區"
+    s10: null, s14: null, s15: 40, s16: null,
+    visits: 3000, pph: null,
+    public: false, np: true, shift: 12,
+    lastUpdated: "2026-04-04",
+    note: "15班40萬（白+夜）；科主任減班同薪；2名急專缺額"
   },
   {
     hospital: "萬芳醫院", region: "台北", area: "北部",
@@ -527,10 +527,10 @@ const data = [
     hospital: "新北永和耕莘醫院", region: "新北", area: "北部",
     level: "區域醫院（天主教耕莘體系）",
     s10: null, s14: null, s15: null, s16: null,
-    visits: null, pph: null,
-    public: false, np: null, shift: null,
-    lastUpdated: "2024-xx-xx",
-    note: "徵2名急診主治；因資深醫師退休缺口；詳細薪資待確認；永和中正路"
+    visits: 3200, pph: null,
+    public: false, np: true, shift: 12,
+    lastUpdated: "2026-04-04",
+    note: "平日2萬/班；假日2.2萬/班；底薪4萬；節稅50-70萬/年；不塞床；來診3000-3400/月；1-2 NP"
   },
   {
     hospital: "部立桃園醫院", region: "桃園", area: "北部",
@@ -553,11 +553,11 @@ const data = [
   {
     hospital: "楊梅天成醫院", region: "桃園", area: "北部",
     level: "地區醫院",
-    s10: null, s14: null, s15: null, s16: null,
+    s10: 32, s14: null, s15: 45, s16: null,
     visits: null, pph: null,
-    public: false, np: null, shift: null,
-    lastUpdated: "2024-xx-xx",
-    note: "有徵才文；桃園楊梅；詳細薪資待確認"
+    public: false, np: true, shift: 12,
+    lastUpdated: "2026-04-04",
+    note: "10班31-32萬；12班37萬；180h遠超45萬；年終+三節；Part-time友善"
   },
   {
     hospital: "屏東基督教醫院", region: "屏東", area: "南部",
@@ -589,11 +589,11 @@ const data = [
   {
     hospital: "高雄市立民生醫院", region: "高雄", area: "南部",
     level: "市立醫院（公立）",
-    s10: null, s14: null, s15: null, s16: null,
-    visits: null, pph: null,
-    public: true, np: null, shift: null,
-    lastUpdated: "2025-xx-xx",
-    note: "公立市立醫院；急診誠徵；詳細薪資待確認；高雄市中心"
+    s10: null, s14: null, s15: 41, s16: null,
+    visits: 1400, pph: null,
+    public: true, np: true, shift: 12,
+    lastUpdated: "2026-04-04",
+    note: "15班40-43萬；公職底薪+收治獎勵金；夜班7-8班；來診1250-1550/月"
   },
   {
     hospital: "高醫岡山醫院", region: "高雄", area: "南部",
@@ -672,9 +672,9 @@ const data = [
     level: "醫學中心分院（公立）",
     s10: null, s14: null, s15: null, s16: null,
     visits: null, pph: null,
-    public: true, np: null, shift: null,
-    lastUpdated: "2025-xx-xx",
-    note: "有公職名額（僅剩1名）；PPF每位100-200元；南投偏鄉；適合厭倦學術轉臨床"
+    public: true, np: true, shift: 12,
+    lastUpdated: "2026-04-04",
+    note: "平日白1600/h；平日夜1800/h；假日白2000/h；假日夜2200/h；公職"
   },
   {
     hospital: "部立台中醫院", region: "台中", area: "中部",
@@ -715,11 +715,11 @@ const data = [
   {
     hospital: "彰濱秀傳醫院", region: "彰化", area: "中部",
     level: "區域醫院（秀傳體系）",
-    s10: null, s14: null, s15: null, s16: null,
-    visits: null, pph: null,
-    public: false, np: null, shift: null,
-    lastUpdated: "2024-xx-xx",
-    note: "彰化海濱；秀傳體系；有徵才文；詳細薪資待確認"
+    s10: null, s14: null, s15: 35, s16: null,
+    visits: 2500, pph: null,
+    public: false, np: true, shift: 12,
+    lastUpdated: "2026-04-04",
+    note: "15班30-40萬；地區教學重度急救責任；來診2500/月；2名缺"
   }
 ];
 
