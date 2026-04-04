@@ -410,17 +410,17 @@ function renderStats(d) {
     </div>
     <div class="stat-card">
       <div class="label">最高月薪（15班）</div>
-      <div class="value">${withS15.length ? Math.max(...withS15.map(x=>x.s15)) : '—'}萬</div>
+      <div class="value">${withS15.length ? Math.max(...withS15.map(x=>x.s15)) + '萬' : 'N/A'}</div>
       <div class="sub">稅前，含績效</div>
     </div>
     <div class="stat-card">
       <div class="label">平均月薪（15班）</div>
-      <div class="value">${avgS15}萬</div>
+      <div class="value">${withS15.length ? avgS15 + '萬' : 'N/A'}</div>
       <div class="sub">${withS15.length} 家醫院有揭露</div>
     </div>
     <div class="stat-card">
       <div class="label">最高月薪（16班）</div>
-      <div class="value">${withS16.length ? Math.max(...withS16.map(x=>x.s16)) : '—'}萬</div>
+      <div class="value">${withS16.length ? Math.max(...withS16.map(x=>x.s16)) + '萬' : 'N/A'}</div>
       <div class="sub">多班保證制</div>
     </div>
   `;
