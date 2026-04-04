@@ -33,10 +33,8 @@
       font-size: 0.8rem;
       color: #68d391;
     }
-
     .container { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
 
-    /* Stats row */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -53,7 +51,6 @@
     .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #f7fafc; margin: 6px 0 4px; }
     .stat-card .sub { font-size: 0.8rem; color: #68d391; }
 
-    /* Filters */
     .filters {
       display: flex;
       gap: 12px;
@@ -78,7 +75,6 @@
     }
     .filter-label { font-size: 0.8rem; color: #718096; margin-right: 4px; }
 
-    /* Main grid */
     .main-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -100,7 +96,6 @@
       letter-spacing: 0.05em;
     }
 
-    /* Table */
     .table-card { grid-column: 1 / -1; }
     table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     thead th {
@@ -112,12 +107,14 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.04em;
+      white-space: nowrap;
     }
     thead th:first-child { border-radius: 8px 0 0 8px; }
     thead th:last-child { border-radius: 0 8px 8px 0; }
     tbody tr { border-bottom: 1px solid #2d3748; transition: background 0.1s; }
     tbody tr:hover { background: #2d3748; }
     tbody td { padding: 12px 12px; color: #e2e8f0; vertical-align: top; }
+
     .region-badge {
       display: inline-block;
       padding: 2px 8px;
@@ -129,7 +126,40 @@
     .salary-high { color: #68d391; font-weight: 700; }
     .salary-mid { color: #f6e05e; font-weight: 600; }
     .salary-low { color: #fc8181; }
-    .note-text { font-size: 0.78rem; color: #718096; line-height: 1.5; max-width: 280px; }
+
+    /* Trend badge */
+    .trend-up   { color: #68d391; font-size: 0.8rem; font-weight: 700; }
+    .trend-down { color: #fc8181; font-size: 0.8rem; font-weight: 700; }
+    .trend-flat { color: #a0aec0; font-size: 0.8rem; }
+
+    /* History expand */
+    .history-toggle {
+      cursor: pointer;
+      font-size: 0.72rem;
+      color: #3182ce;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      padding: 2px 0;
+    }
+    .history-panel {
+      display: none;
+      margin-top: 6px;
+      padding: 8px;
+      background: #2d3748;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      color: #a0aec0;
+      line-height: 1.8;
+    }
+    .history-panel.open { display: block; }
+    .hist-row { display: flex; gap: 8px; align-items: flex-start; }
+    .hist-dot { width: 6px; height: 6px; border-radius: 50%; background: #4a5568; margin-top: 6px; flex-shrink: 0; }
+    .hist-date { color: #718096; white-space: nowrap; }
+    .hist-sal { color: #f6e05e; font-weight: 600; white-space: nowrap; }
+    .hist-note { color: #a0aec0; }
+
+    .note-text { font-size: 0.78rem; color: #718096; line-height: 1.5; max-width: 260px; }
     .tag {
       display: inline-block;
       padding: 2px 6px;
@@ -142,10 +172,9 @@
     .tag-8h { background: #44337a; color: #d6bcfa; }
     .tag-12h { background: #2d3748; color: #a0aec0; }
 
-    /* Chart container */
     .chart-wrap { position: relative; height: 280px; }
 
-    /* Region colors */
+    /* Region badge colors */
     .r-台北 { background: #3182ce; }
     .r-新北 { background: #2b6cb0; }
     .r-桃園 { background: #2c7a7b; }
@@ -157,8 +186,11 @@
     .r-嘉義 { background: #6b46c1; }
     .r-台南 { background: #b7791f; }
     .r-高雄 { background: #c53030; }
+    .r-南投 { background: #38a169; }
+    .r-屏東 { background: #d53f8c; }
+    .r-花蓮 { background: #0987a0; }
+    .r-宜蘭 { background: #6b46c1; }
     .r-台東 { background: #702459; }
-    .r-其他 { background: #4a5568; }
 
     .source-note {
       margin-top: 16px;
@@ -193,10 +225,8 @@
 
 <div class="container">
 
-  <!-- Stats -->
   <div class="stats-grid" id="statsGrid"></div>
 
-  <!-- Filters -->
   <div class="filters">
     <span class="filter-label">地區：</span>
     <button class="filter-btn active" onclick="filterRegion('all', this)">全部</button>
@@ -206,7 +236,6 @@
     <button class="filter-btn" onclick="filterRegion('東部', this)">東部</button>
   </div>
 
-  <!-- Charts -->
   <div class="main-grid">
     <div class="card">
       <h2>📊 15班月薪比較（萬元）</h2>
@@ -218,35 +247,32 @@
     </div>
   </div>
 
-  <!-- Trend Section -->
   <div class="card" style="margin-bottom:20px">
     <h2>📈 薪資時序趨勢（有歷史記錄的醫院）</h2>
     <div class="chart-wrap" style="height:320px"><canvas id="trendChart"></canvas></div>
     <div style="margin-top:12px;font-size:0.8rem;color:#718096;line-height:1.7">
       <strong style="color:#a0aec0">觀察：</strong>
-      員林基督教醫院近年調薪幅度達 <span style="color:#68d391;font-weight:700">+27.7%</span>（15班 47萬→60萬/16班），補充人力力道最強；
-      義大醫院 2025 年兩篇貼文結構相似（底薪37萬不變），第二篇資訊更透明化；
-      公立醫院（聯醫和平）薪資結構固定，無明顯漲幅。
+      員林基督教醫院近年調薪幅度最大；公立醫院薪資結構相對固定；部分私立醫院 2025-2026 積極調升以吸引人才。
     </div>
   </div>
 
-  <!-- Table -->
   <div class="card table-card">
-    <h2>📋 各醫院詳細資料</h2>
+    <h2>📋 各醫院詳細資料（點選「歷史」展開時間軸）</h2>
     <table id="mainTable">
       <thead>
         <tr>
           <th>醫院</th>
           <th>地區</th>
           <th>醫院層級</th>
+          <th>趨勢</th>
           <th>10班/月</th>
           <th>14班/月</th>
           <th>15班/月</th>
           <th>16班/月</th>
           <th>月來診量</th>
-          <th>PPH</th>
           <th>特色</th>
           <th>備註</th>
+          <th>更新日期</th>
         </tr>
       </thead>
       <tbody id="tableBody"></tbody>
@@ -254,12 +280,16 @@
   </div>
 
   <div class="source-note">
-    ⚠️ <strong>資料說明：</strong>本表資料取自某急診醫師 Facebook 私密社群的徵才貼文（2021–2026）。薪資為稅前金額，實際薪資因個人年資、班數、醫院政策而異。部分醫院資料有所欠缺（null），係因原貼文未完整揭露。資料僅供急診醫師職涯規劃參考，不代表官方立場。
+    ⚠️ <strong>資料說明：</strong>本表資料取自急診醫師 Facebook 私密社群的徵才貼文（2023–2026）。薪資為稅前金額，實際薪資因個人年資、班數、醫院政策而異。「趨勢」以 history 欄位中最早與最新的 15班薪資計算；↑漲 ↓跌 →持平 ●首次揭露。資料僅供急診醫師職涯規劃參考，不代表官方立場。
   </div>
 
 </div>
 
 <script>
+// ─────────────────────────────────────────────
+// hospitals data
+// history: array of { date, s15, note } newest-first
+// ─────────────────────────────────────────────
 const data = [
   {
     hospital: "臺大醫院雲林分院", region: "雲林", area: "中部",
@@ -268,7 +298,8 @@ const data = [
     visits: 5000, pph: 1.72,
     public: false, np: true, shift: 12,
     lastUpdated: "2026-03-25",
-    note: "12班43-45萬；底薪11.7萬/年調；績效疊加；節稅空間大"
+    note: "12班43-45萬；底薪11.7萬/年調；績效疊加；節稅空間大",
+    history: []
   },
   {
     hospital: "汐止國泰醫院", region: "新北", area: "北部",
@@ -277,7 +308,8 @@ const data = [
     visits: 4250, pph: 2.25,
     public: false, np: true, shift: 12,
     lastUpdated: "2025-12-17",
-    note: "8白+8夜>55萬；16夜60萬；≥12班+4萬,≥16班+6萬；扣5%基金"
+    note: "8白+8夜>55萬；16夜60萬；≥12班+4萬,≥16班+6萬；扣5%基金",
+    history: []
   },
   {
     hospital: "員林基督教醫院", region: "彰化", area: "中部",
@@ -286,25 +318,31 @@ const data = [
     visits: 5750, pph: 3.0,
     public: false, np: true, shift: 12,
     lastUpdated: "2025-10-31",
-    note: "15班47萬起(不含年終)；專任實領超50萬；10班30萬起；3醫師/班(內科含婦兒2+外傷1)；白天增設高峰12h班；24h NP(白3小夜3大夜1)；月量5500-6000；一二級10%/三級85%；年終底薪×2.8；Line: ospet80 李旭雲主任"
+    note: "15班47萬起(不含年終)；專任實領超50萬；10班30萬起；3醫師/班；24h NP；月量5500-6000；年終底薪×2.8；Line: ospet80 李旭雲主任",
+    history: [
+      { date: "2025-10-31", s15: 47, note: "15班47萬起，16班保證60萬；年終底薪×2.8" },
+      { date: "2024-07-01", s15: 44, note: "15班約44萬；招募擴編中" }
+    ]
   },
   {
-    hospital: "光田醫院", s15: 50, region: "台中", area: "中部",
+    hospital: "光田醫院", region: "台中", area: "中部",
     level: "區域醫院",
-    s10: null, s14: null, s16: null,
+    s10: null, s14: null, s15: 50, s16: null,
     visits: null, pph: null,
     public: false, np: true, shift: 12,
     lastUpdated: "2026-04-03",
-    note: "向上院區+大甲院區；15班稅前≥50萬；有PPH數據；中部海線；2026-04-03貼文"
+    note: "向上院區+大甲院區；15班稅前≥50萬；有PPH數據；中部海線",
+    history: []
   },
   {
     hospital: "為恭紀念醫院", region: "苗栗", area: "北部",
     level: "區域醫院",
-    s10: 33.5, s14: null, s15: 50.5, s16: null,
+    s10: 33, s14: null, s15: 50, s16: null,
     visits: null, pph: null,
-    public: false, np: false, shift: null,
+    public: false, np: true, shift: null,
     lastUpdated: "2025-05-18",
-    note: "15班(180h)49-52萬(含PPF)；10班32-35萬；全天兩線+假日多一中班；24h NP；宿舍；中醫大聯盟；徐主任0918555511 cardia333@gmail.com"
+    note: "15班(180h)49-52萬(含PPF)；10班32-35萬；全天兩線+假日多一中班；宿舍；中醫大聯盟；徐主任0918555511",
+    history: []
   },
   {
     hospital: "台北市立聯合醫院和平院區", region: "台北", area: "北部",
@@ -313,7 +351,12 @@ const data = [
     visits: 3500, pph: null,
     public: true, np: true, shift: 12,
     lastUpdated: "2025-03-01",
-    note: "14班37萬；固定薪15萬+值班費12萬+PPF10萬；月量3500；85%三四級/重症15%；2.5線醫師；超班獎金；兒科/ENT24h；整修中(2025年5-7月)；無節稅(公家)"
+    note: "14班37萬；固定薪15萬+值班費12萬+PPF10萬；月量3500；重症15%；無節稅",
+    history: [
+      { date: "2025-03-01", s15: null, s14: 37, note: "14班37萬（2025最新）；超班獎勵新增" },
+      { date: "2024-01-01", s15: null, s14: 37, note: "14班37萬；結構固定" },
+      { date: "2023-03-01", s15: null, s14: 35, note: "2023 Q1：14班約35萬；疫情後過渡期" }
+    ]
   },
   {
     hospital: "台大竹東分院", region: "新竹", area: "北部",
@@ -322,17 +365,19 @@ const data = [
     visits: 900, pph: null,
     public: true, np: null, shift: null,
     lastUpdated: null,
-    note: "保證至少30萬；月來診900人；偏鄉型；名額競爭激烈"
+    note: "保證至少30萬；月來診900人；偏鄉型；名額競爭激烈",
+    history: []
   },
   {
     hospital: "漢銘基督教醫院", region: "彰化", area: "中部",
     level: "地區醫院（彰基體系分院）",
     s10: null, s14: null, s15: 40, s16: null,
     visits: 700, pph: null,
-    public: false, np: true, shift: "12h",
+    public: false, np: true, shift: 12,
     lastUpdated: "2026-01-19",
-    note: "15班保障40萬，超班另計；白班07-19/夜班19-07；以安養中心病人為主，日均23人次；嚴重病人可轉彰基；值班兼顧ICU；白班小夜有專師；不需管理責任不出差；聯絡：劉小姐 04-7113456-8405"
-  },,
+    note: "15班保障40萬；白班07-19/夜班19-07；日均23人次；嚴重病人可轉彰基；不需管理責任；劉小姐 04-7113456-8405",
+    history: []
+  },
   {
     hospital: "衛福部台北醫院", region: "新北", area: "北部",
     level: "部立醫院（公立）",
@@ -340,36 +385,39 @@ const data = [
     visits: 5000, pph: null,
     public: true, np: true, shift: null,
     lastUpdated: "2025-08-11",
-    note: "15班平均43-45萬(含年終獎金)；平日白25k/夜29k/假日白29k/夜31k/平日中班27k/假日中班30k；20-40%免稅；端午中秋各3萬；年終≥6萬(10年以上>12萬)；月量4700-5300；後線科別齊全；新莊思源路近捷運頭前庄；游秉勳主任"
+    note: "15班平均43-45萬(含年終)；平日白25k/夜29k/假日白29k/夜31k；20-40%免稅；端午中秋各3萬；年終≥6萬；月量4700-5300；游秉勳主任",
+    history: []
   },
   {
     hospital: "羅東博愛醫院", region: "宜蘭", area: "北部",
-    level: "重度急救責任醫院+區域醫院",
+    level: "重度急救責任醫院",
     s10: null, s14: 40, s15: null, s16: null,
     visits: 5500, pph: null,
     public: false, np: true, shift: 12,
     lastUpdated: "2025-02-08",
-    note: "14班38-42萬；班薪26000-32000含PPF；宿舍提供；可訓練重症+急診雙專科；實際常15-16班"
+    note: "14班38-42萬；班薪26000-32000含PPF；宿舍；可訓練重症+急診雙專科；實際常15-16班",
+    history: []
   },
   {
     hospital: "中壢長榮醫院", region: "桃園", area: "北部",
     level: "地區醫院",
     s10: null, s14: null, s15: 36, s16: null,
-    hourly: 2000, visits: 1200, pph: null,
+    visits: 1200, pph: null,
     public: false, np: true, shift: 12,
     lastUpdated: "2024-01-26",
-    note: "15班36萬；時薪2000；月量1200±200；一線班；非急救責任醫院；150床；近內壢車站10分鐘；無行政工作"
+    note: "15班36萬；時薪2000；月量1200±200；一線班；非急救責任醫院；150床；近內壢車站",
+    history: []
   },
-  /* ──────── 五年掃描補錄（2021–2026）──────── */,
   {
     hospital: "台北榮總新竹分院", region: "新竹", area: "北部",
     level: "醫學中心分院（公立）",
-    s10: null, s14: null, s15: 56.5, s16: null,
-    visits: null, pph: null,
+    s10: null, s14: null, s15: 56, s16: null,
+    visits: 1400, pph: null,
     public: true, np: null, shift: 12,
     lastUpdated: "2025-06-16",
-    note: "15-16班保障45萬+偏遠留任獎金10.5萬=55.5萬；到職後2年偏遠獎金；可升公務員；月量1400；4急專全時段單線；安養院榮民/原住民為主；竹東；李國瑋醫師 seadog0315@yahoo.com.tw"
-  },,
+    note: "15-16班保障45萬+偏遠留任獎金10.5萬=55.5萬；到職後2年偏遠獎金；可升公務員；竹東；李國瑋醫師",
+    history: []
+  },
   {
     hospital: "振興醫院", region: "台北", area: "北部",
     level: "準醫學中心",
@@ -377,16 +425,18 @@ const data = [
     visits: 4200, pph: null,
     public: false, np: true, shift: 12,
     lastUpdated: "2025-08-10",
-    note: "15班base 40萬+夜班加給(平日5000/假日10000)=44-46萬；每日130-150人；白班三線/夜班二線；停留<6h<18%；ICU等待2.5h"
-  },,,
+    note: "15班base 40萬+夜班加給(平日5000/假日10000)=44-46萬；每日130-150人；白班三線/夜班二線",
+    history: []
+  },
   {
     hospital: "樂生醫院", region: "新北", area: "北部",
-    level: "地區醫院（迴龍捷運旁）",
+    level: "地區醫院",
     s10: null, s14: null, s15: 33, s16: null,
     visits: 1000, pph: null,
     public: true, np: false, shift: 12,
-    lastUpdated: "2024-xx-xx",
-    note: "15班約30萬；加住院人頭PPF可到33-35萬；月均900-1000；單線輕鬆型；可兼任"
+    lastUpdated: "2024-01-01",
+    note: "15班約30萬；加住院人頭PPF可到33-35萬；月均900-1000；單線輕鬆型；可兼任",
+    history: []
   },
   {
     hospital: "新北永和耕莘醫院", region: "新北", area: "北部",
@@ -395,7 +445,8 @@ const data = [
     visits: 3200, pph: null,
     public: false, np: true, shift: 12,
     lastUpdated: "2026-02-27",
-    note: "平日班2萬/假日班2.2萬；底薪4萬；按時薪計算無PPF；節稅50-70萬/年；月量3000-3400；三線(內科外科小兒各1)；小兒科醫師看；近頂溪捷運15分鐘；可兼差(每週≤2次)"
+    note: "平日班2萬/假日班2.2萬；底薪4萬；節稅50-70萬/年；月量3000-3400；三線；近頂溪捷運",
+    history: []
   },
   {
     hospital: "部立桃園醫院", region: "桃園", area: "北部",
@@ -403,8 +454,9 @@ const data = [
     s10: null, s14: null, s15: 43, s16: null,
     visits: null, pph: null,
     public: true, np: null, shift: 12,
-    lastUpdated: "2024-xx-xx",
-    note: "底薪53000+；值班費平日白18000/夜23160；假日白23160/夜30840；共計15班約42-45萬"
+    lastUpdated: "2024-01-01",
+    note: "底薪53000+；值班費平日白18000/夜23160；假日白23160/夜30840；共計15班約42-45萬",
+    history: []
   },
   {
     hospital: "楊梅天成醫院", region: "桃園", area: "北部",
@@ -413,16 +465,18 @@ const data = [
     visits: null, pph: null,
     public: false, np: true, shift: 12,
     lastUpdated: "2025-02-09",
-    note: "10班31-32萬；134h稅前36+；15班(180h)遠大於45萬；超額每人+800；節稅15-18%；無NP(招募中)；楊梅最大醫院"
+    note: "10班31-32萬；15班(180h)遠大於45萬；超額每人+800；節稅15-18%；楊梅最大醫院",
+    history: []
   },
   {
     hospital: "屏東基督教醫院", region: "屏東", area: "南部",
     level: "區域醫院",
     s10: null, s14: null, s15: 45, s16: null,
     visits: 6000, pph: null,
-    public: false, np: null, shift: 12,
+    public: false, np: true, shift: 12,
     lastUpdated: "2025-07-05",
-    note: "180h絕對≥45萬；8h班頭費200/人；達標有激勵獎金；三節年終；不輪大夜(新醫師僅白班及小夜)；月量6000；平日白2線/小夜3線/大夜2線；14急診主治+2兒科+2兼診；每班1-2 NP；24h trauma+AMI team；ICU直接簽床；宿舍(步行10分鐘)；邱文智醫師"
+    note: "180h絕對≥45萬；8h班頭費200/人；不輪大夜；月量6000；14急診主治+2兒科；每班1-2 NP；宿舍；邱文智醫師",
+    history: []
   },
   {
     hospital: "屏東枋寮醫院", region: "屏東", area: "南部",
@@ -430,8 +484,9 @@ const data = [
     s10: null, s14: null, s15: 44, s16: null,
     visits: 2250, pph: null,
     public: false, np: null, shift: 12,
-    lastUpdated: "2025-xx-xx",
-    note: "底薪39萬+簽約金1萬/月+PPF4-5萬≈44-45萬；年來診27000；15班約6夜班；南屏東偏鄉"
+    lastUpdated: "2025-01-01",
+    note: "底薪39萬+簽約金1萬/月+PPF4-5萬≈44-45萬；年來診27000；南屏東偏鄉",
+    history: []
   },
   {
     hospital: "高雄市立民生醫院", region: "高雄", area: "南部",
@@ -440,7 +495,8 @@ const data = [
     visits: 1400, pph: null,
     public: true, np: true, shift: 12,
     lastUpdated: "2025-07-21",
-    note: "15班40-43萬(公職底薪+收治獎勵金，視住院人數浮動)；月量1250-1550；4位急專全時段單線看診；安養院住民為主；無研究壓力；兒科建議轉診"
+    note: "15班40-43萬（視住院人數浮動）；月量1250-1550；4位急專單線；無研究壓力；兒科建議轉診",
+    history: []
   },
   {
     hospital: "高醫岡山醫院", region: "高雄", area: "南部",
@@ -449,16 +505,18 @@ const data = [
     visits: 2750, pph: null,
     public: false, np: true, shift: 12,
     lastUpdated: "2025-10-06",
-    note: "15班45萬(含值班費+PPF)；免稅15班約5萬/16班約7萬；月量2500-3000；PPH白班2/夜班1.2；高雄捷運紅線共構"
+    note: "15班45萬(含值班費+PPF)；免稅15班約5萬/16班約7萬；月量2500-3000；PPH白班2/夜班1.2；高雄捷運紅線共構",
+    history: []
   },
   {
     hospital: "台中榮總嘉義分院", region: "嘉義", area: "南部",
     level: "醫學中心分院（公立）",
     s10: null, s14: null, s15: 46, s16: null,
     visits: 1450, pph: 2.6,
-    public: true, np: null, shift: 12,
+    public: true, np: true, shift: 12,
     lastUpdated: "2025-08-25",
-    note: "15班(180h)45-46萬(公職，7月起調薪)；月量1400-1500；PPH白班2.6/夜班1.2；白夜各1線12h；高度彈性排班；NP協助；0931288496 m850798@gmail.com"
+    note: "15班45-46萬（7月起調薪）；月量1400-1500；PPH白班2.6/夜班1.2；高度彈性排班",
+    history: []
   },
   {
     hospital: "部立台南醫院新化分院", region: "台南", area: "南部",
@@ -467,7 +525,8 @@ const data = [
     visits: 1300, pph: null,
     public: true, np: true, shift: null,
     lastUpdated: "2026-02-06",
-    note: "15班180h=42萬；每月46h可報加班免稅(免稅額9.2-9.4萬)；月量1300；一線看診；白班小夜有NP(週休兩日)；超音波另計；Line changyaojen5153；06-5911929#2002"
+    note: "15班=42萬；每月46h可報加班免稅；月量1300；白班小夜有NP；Line changyaojen5153",
+    history: []
   },
   {
     hospital: "竹山秀傳醫院", region: "南投", area: "中部",
@@ -476,7 +535,8 @@ const data = [
     visits: 2500, pph: null,
     public: false, np: false, shift: null,
     lastUpdated: "2024-10-16",
-    note: "15班+PPF=42-43萬；月量2500(含換藥約300)；全天兩線12h班；8位急診醫師；24h心導管+開腦；國三竹山交流道；洪順世主任 0911756971 siuhuong@gmail.com"
+    note: "15班+PPF=42-43萬；月量2500；全天兩線12h班；24h心導管+開腦；洪順世主任 0911756971",
+    history: []
   },
   {
     hospital: "草屯佑民醫院", region: "南投", area: "中部",
@@ -485,7 +545,8 @@ const data = [
     visits: 4700, pph: null,
     public: false, np: true, shift: null,
     lastUpdated: "2026-03-13",
-    note: "時薪：白1200/夜1600；PPF450/位；超音波300/個；15班(180h,6夜)≈42萬；包夜班(12夜)可破50萬；月量4700(1成換藥)；夜班津貼>12夜班+5萬；台中哈佛；14位急專；DMAT補助6000/天"
+    note: "時薪：白1200/夜1600；PPF450/位；15班(6夜)≈42萬；包夜班可破50萬；月量4700；14位急專；台中哈佛",
+    history: []
   },
   {
     hospital: "埔里基督教醫院", region: "南投", area: "中部",
@@ -494,7 +555,8 @@ const data = [
     visits: 2400, pph: null,
     public: false, np: true, shift: 12,
     lastUpdated: "2025-08-19",
-    note: "15班(含4假日)保障44萬，稅前超46萬(+PPF)；週間白26k/夜28k；假日白30k/夜31k；每人次獎金80-120元；NP週一四08-24/週五日24h；宿舍；節稅20%；距台中40-50分鐘；0921300138"
+    note: "15班保障44萬（稅前超46萬+PPF）；週間白26k/夜28k；假日白30k/夜31k；NP週一四08-24；宿舍；節稅20%",
+    history: []
   },
   {
     hospital: "部立台中醫院", region: "台中", area: "中部",
@@ -503,7 +565,8 @@ const data = [
     visits: 2600, pph: null,
     public: true, np: true, shift: null,
     lastUpdated: "2025-04-17",
-    note: "時薪制(無PPF)：白2200/夜2600/假日白2300/假日夜2800；大夜單線+200；180h≈43.9萬；節稅25%；每日87人(高峰100)；白夜班NP1位；大夜無NP；兒科週一五8-21；班別可8/12h彈性"
+    note: "時薪制(無PPF)：白2200/夜2600/假日白2300/假日夜2800；180h≈43.9萬；節稅25%；每日87人",
+    history: []
   },
   {
     hospital: "台中慈濟醫院", region: "台中", area: "中部",
@@ -511,9 +574,10 @@ const data = [
     s10: null, s14: null, s15: 38, s16: null,
     visits: 4000, pph: null,
     public: false, np: true, shift: null,
-    lastUpdated: "2025-xx-xx",
-    note: "15班(172-176h)稅前38萬+；8成報稅；24h NP；約350人次/醫師/月"
-  },,
+    lastUpdated: "2025-01-01",
+    note: "15班(172-176h)稅前38萬+；8成報稅；24h NP；約350人次/醫師/月",
+    history: []
+  },
   {
     hospital: "彰濱秀傳醫院", region: "彰化", area: "中部",
     level: "區域醫院（秀傳體系）",
@@ -521,20 +585,50 @@ const data = [
     visits: 2500, pph: null,
     public: false, np: true, shift: 12,
     lastUpdated: "2023-09-14",
-    note: "15班30-40萬；月量2500；全天二線急診主治；需支援外院；聯絡人康秘書0975-617-158"
+    note: "15班30-40萬；月量2500；全天二線；需支援外院；康秘書0975-617-158",
+    history: []
   },
-  { hospital: "高雄路竹秀傳醫院", region: "高雄", level: "區域", s15: 44, visits: 0, note: "44萬(不含PPF)；秀傳體系；高雄路竹科學園區；700床規劃中區域教學醫院；南部醫學中心建教合作；莊佳璋醫師 0921565932 chuanger@mail.ncku.edu.tw", lastUpdated: "2024-08-16" },
-  { hospital: "虎尾若瑟醫院", region: "雲林", level: "區域", s15: 45, visits: 0, note: "15班≥45萬(值班費+PF+procedure+超音波)；5位NP班班都有；輕症多；地區中度責任醫院；簽床內兒急診決定/其他要會診；候鐘閔主任 erdrhou@gmail.com", lastUpdated: "2025-09-02" }
+  {
+    hospital: "高雄路竹秀傳醫院", region: "高雄", area: "南部",
+    level: "區域醫院（秀傳體系）",
+    s10: null, s14: null, s15: 44, s16: null,
+    visits: null, pph: null,
+    public: false, np: null, shift: null,
+    lastUpdated: "2024-08-16",
+    note: "44萬(不含PPF)；秀傳體系；路竹科學園區；700床規劃中；南部醫學中心建教合作；莊佳璋醫師 0921565932",
+    history: []
+  },
+  {
+    hospital: "虎尾若瑟醫院", region: "雲林", area: "中部",
+    level: "地區醫院",
+    s10: null, s14: null, s15: 45, s16: null,
+    visits: null, pph: null,
+    public: false, np: true, shift: null,
+    lastUpdated: "2025-09-02",
+    note: "15班≥45萬(值班費+PF+procedure+超音波)；5位NP班班都有；輕症多；候鐘閔主任 erdrhou@gmail.com",
+    history: []
+  },
+  {
+    hospital: "衛福部豐原醫院", region: "台中", area: "中部",
+    level: "部立醫院（公立）",
+    s10: null, s12: 40, s15: 45, s16: null,
+    visits: 4500, pph: null,
+    public: true, np: true, shift: 12,
+    lastUpdated: "2026-01-16",
+    note: "重度急救責任醫院；日來診150；2.5線；24h NP；12-13班≈40萬；15班滿班前段班薪資但難排滿；11位醫師；戴笠修代理主任",
+    history: []
+  }
 ];
 
-// Region color map
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
 const regionColors = {
   "台北": "#3182ce", "新北": "#2b6cb0", "桃園": "#2c7a7b",
   "新竹": "#285e61", "苗栗": "#276749", "台中": "#2f855a",
   "彰化": "#c05621", "雲林": "#975a16", "嘉義": "#6b46c1",
-  "台南": "#b7791f", "高雄": "#c53030", "台東": "#702459",
-  "南投": "#38a169", "屏東": "#d53f8c", "花蓮": "#0987a0",
-  "宜蘭": "#6b46c1"
+  "台南": "#b7791f", "高雄": "#c53030", "南投": "#38a169",
+  "屏東": "#d53f8c", "花蓮": "#0987a0", "宜蘭": "#4c51bf", "台東": "#702459"
 };
 
 function fmtSalary(val) {
@@ -543,12 +637,42 @@ function fmtSalary(val) {
   return `<span class="${cls}">${val}萬</span>`;
 }
 
+function calcTrend(row) {
+  // Use history array if available
+  if (row.history && row.history.length >= 2) {
+    const newest = row.history[0];
+    const oldest = row.history[row.history.length - 1];
+    const ns = newest.s15 || newest.s14;
+    const os = oldest.s15 || oldest.s14;
+    if (ns && os) {
+      const diff = ns - os;
+      if (diff > 0) return { icon: `↑ +${diff}萬`, cls: 'trend-up', tip: `${oldest.date} → ${newest.date}` };
+      if (diff < 0) return { icon: `↓ ${diff}萬`, cls: 'trend-down', tip: `${oldest.date} → ${newest.date}` };
+      return { icon: '→ 持平', cls: 'trend-flat', tip: `${oldest.date} → ${newest.date}` };
+    }
+  }
+  return { icon: '●', cls: 'trend-flat', tip: '首次揭露' };
+}
+
+let histCounter = 0;
+function renderHistoryBtn(row) {
+  if (!row.history || row.history.length === 0) return '';
+  const id = `h${histCounter++}`;
+  const rows = row.history.map(h => {
+    const sal = h.s15 ? `${h.s15}萬（15班）` : h.s14 ? `${h.s14}萬（14班）` : '—';
+    return `<div class="hist-row"><div class="hist-dot"></div><span class="hist-date">${h.date}</span><span class="hist-sal">${sal}</span><span class="hist-note">${h.note || ''}</span></div>`;
+  }).join('');
+  return `<button class="history-toggle" onclick="toggleHist('${id}')">歷史 (${row.history.length})</button><div class="history-panel" id="${id}">${rows}</div>`;
+}
+
+function toggleHist(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
 function renderStats(d) {
   const withS15 = d.filter(x => x.s15);
   const withS16 = d.filter(x => x.s16);
-  const maxSalary = Math.max(...d.flatMap(x => [x.s10,x.s14,x.s15,x.s16].filter(Boolean)));
   const avgS15 = withS15.length ? (withS15.reduce((a,b) => a + b.s15, 0) / withS15.length).toFixed(1) : '—';
-
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat-card">
       <div class="label">醫院數量</div>
@@ -574,19 +698,19 @@ function renderStats(d) {
 }
 
 function renderTable(d) {
-  document.getElementById('tableBody').innerHTML = d.map(row => `
-    <tr>
-      <td><strong>${row.hospital}</strong></td>
-      <td>
-        <span class="region-badge r-${row.region}">${row.region}</span>
-      </td>
+  histCounter = 0;
+  document.getElementById('tableBody').innerHTML = d.map(row => {
+    const trend = calcTrend(row);
+    return `<tr>
+      <td><strong>${row.hospital}</strong>${renderHistoryBtn(row)}</td>
+      <td><span class="region-badge r-${row.region}">${row.region}</span></td>
       <td style="font-size:0.78rem;color:#a0aec0">${row.level}</td>
+      <td title="${trend.tip}"><span class="${trend.cls}">${trend.icon}</span></td>
       <td>${fmtSalary(row.s10)}</td>
       <td>${fmtSalary(row.s14)}</td>
       <td>${fmtSalary(row.s15)}</td>
       <td>${fmtSalary(row.s16)}</td>
       <td style="color:#a0aec0">${row.visits ? row.visits.toLocaleString() : '—'}</td>
-      <td style="color:#a0aec0">${row.pph || '—'}</td>
       <td>
         ${row.public ? '<span class="tag tag-public">公立</span>' : ''}
         ${row.np === true ? '<span class="tag tag-np">NP支援</span>' : ''}
@@ -595,20 +719,21 @@ function renderTable(d) {
       </td>
       <td class="note-text">${row.note}</td>
       <td style="color:#718096;font-size:0.78rem;white-space:nowrap">${row.lastUpdated || '—'}</td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
-let barChart, doughnutChart;
+let barChart, doughnutChart, trendChart;
 
 function renderCharts(d) {
-  // Bar chart: 15-shift salary
-  const barData = d.filter(x => x.s15 || x.s16).map(x => ({
-    label: x.hospital.replace('醫院','院').replace('台北市立聯合醫院','聯醫').replace('台東馬偕','馬偕台東'),
-    s15: x.s15 || null,
-    s16: x.s16 || null,
-    color: regionColors[x.region] || '#4a5568'
-  })).sort((a,b) => (b.s15||b.s16) - (a.s15||a.s16));
+  const barData = d.filter(x => x.s15 || x.s16)
+    .map(x => ({
+      label: x.hospital.replace('醫院','院').replace('台北市立聯合醫院','聯醫'),
+      s15: x.s15 || null,
+      s16: x.s16 || null,
+      color: regionColors[x.region] || '#4a5568'
+    }))
+    .sort((a,b) => (b.s15||b.s16||0) - (a.s15||a.s16||0));
 
   const barCtx = document.getElementById('salaryChart').getContext('2d');
   if (barChart) barChart.destroy();
@@ -617,59 +742,40 @@ function renderCharts(d) {
     data: {
       labels: barData.map(x => x.label),
       datasets: [
-        {
-          label: '15班月薪',
-          data: barData.map(x => x.s15),
+        { label: '15班月薪', data: barData.map(x => x.s15),
           backgroundColor: barData.map(x => x.color + 'cc'),
           borderColor: barData.map(x => x.color),
-          borderWidth: 1,
-          borderRadius: 4,
-        },
-        {
-          label: '16班月薪',
-          data: barData.map(x => x.s16),
-          backgroundColor: barData.map(x => x.color + '66'),
+          borderWidth: 1, borderRadius: 4 },
+        { label: '16班月薪', data: barData.map(x => x.s16),
+          backgroundColor: barData.map(x => x.color + '55'),
           borderColor: barData.map(x => x.color + 'aa'),
-          borderWidth: 1,
-          borderRadius: 4,
-          borderDash: [4,2],
-        }
+          borderWidth: 1, borderRadius: 4 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color: '#a0aec0', font: { size: 11 } } },
-        tooltip: {
-          callbacks: {
-            label: ctx => ctx.raw ? `${ctx.dataset.label}: ${ctx.raw}萬元` : '—'
-          }
-        }
+        tooltip: { callbacks: { label: ctx => ctx.raw ? `${ctx.dataset.label}: ${ctx.raw}萬` : null } }
       },
       scales: {
         x: { ticks: { color: '#718096', font: { size: 10 } }, grid: { color: '#2d3748' } },
-        y: {
-          ticks: { color: '#718096', callback: v => v + '萬' },
-          grid: { color: '#2d3748' },
-          min: 0, max: 70
-        }
+        y: { ticks: { color: '#718096', callback: v => v + '萬' }, grid: { color: '#2d3748' }, min: 0, max: 70 }
       }
     }
   });
 
-  // Doughnut: by region
   const regionMap = {};
   d.forEach(x => {
     if (!regionMap[x.region]) regionMap[x.region] = [];
     const best = Math.max(...[x.s10,x.s14,x.s15,x.s16].filter(Boolean), 0);
     if (best > 0) regionMap[x.region].push(best);
   });
-
   const regions = Object.keys(regionMap);
   const regionAvgs = regions.map(r => {
     const vals = regionMap[r];
-    return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : 0;
-  }).map(Number);
+    return vals.length ? +(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : 0;
+  });
 
   const doCtx = document.getElementById('regionChart').getContext('2d');
   if (doughnutChart) doughnutChart.destroy();
@@ -679,30 +785,80 @@ function renderCharts(d) {
       labels: regions,
       datasets: [{
         data: regionAvgs,
-        backgroundColor: regions.map(r => (regionColors[r] || '#4a5568') + 'cc'),
-        borderColor: regions.map(r => regionColors[r] || '#4a5568'),
-        borderWidth: 2,
+        backgroundColor: regions.map(r => (regionColors[r]||'#4a5568') + 'cc'),
+        borderColor: regions.map(r => regionColors[r]||'#4a5568'),
+        borderWidth: 2
       }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { position: 'right', labels: { color: '#a0aec0', font: { size: 11 }, padding: 12 } },
-        tooltip: {
-          callbacks: {
-            label: ctx => `${ctx.label}: 平均 ${ctx.raw} 萬`
-          }
-        }
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: 平均 ${ctx.raw} 萬` } }
+      }
+    }
+  });
+}
+
+function renderTrendChart() {
+  // Build trend series from hospitals that have history
+  const trendSeries = data
+    .filter(x => x.history && x.history.length >= 2)
+    .map(x => {
+      const color = regionColors[x.region] || '#4a5568';
+      return {
+        label: x.hospital.replace('醫院','院'),
+        color,
+        points: x.history.slice().reverse() // oldest first
+          .map(h => ({ x: h.date.slice(0,7), y: h.s15 || h.s14 }))
+      };
+    });
+
+  if (trendSeries.length === 0) {
+    document.getElementById('trendChart').parentElement.innerHTML =
+      '<p style="color:#718096;padding:20px;text-align:center">尚無多時間點資料，持續收集中...</p>';
+    return;
+  }
+
+  const allX = [...new Set(trendSeries.flatMap(s => s.points.map(p => p.x)))].sort();
+
+  const tCtx = document.getElementById('trendChart').getContext('2d');
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(tCtx, {
+    type: 'line',
+    data: {
+      labels: allX,
+      datasets: trendSeries.map(s => ({
+        label: s.label,
+        data: allX.map(x => { const pt = s.points.find(p => p.x === x); return pt ? pt.y : null; }),
+        borderColor: s.color,
+        backgroundColor: s.color + '33',
+        borderWidth: 2.5,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        spanGaps: false,
+        tension: 0.3
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#a0aec0', font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ctx.raw ? `${ctx.dataset.label}: ${ctx.raw}萬` : null } }
+      },
+      scales: {
+        x: { ticks: { color: '#718096' }, grid: { color: '#2d3748' } },
+        y: { ticks: { color: '#718096', callback: v => v + '萬' }, grid: { color: '#2d3748' }, min: 30, max: 65 }
       }
     }
   });
 }
 
 const areaMap = {
-  "北部": ["台北","新北","桃園","新竹","苗栗","基隆"],
+  "北部": ["台北","新北","桃園","新竹","苗栗","基隆","宜蘭"],
   "中部": ["台中","彰化","南投","雲林"],
   "南部": ["嘉義","台南","高雄","屏東"],
-  "東部": ["台東","花蓮","宜蘭"]
+  "東部": ["台東","花蓮"]
 };
 
 function filterRegion(area, btn) {
@@ -714,119 +870,6 @@ function filterRegion(area, btn) {
   renderCharts(filtered);
 }
 
-// Trend chart
-function renderTrendChart() {
-  const trendData = [
-    {
-      label: '員林基督教（15班）',
-      color: '#c05621',
-      points: [
-        { x: '2024-07', y: 47, note: '15班47萬起（未稅）' },
-        { x: '2026-04', y: 50, note: '加薪後15班保~50萬' }
-]
-    },
-    {
-      label: '員林基督教（16班）',
-      color: '#f6ad55',
-      points: [
-        { x: '2024-07', y: null },
-        { x: '2026-04', y: 60, note: '16班保證60萬+' }
-]
-    },
-    {
-      label: '義大醫院（15班平均）',
-      color: '#c53030',
-      points: [
-        { x: '2025-09', y: 40, note: '平均超過40萬' },
-        { x: '2025-11', y: 40, note: '底薪37萬+績效3萬=40萬' }
-]
-    },
-    {
-      label: '聯醫和平（14班）',
-      color: '#3182ce',
-      points: [
-        { x: '2023-03', y: 35, note: '2023 Q1：疫情後；14班35萬' },
-        { x: '2023-10', y: 36, note: '2023 Q4：NP擴編中；36萬' },
-        { x: '2024-01', y: 37, note: '2024：4位NP上線；37萬' },
-        { x: '2025-06', y: 37, note: '2025：結構固定；超班獎勵新增' }
-]
-    },
-    {
-      label: '汐止國泰（16班）',
-      color: '#2b6cb0',
-      points: [
-        { x: '2025-12', y: 60, note: '16夜班60萬' }
-]
-    },
-    {
-      label: '羅東博愛（14班）',
-      color: '#276749',
-      points: [
-        { x: '2023-01', y: 40, note: '2023：14班38-42萬；蘇澳+仁愛支援另計' }
-]
-    },
-    {
-      label: '衛福部台北醫院（15班）',
-      color: '#553c9a',
-      points: [
-        { x: '2025-12', y: 50, note: '2026年招募：15班50萬以上（含年終）' }
-]
-    },
-
-  {
-    hospital: "衛福部豐原醫院", region: "台中", area: "中部",
-    level: "部立醫院（公立）",
-    s10: null, s12: 40, s15: 45, s16: null,
-    visits: 4500, pph: null,
-    public: true, np: true, shift: 12,
-    lastUpdated: "2026-01-16",
-    note: "重度急救責任醫院；日來診150；2.5線(日夜各二+10-22一線)；24h NP；底薪+值班費+PPF；15班滿班前段班薪資但難排滿；12-13班≈40萬；11位醫師；無避稅；戴笠修代理主任"
-  }
-
-];
-
-  const allX = ['2023-01','2023-03','2023-10','2024-01','2024-07','2025-06','2025-09','2025-11','2025-12','2026-04'];
-  const tCtx = document.getElementById('trendChart').getContext('2d');
-  new Chart(tCtx, {
-    type: 'line',
-    data: {
-      labels: allX,
-      datasets: trendData.map(d => ({
-        label: d.label,
-        data: allX.map(x => {
-          const pt = d.points.find(p => p.x === x);
-          return pt ? pt.y : null;
-        }),
-        borderColor: d.color,
-        backgroundColor: d.color + '33',
-        borderWidth: 2.5,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        spanGaps: false,
-        tension: 0.3,
-      }))
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: '#a0aec0', font: { size: 11 } } },
-        tooltip: {
-          callbacks: { label: ctx => ctx.raw ? `${ctx.dataset.label}: ${ctx.raw}萬` : null }
-        }
-      },
-      scales: {
-        x: { ticks: { color: '#718096' }, grid: { color: '#2d3748' } },
-        y: {
-          ticks: { color: '#718096', callback: v => v + '萬' },
-          grid: { color: '#2d3748' },
-          min: 30, max: 70
-        }
-      }
-    }
-  });
-}
-
-// Initial render
 renderStats(data);
 renderTable(data);
 renderCharts(data);
