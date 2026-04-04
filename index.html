@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全台急診醫師薪資 Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, 'SF Pro Display', 'PingFang TC', 'Noto Sans TC', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #1a1d2e 0%, #16213e 50%, #0f3460 100%);
+      border-bottom: 1px solid #2d3748;
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-icon { font-size: 2rem; }
+    .header h1 { font-size: 1.6rem; font-weight: 700; color: #f7fafc; }
+    .header p { font-size: 0.85rem; color: #a0aec0; margin-top: 4px; }
+    .header-badge {
+      margin-left: auto;
+      background: #2d3748;
+      border: 1px solid #4a5568;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      color: #68d391;
+    }
+
+    .container { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
+
+    /* Stats row */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #1a202c;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .stat-card .label { font-size: 0.75rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #f7fafc; margin: 6px 0 4px; }
+    .stat-card .sub { font-size: 0.8rem; color: #68d391; }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-btn {
+      background: #2d3748;
+      border: 1px solid #4a5568;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      color: #a0aec0;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: #3182ce;
+      border-color: #3182ce;
+      color: #fff;
+    }
+    .filter-label { font-size: 0.8rem; color: #718096; margin-right: 4px; }
+
+    /* Main grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #1a202c;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card h2 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #a0aec0;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Table */
+    .table-card { grid-column: 1 / -1; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead th {
+      text-align: left;
+      padding: 10px 12px;
+      background: #2d3748;
+      color: #a0aec0;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    thead th:first-child { border-radius: 8px 0 0 8px; }
+    thead th:last-child { border-radius: 0 8px 8px 0; }
+    tbody tr { border-bottom: 1px solid #2d3748; transition: background 0.1s; }
+    tbody tr:hover { background: #2d3748; }
+    tbody td { padding: 12px 12px; color: #e2e8f0; vertical-align: top; }
+    .region-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .salary-high { color: #68d391; font-weight: 700; }
+    .salary-mid { color: #f6e05e; font-weight: 600; }
+    .salary-low { color: #fc8181; }
+    .note-text { font-size: 0.78rem; color: #718096; line-height: 1.5; max-width: 280px; }
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      margin: 1px;
+    }
+    .tag-public { background: #2c5282; color: #90cdf4; }
+    .tag-np { background: #276749; color: #9ae6b4; }
+    .tag-8h { background: #44337a; color: #d6bcfa; }
+    .tag-12h { background: #2d3748; color: #a0aec0; }
+
+    /* Chart container */
+    .chart-wrap { position: relative; height: 280px; }
+
+    /* Region colors */
+    .r-台北 { background: #3182ce; }
+    .r-新北 { background: #2b6cb0; }
+    .r-桃園 { background: #2c7a7b; }
+    .r-新竹 { background: #285e61; }
+    .r-苗栗 { background: #276749; }
+    .r-台中 { background: #2f855a; }
+    .r-彰化 { background: #c05621; }
+    .r-雲林 { background: #975a16; }
+    .r-嘉義 { background: #6b46c1; }
+    .r-台南 { background: #b7791f; }
+    .r-高雄 { background: #c53030; }
+    .r-台東 { background: #702459; }
+    .r-其他 { background: #4a5568; }
+
+    .source-note {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #1a202c;
+      border: 1px solid #2d3748;
+      border-left: 3px solid #3182ce;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      color: #718096;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .main-grid { grid-template-columns: 1fr; }
+      .table-card { grid-column: 1; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🏥</div>
+  <div>
+    <h1>全台急診醫師薪資 Dashboard</h1>
+    <p>資料來源：急診醫師的秘密花園 (Facebook 私密社團) · 2024–2026</p>
+  </div>
+  <div class="header-badge">🔒 私密社團資料 · 僅供參考</div>
+</div>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <span class="filter-label">地區：</span>
+    <button class="filter-btn active" onclick="filterRegion('all', this)">全部</button>
+    <button class="filter-btn" onclick="filterRegion('北部', this)">北部</button>
+    <button class="filter-btn" onclick="filterRegion('中部', this)">中部</button>
+    <button class="filter-btn" onclick="filterRegion('南部', this)">南部</button>
+    <button class="filter-btn" onclick="filterRegion('東部', this)">東部</button>
+  </div>
+
+  <!-- Charts -->
+  <div class="main-grid">
+    <div class="card">
+      <h2>📊 15班月薪比較（萬元）</h2>
+      <div class="chart-wrap"><canvas id="salaryChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>🗺️ 各地區薪資分布</h2>
+      <div class="chart-wrap"><canvas id="regionChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Trend Section -->
+  <div class="card" style="margin-bottom:20px">
+    <h2>📈 薪資時序趨勢（有歷史記錄的醫院）</h2>
+    <div class="chart-wrap" style="height:320px"><canvas id="trendChart"></canvas></div>
+    <div style="margin-top:12px;font-size:0.8rem;color:#718096;line-height:1.7">
+      <strong style="color:#a0aec0">觀察：</strong>
+      員林基督教醫院 2024→2026 年調薪幅度達 <span style="color:#68d391;font-weight:700">+27.7%</span>（15班 47萬→60萬/16班），補充人力力道最強；
+      義大醫院 2025 年兩篇貼文結構相似（底薪37萬不變），第二篇資訊更透明化；
+      公立醫院（聯醫和平）薪資結構固定，無明顯漲幅。
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card table-card">
+    <h2>📋 各醫院詳細資料</h2>
+    <table id="mainTable">
+      <thead>
+        <tr>
+          <th>醫院</th>
+          <th>地區</th>
+          <th>醫院層級</th>
+          <th>10班/月</th>
+          <th>14班/月</th>
+          <th>15班/月</th>
+          <th>16班/月</th>
+          <th>月來診量</th>
+          <th>PPH</th>
+          <th>特色</th>
+          <th>備註</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="source-note">
+    ⚠️ <strong>資料說明：</strong>本表資料取自「急診醫師的秘密花園」Facebook 私密社團的徵才貼文（2024–2026）。薪資為稅前金額，實際薪資因個人年資、班數、醫院政策而異。部分醫院資料有所欠缺（null），係因原貼文未完整揭露。資料僅供急診醫師職涯規劃參考，不代表官方立場。
+  </div>
+
+</div>
+
+<script>
+const data = [
+  {
+    hospital: "臺大醫院雲林分院", region: "雲林", area: "中部",
+    level: "醫學中心分院",
+    s10: null, s14: null, s15: 50, s16: null,
+    visits: 5000, pph: 1.72,
+    public: false, np: true, shift: 12,
+    note: "12班43-45萬；底薪11.7萬/年調；績效疊加；節稅空間大"
+  },
+  {
+    hospital: "汐止國泰醫院", region: "新北", area: "北部",
+    level: "區域醫院",
+    s10: null, s14: null, s15: null, s16: 60,
+    visits: 4250, pph: 2.25,
+    public: false, np: true, shift: 12,
+    note: "8白+8夜>55萬；16夜60萬；≥12班+4萬,≥16班+6萬；扣5%基金"
+  },
+  {
+    hospital: "員林基督教醫院", region: "彰化", area: "中部",
+    level: "區域醫院",
+    s10: 36, s14: null, s15: 50, s16: 60,
+    visits: 5150, pph: 3.0,
+    public: false, np: true, shift: 12,
+    note: "保證薪資；又加薪後最新標準；有論文另加薪"
+  },
+  {
+    hospital: "台南郭綜合醫院", region: "台南", area: "南部",
+    level: "地區醫院",
+    s10: null, s14: null, s15: null, s16: null,
+    hourly: 2750, visits: 2850, pph: 2.25,
+    public: false, np: true, shift: 8,
+    note: "時薪2500-3000元；大夜>3000；8h制；多勞多得"
+  },
+  {
+    hospital: "光田醫院", region: "台中", area: "中部",
+    level: "區域醫院",
+    s10: null, s14: null, s15: 49, s16: null,
+    visits: null, pph: null,
+    public: false, np: true, shift: 12,
+    note: "15班稅前未達50萬；向上+大甲雙院區；中部缺人市場；NP協助；誠實揭露"
+  },
+  {
+    hospital: "台東馬偕醫院", region: "台東", area: "東部",
+    level: "區域醫院",
+    s10: null, s14: null, s15: null, s16: null,
+    visits: 3800, pph: null,
+    public: false, np: true, shift: 12,
+    note: "14班基本+夜班5000/班+PPF；可跨院支援；宿舍；偏鄉加給"
+  },
+  {
+    hospital: "為恭紀念醫院", region: "苗栗", area: "北部",
+    level: "區域醫院",
+    s10: 33.5, s14: null, s15: 50.5, s16: null,
+    visits: null, pph: null,
+    public: false, np: false, shift: null,
+    note: "180小時15班含PPF約49-52萬；宿舍提供（外縣市醫師）；頭份交流道5分鐘；中醫大聯盟"
+  },
+  {
+    hospital: "義大醫院", region: "高雄", area: "南部",
+    level: "醫學中心",
+    s10: null, s14: null, s15: 40, s16: null,
+    visits: null, pph: null,
+    public: false, np: true, shift: 12,
+    note: "底薪37萬/15班+績效3萬=40萬；加班2.4萬/班；SCI論文獎5萬起；燕巢+義大+大昌三院區"
+  },
+  {
+    hospital: "台北市立聯合醫院和平院區", region: "台北", area: "北部",
+    level: "市立醫院（公立）",
+    s10: null, s14: 37, s15: null, s16: null,
+    visits: 3500, pph: null,
+    public: true, np: true, shift: 12,
+    note: "固定15萬+值班12萬+PPF10萬；公立無節稅；聯醫獎勵+3-5萬（第2年起）"
+  },
+  {
+    hospital: "台南市立醫院（秀傳）", region: "台南", area: "南部",
+    level: "市立醫院（公立）",
+    s10: null, s14: null, s15: null, s16: null,
+    visits: 400, pph: null,
+    public: true, np: false, shift: 8,
+    note: "16班<150h/月；月來診僅400人；8h制；台南市中心；公立薪資穩定"
+  },
+  {
+    hospital: "台大竹東分院", region: "新竹", area: "北部",
+    level: "醫學中心分院",
+    s10: null, s14: null, s15: 30, s16: null,
+    visits: 900, pph: null,
+    public: true, np: null, shift: null,
+    note: "保證至少30萬；月來診900人；偏鄉型；名額競爭激烈"
+  },
+  {
+    hospital: "衛福部台北醫院", region: "新北", area: "北部",
+    level: "部立醫院（公立）",
+    s10: null, s14: null, s15: 50, s16: null,
+    visits: 5000, pph: null,
+    public: true, np: true, shift: null,
+    note: "15班50萬以上（含年終攤提）；平日白25000/夜29000；假日白29000/夜31000；端午中秋各3萬；年終≥15萬；2027新大樓"
+  },
+  {
+    hospital: "羅東博愛醫院", region: "宜蘭", area: "北部",
+    level: "重度急救責任醫院+區域醫院",
+    s10: null, s14: 40, s15: null, s16: null,
+    visits: 5500, pph: null,
+    public: false, np: true, shift: 12,
+    note: "14班38-42萬；班薪26000-32000含PPF；宿舍提供；可訓練重症+急診雙專科；實際常15-16班"
+  },
+  {
+    hospital: "高雄聖功醫院", region: "高雄", area: "南部",
+    level: "地區醫院（一般急救責任）",
+    s10: null, s14: null, s15: null, s16: null,
+    hourly: 2800, visits: 1300, pph: null,
+    public: false, np: false, shift: null,
+    note: "平日白23200/夜25000；假日白30000/夜35000；市中心；周圍四大醫中轉診方便"
+  },
+  {
+    hospital: "中壢長榮醫院", region: "桃園", area: "北部",
+    level: "地區醫院",
+    s10: null, s14: null, s15: null, s16: null,
+    hourly: 2000, visits: 400, pph: null,
+    public: false, np: false, shift: null,
+    note: "時薪2000；社區型小急診；重症少；無暫留；已待13年；班數彈性"
+  }
+];
+
+// Region color map
+const regionColors = {
+  "台北": "#3182ce", "新北": "#2b6cb0", "桃園": "#2c7a7b",
+  "新竹": "#285e61", "苗栗": "#276749", "台中": "#2f855a",
+  "彰化": "#c05621", "雲林": "#975a16", "嘉義": "#6b46c1",
+  "台南": "#b7791f", "高雄": "#c53030", "台東": "#702459"
+};
+
+function fmtSalary(val) {
+  if (!val) return '<span style="color:#4a5568">—</span>';
+  const cls = val >= 55 ? 'salary-high' : val >= 45 ? 'salary-mid' : 'salary-low';
+  return `<span class="${cls}">${val}萬</span>`;
+}
+
+function renderStats(d) {
+  const withS15 = d.filter(x => x.s15);
+  const withS16 = d.filter(x => x.s16);
+  const maxSalary = Math.max(...d.flatMap(x => [x.s10,x.s14,x.s15,x.s16].filter(Boolean)));
+  const avgS15 = withS15.length ? (withS15.reduce((a,b) => a + b.s15, 0) / withS15.length).toFixed(1) : '—';
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card">
+      <div class="label">醫院數量</div>
+      <div class="value">${d.length}</div>
+      <div class="sub">涵蓋 ${[...new Set(d.map(x=>x.area))].length} 個區域</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">最高月薪（15班）</div>
+      <div class="value">${withS15.length ? Math.max(...withS15.map(x=>x.s15)) : '—'}萬</div>
+      <div class="sub">稅前，含績效</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">平均月薪（15班）</div>
+      <div class="value">${avgS15}萬</div>
+      <div class="sub">${withS15.length} 家醫院有揭露</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">最高月薪（16班）</div>
+      <div class="value">${withS16.length ? Math.max(...withS16.map(x=>x.s16)) : '—'}萬</div>
+      <div class="sub">多班保證制</div>
+    </div>
+  `;
+}
+
+function renderTable(d) {
+  document.getElementById('tableBody').innerHTML = d.map(row => `
+    <tr>
+      <td><strong>${row.hospital}</strong></td>
+      <td>
+        <span class="region-badge r-${row.region}">${row.region}</span>
+      </td>
+      <td style="font-size:0.78rem;color:#a0aec0">${row.level}</td>
+      <td>${fmtSalary(row.s10)}</td>
+      <td>${fmtSalary(row.s14)}</td>
+      <td>${fmtSalary(row.s15)}</td>
+      <td>${fmtSalary(row.s16)}</td>
+      <td style="color:#a0aec0">${row.visits ? row.visits.toLocaleString() : '—'}</td>
+      <td style="color:#a0aec0">${row.pph || '—'}</td>
+      <td>
+        ${row.public ? '<span class="tag tag-public">公立</span>' : ''}
+        ${row.np === true ? '<span class="tag tag-np">NP支援</span>' : ''}
+        ${row.shift === 8 ? '<span class="tag tag-8h">8h制</span>' : ''}
+        ${row.shift === 12 ? '<span class="tag tag-12h">12h制</span>' : ''}
+      </td>
+      <td class="note-text">${row.note}</td>
+    </tr>
+  `).join('');
+}
+
+let barChart, doughnutChart;
+
+function renderCharts(d) {
+  // Bar chart: 15-shift salary
+  const barData = d.filter(x => x.s15 || x.s16).map(x => ({
+    label: x.hospital.replace('醫院','院').replace('台北市立聯合醫院','聯醫').replace('台東馬偕','馬偕台東'),
+    s15: x.s15 || null,
+    s16: x.s16 || null,
+    color: regionColors[x.region] || '#4a5568'
+  })).sort((a,b) => (b.s15||b.s16) - (a.s15||a.s16));
+
+  const barCtx = document.getElementById('salaryChart').getContext('2d');
+  if (barChart) barChart.destroy();
+  barChart = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: barData.map(x => x.label),
+      datasets: [
+        {
+          label: '15班月薪',
+          data: barData.map(x => x.s15),
+          backgroundColor: barData.map(x => x.color + 'cc'),
+          borderColor: barData.map(x => x.color),
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: '16班月薪',
+          data: barData.map(x => x.s16),
+          backgroundColor: barData.map(x => x.color + '66'),
+          borderColor: barData.map(x => x.color + 'aa'),
+          borderWidth: 1,
+          borderRadius: 4,
+          borderDash: [4,2],
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#a0aec0', font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.raw ? `${ctx.dataset.label}: ${ctx.raw}萬元` : '—'
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#718096', font: { size: 10 } }, grid: { color: '#2d3748' } },
+        y: {
+          ticks: { color: '#718096', callback: v => v + '萬' },
+          grid: { color: '#2d3748' },
+          min: 0, max: 70
+        }
+      }
+    }
+  });
+
+  // Doughnut: by region
+  const regionMap = {};
+  d.forEach(x => {
+    if (!regionMap[x.region]) regionMap[x.region] = [];
+    const best = Math.max(...[x.s10,x.s14,x.s15,x.s16].filter(Boolean), 0);
+    if (best > 0) regionMap[x.region].push(best);
+  });
+
+  const regions = Object.keys(regionMap);
+  const regionAvgs = regions.map(r => {
+    const vals = regionMap[r];
+    return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : 0;
+  }).map(Number);
+
+  const doCtx = document.getElementById('regionChart').getContext('2d');
+  if (doughnutChart) doughnutChart.destroy();
+  doughnutChart = new Chart(doCtx, {
+    type: 'doughnut',
+    data: {
+      labels: regions,
+      datasets: [{
+        data: regionAvgs,
+        backgroundColor: regions.map(r => (regionColors[r] || '#4a5568') + 'cc'),
+        borderColor: regions.map(r => regionColors[r] || '#4a5568'),
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#a0aec0', font: { size: 11 }, padding: 12 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.label}: 平均 ${ctx.raw} 萬`
+          }
+        }
+      }
+    }
+  });
+}
+
+const areaMap = {
+  "北部": ["台北","新北","桃園","新竹","苗栗","基隆"],
+  "中部": ["台中","彰化","南投","雲林"],
+  "南部": ["嘉義","台南","高雄","屏東"],
+  "東部": ["台東","花蓮","宜蘭"]
+};
+
+function filterRegion(area, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = area === 'all' ? data : data.filter(x => areaMap[area]?.includes(x.region));
+  renderStats(filtered);
+  renderTable(filtered);
+  renderCharts(filtered);
+}
+
+// Trend chart
+function renderTrendChart() {
+  const trendData = [
+    {
+      label: '員林基督教（15班）',
+      color: '#c05621',
+      points: [
+        { x: '2024-07', y: 47, note: '15班47萬起（未稅）' },
+        { x: '2026-04', y: 50, note: '加薪後15班保~50萬' },
+      ]
+    },
+    {
+      label: '員林基督教（16班）',
+      color: '#f6ad55',
+      points: [
+        { x: '2024-07', y: null },
+        { x: '2026-04', y: 60, note: '16班保證60萬+' },
+      ]
+    },
+    {
+      label: '義大醫院（15班平均）',
+      color: '#c53030',
+      points: [
+        { x: '2025-09', y: 40, note: '平均超過40萬' },
+        { x: '2025-11', y: 40, note: '底薪37萬+績效3萬=40萬' },
+      ]
+    },
+    {
+      label: '聯醫和平（14班）',
+      color: '#3182ce',
+      points: [
+        { x: '2023-03', y: 35, note: '2023 Q1：疫情後；14班35萬' },
+        { x: '2023-10', y: 36, note: '2023 Q4：NP擴編中；36萬' },
+        { x: '2024-01', y: 37, note: '2024：4位NP上線；37萬' },
+        { x: '2025-06', y: 37, note: '2025：結構固定；超班獎勵新增' },
+      ]
+    },
+    {
+      label: '汐止國泰（16班）',
+      color: '#2b6cb0',
+      points: [
+        { x: '2025-12', y: 60, note: '16夜班60萬' },
+      ]
+    },
+    {
+      label: '羅東博愛（14班）',
+      color: '#276749',
+      points: [
+        { x: '2023-01', y: 40, note: '2023：14班38-42萬；蘇澳+仁愛支援另計' },
+      ]
+    },
+    {
+      label: '衛福部台北醫院（15班）',
+      color: '#553c9a',
+      points: [
+        { x: '2025-12', y: 50, note: '2026年招募：15班50萬以上（含年終）' },
+      ]
+    },
+  ];
+
+  const allX = ['2023-01','2023-03','2023-10','2024-01','2024-07','2025-06','2025-09','2025-11','2025-12','2026-04'];
+  const tCtx = document.getElementById('trendChart').getContext('2d');
+  new Chart(tCtx, {
+    type: 'line',
+    data: {
+      labels: allX,
+      datasets: trendData.map(d => ({
+        label: d.label,
+        data: allX.map(x => {
+          const pt = d.points.find(p => p.x === x);
+          return pt ? pt.y : null;
+        }),
+        borderColor: d.color,
+        backgroundColor: d.color + '33',
+        borderWidth: 2.5,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        spanGaps: false,
+        tension: 0.3,
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#a0aec0', font: { size: 11 } } },
+        tooltip: {
+          callbacks: { label: ctx => ctx.raw ? `${ctx.dataset.label}: ${ctx.raw}萬` : null }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#718096' }, grid: { color: '#2d3748' } },
+        y: {
+          ticks: { color: '#718096', callback: v => v + '萬' },
+          grid: { color: '#2d3748' },
+          min: 30, max: 70
+        }
+      }
+    }
+  });
+}
+
+// Initial render
+renderStats(data);
+renderTable(data);
+renderCharts(data);
+renderTrendChart();
+</script>
+</body>
+</html>
