@@ -821,7 +821,14 @@ function renderCharts(d) {
       s16: x.s16 || null,
       color: regionColors[x.region] || '#4a5568'
     }))
-    .sort((a,b) => (b.s15||b.s16||0) - (a.s15||a.s16||0));
+    .sort((a,b) => {
+    const regionOrder = ["基隆","台北","新北","桃園","新竹","苗栗","台中","彰化","南投","雲林","嘉義","台南","高雄","屏東","宜蘭","花蓮","台東","澎湖","金門","連江"];
+    const ra = regionOrder.indexOf(a.region), rb = regionOrder.indexOf(b.region);
+    const orderA = ra === -1 ? 99 : ra;
+    const orderB = rb === -1 ? 99 : rb;
+    if (orderA !== orderB) return orderA - orderB;
+    return (b.s15||b.s16||0) - (a.s15||a.s16||0);
+  });
 
   const barCtx = document.getElementById('salaryChart').getContext('2d');
   if (barChart) barChart.destroy();
