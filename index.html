@@ -973,7 +973,7 @@ function renderCharts(d) {
   });
 }
 
-function renderTrendChart() {
+function renderTrendChart() { return; // trend chart canvas removed
   // Build trend series from hospitals that have history
   const trendSeries = data
     .filter(x => x.history && x.history.length >= 2)
@@ -1046,7 +1046,7 @@ function filterRegion(area, btn) {
 renderStats(data);
 renderTable(data);
 renderCharts(data);
-renderTrendChart();
+// renderTrendChart(); // trend chart removed
 
 // ─────────────────────────────────────────────
 // Supabase Contribution System
