@@ -4,7 +4,418 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>全台急診醫師薪資 Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+
+// ─────────────────────────────────────────────
+// Supabase Contribution System
+// ─────────────────────────────────────────────
+const SB_URL = 'https://gjpvzqlsfimuqwditeqf.supabase.co';
+const SB_KEY = 'sb_publishable_P0gPzbp1mg8pgYJumikvTg_RJj8PHYS';
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+// Anonymous token (simple fingerprint hash)
+function getSubmitterToken() {
+  let token = localStorage.getItem('er_salary_token');
+  if (!token) {
+    token = 'anon_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('er_salary_token', token);
+  }
+  return token;
+}
+
+// Rate limit: 3 per 24h
+function checkRateLimit() {
+  const key = 'er_salary_submissions';
+  let subs = JSON.parse(localStorage.getItem(key) || '[]');
+  const cutoff = Date.now() - 24*60*60*1000;
+  subs = subs.filter(t => t > cutoff);
+  localStorage.setItem(key, JSON.stringify(subs));
+  return subs.length < 3;
+}
+function recordSubmission() {
+  const key = 'er_salary_submissions';
+  let subs = JSON.parse(localStorage.getItem(key) || '[]');
+  subs.push(Date.now());
+  localStorage.setItem(key, JSON.stringify(subs));
+}
+
+let selectedHospitalId = null;
+let isNewHospital = false;
+let searchTimeout = null;
+
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('reportForm').reset();
+  selectedHospitalId = null;
+  isNewHospital = false;
+  document.getElementById('hospId').value = '';
+  document.getElementById('hospHint').textContent = '';
+  document.getElementById('newHospFields').classList.remove('open');
+  document.getElementById('searchResults').style.display = 'none';
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+// Close on overlay click
+document.addEventListener('click', e => {
+  if (e.target.id === 'modalOverlay') closeModal();
+});
+
+// Hospital search
+const hospSearchInput = document.getElementById('hospSearch');
+hospSearchInput.addEventListener('input', function() {
+  const q = this.value.trim();
+  if (q.length < 2) {
+    document.getElementById('searchResults').style.display = 'none';
+    return;
+  }
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => searchHospitals(q), 250);
+});
+
+async function searchHospitals(q) {
+  const resultsDiv = document.getElementById('searchResults');
+  try {
+    // Try fuzzy search via RPC
+    let { data, error } = await sb.rpc('search_hospitals', { query: q });
+    // Fallback to LIKE if RPC fails
+    if (error || !data || data.length === 0) {
+      const { data: d2 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q}%`).limit(10);
+      data = d2 || [];
+    }
+    let html = '';
+    if (data.length > 0) {
+      html = data.map(h => 
+        `<div class="sr-item" onclick="selectHospital('${h.id}', '${h.name.replace(/'/g,"\'")}')">` +
+        `${h.name} <span class="sr-region">${h.region}</span></div>`
+      ).join('');
+    }
+    html += `<div class="sr-new" onclick="selectNewHospital()">➕ 新增醫院「${q}」</div>`;
+    resultsDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+  } catch (e) {
+    console.error('Search error:', e);
+  }
+}
+
+function selectHospital(id, name) {
+  selectedHospitalId = id;
+  isNewHospital = false;
+  document.getElementById('hospSearch').value = name;
+  document.getElementById('hospId').value = id;
+  document.getElementById('hospHint').innerHTML = '✅ 已選擇：' + name;
+  document.getElementById('hospHint').style.color = '#68d391';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('newHospFields').classList.remove('open');
+}
+
+function selectNewHospital() {
+  const name = document.getElementById('hospSearch').value.trim();
+  selectedHospitalId = null;
+  isNewHospital = true;
+  document.getElementById('hospId').value = '';
+  document.getElementById('hospHint').innerHTML = '🆕 將申請新增醫院「' + name + '」（需管理員審核）';
+  document.getElementById('hospHint').style.color = '#f6ad55';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('newHospFields').classList.add('open');
+}
+
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.className = 'toast toast-' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+async function submitReport(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '送出中...';
+
+  try {
+    if (!checkRateLimit()) {
+      showToast('⚠️ 24小時內已送出3筆，請稍後再試', 'err');
+      return;
+    }
+
+    const token = getSubmitterToken();
+    const s10 = document.getElementById('fs10').value || null;
+    const s14 = document.getElementById('fs14').value || null;
+    const s15 = document.getElementById('fs15').value || null;
+    const s16 = document.getElementById('fs16').value || null;
+    const visits = document.getElementById('fvisits').value || null;
+    const note = document.getElementById('fnote').value || null;
+    const srcDate = document.getElementById('fsrcDate').value || null;
+
+    // Validate: at least one salary field
+    if (!s10 && !s14 && !s15 && !s16) {
+      showToast('⚠️ 請至少填寫一個薪資欄位', 'err');
+      return;
+    }
+
+    let hospitalId = selectedHospitalId;
+
+    // New hospital request
+    if (isNewHospital) {
+      const name = document.getElementById('hospSearch').value.trim();
+      const region = document.getElementById('newRegion').value;
+      const level = document.getElementById('newLevel').value;
+      if (!region) {
+        showToast('⚠️ 新醫院請選擇地區', 'err');
+        return;
+      }
+      const areaLookup = {"基隆":"北部","台北":"北部","新北":"北部","桃園":"北部","新竹":"北部","苗栗":"北部","台中":"中部","彰化":"中部","南投":"中部","雲林":"中部","嘉義":"南部","台南":"南部","高雄":"南部","屏東":"南部","宜蘭":"北部","花蓮":"東部","台東":"東部"};
+      const { data: reqData, error: reqErr } = await sb.from('hospital_requests').insert({
+        name, region, area: areaLookup[region] || '北部', level,
+        submitter_token: token
+      }).select().single();
+      if (reqErr) throw reqErr;
+      // For new hospital, we save the salary report after admin approves
+      showToast('✅ 新醫院申請已送出！薪資將在管理員審核後顯示。', 'ok');
+      recordSubmission();
+      closeModal();
+      return;
+    }
+
+    if (!hospitalId) {
+      showToast('⚠️ 請先搜尋並選擇醫院', 'err');
+      return;
+    }
+
+    // Submit salary report
+    const { error } = await sb.from('salary_reports').insert({
+      hospital_id: hospitalId,
+      s10: s10 ? parseFloat(s10) : null,
+      s14: s14 ? parseFloat(s14) : null,
+      s15: s15 ? parseFloat(s15) : null,
+      s16: s16 ? parseFloat(s16) : null,
+      visits: visits ? parseInt(visits) : null,
+      note,
+      source_date: srcDate,
+      submitter_token: token
+    });
+    if (error) throw error;
+
+    showToast('✅ 薪資回報成功！感謝你的貢獻。', 'ok');
+    recordSubmission();
+    closeModal();
+  } catch (err) {
+    console.error('Submit error:', err);
+    showToast('❌ 送出失敗：' + (err.message || err), 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '送出回報';
+  }
+}
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+
+// ─────────────────────────────────────────────
+// Supabase Contribution System
+// ─────────────────────────────────────────────
+const SB_URL = 'https://gjpvzqlsfimuqwditeqf.supabase.co';
+const SB_KEY = 'sb_publishable_P0gPzbp1mg8pgYJumikvTg_RJj8PHYS';
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+// Anonymous token (simple fingerprint hash)
+function getSubmitterToken() {
+  let token = localStorage.getItem('er_salary_token');
+  if (!token) {
+    token = 'anon_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('er_salary_token', token);
+  }
+  return token;
+}
+
+// Rate limit: 3 per 24h
+function checkRateLimit() {
+  const key = 'er_salary_submissions';
+  let subs = JSON.parse(localStorage.getItem(key) || '[]');
+  const cutoff = Date.now() - 24*60*60*1000;
+  subs = subs.filter(t => t > cutoff);
+  localStorage.setItem(key, JSON.stringify(subs));
+  return subs.length < 3;
+}
+function recordSubmission() {
+  const key = 'er_salary_submissions';
+  let subs = JSON.parse(localStorage.getItem(key) || '[]');
+  subs.push(Date.now());
+  localStorage.setItem(key, JSON.stringify(subs));
+}
+
+let selectedHospitalId = null;
+let isNewHospital = false;
+let searchTimeout = null;
+
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('reportForm').reset();
+  selectedHospitalId = null;
+  isNewHospital = false;
+  document.getElementById('hospId').value = '';
+  document.getElementById('hospHint').textContent = '';
+  document.getElementById('newHospFields').classList.remove('open');
+  document.getElementById('searchResults').style.display = 'none';
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+// Close on overlay click
+document.addEventListener('click', e => {
+  if (e.target.id === 'modalOverlay') closeModal();
+});
+
+// Hospital search
+const hospSearchInput = document.getElementById('hospSearch');
+hospSearchInput.addEventListener('input', function() {
+  const q = this.value.trim();
+  if (q.length < 2) {
+    document.getElementById('searchResults').style.display = 'none';
+    return;
+  }
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => searchHospitals(q), 250);
+});
+
+async function searchHospitals(q) {
+  const resultsDiv = document.getElementById('searchResults');
+  try {
+    // Try fuzzy search via RPC
+    let { data, error } = await sb.rpc('search_hospitals', { query: q });
+    // Fallback to LIKE if RPC fails
+    if (error || !data || data.length === 0) {
+      const { data: d2 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q}%`).limit(10);
+      data = d2 || [];
+    }
+    let html = '';
+    if (data.length > 0) {
+      html = data.map(h => 
+        `<div class="sr-item" onclick="selectHospital('${h.id}', '${h.name.replace(/'/g,"\'")}')">` +
+        `${h.name} <span class="sr-region">${h.region}</span></div>`
+      ).join('');
+    }
+    html += `<div class="sr-new" onclick="selectNewHospital()">➕ 新增醫院「${q}」</div>`;
+    resultsDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+  } catch (e) {
+    console.error('Search error:', e);
+  }
+}
+
+function selectHospital(id, name) {
+  selectedHospitalId = id;
+  isNewHospital = false;
+  document.getElementById('hospSearch').value = name;
+  document.getElementById('hospId').value = id;
+  document.getElementById('hospHint').innerHTML = '✅ 已選擇：' + name;
+  document.getElementById('hospHint').style.color = '#68d391';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('newHospFields').classList.remove('open');
+}
+
+function selectNewHospital() {
+  const name = document.getElementById('hospSearch').value.trim();
+  selectedHospitalId = null;
+  isNewHospital = true;
+  document.getElementById('hospId').value = '';
+  document.getElementById('hospHint').innerHTML = '🆕 將申請新增醫院「' + name + '」（需管理員審核）';
+  document.getElementById('hospHint').style.color = '#f6ad55';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('newHospFields').classList.add('open');
+}
+
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.className = 'toast toast-' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+async function submitReport(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '送出中...';
+
+  try {
+    if (!checkRateLimit()) {
+      showToast('⚠️ 24小時內已送出3筆，請稍後再試', 'err');
+      return;
+    }
+
+    const token = getSubmitterToken();
+    const s10 = document.getElementById('fs10').value || null;
+    const s14 = document.getElementById('fs14').value || null;
+    const s15 = document.getElementById('fs15').value || null;
+    const s16 = document.getElementById('fs16').value || null;
+    const visits = document.getElementById('fvisits').value || null;
+    const note = document.getElementById('fnote').value || null;
+    const srcDate = document.getElementById('fsrcDate').value || null;
+
+    // Validate: at least one salary field
+    if (!s10 && !s14 && !s15 && !s16) {
+      showToast('⚠️ 請至少填寫一個薪資欄位', 'err');
+      return;
+    }
+
+    let hospitalId = selectedHospitalId;
+
+    // New hospital request
+    if (isNewHospital) {
+      const name = document.getElementById('hospSearch').value.trim();
+      const region = document.getElementById('newRegion').value;
+      const level = document.getElementById('newLevel').value;
+      if (!region) {
+        showToast('⚠️ 新醫院請選擇地區', 'err');
+        return;
+      }
+      const areaLookup = {"基隆":"北部","台北":"北部","新北":"北部","桃園":"北部","新竹":"北部","苗栗":"北部","台中":"中部","彰化":"中部","南投":"中部","雲林":"中部","嘉義":"南部","台南":"南部","高雄":"南部","屏東":"南部","宜蘭":"北部","花蓮":"東部","台東":"東部"};
+      const { data: reqData, error: reqErr } = await sb.from('hospital_requests').insert({
+        name, region, area: areaLookup[region] || '北部', level,
+        submitter_token: token
+      }).select().single();
+      if (reqErr) throw reqErr;
+      // For new hospital, we save the salary report after admin approves
+      showToast('✅ 新醫院申請已送出！薪資將在管理員審核後顯示。', 'ok');
+      recordSubmission();
+      closeModal();
+      return;
+    }
+
+    if (!hospitalId) {
+      showToast('⚠️ 請先搜尋並選擇醫院', 'err');
+      return;
+    }
+
+    // Submit salary report
+    const { error } = await sb.from('salary_reports').insert({
+      hospital_id: hospitalId,
+      s10: s10 ? parseFloat(s10) : null,
+      s14: s14 ? parseFloat(s14) : null,
+      s15: s15 ? parseFloat(s15) : null,
+      s16: s16 ? parseFloat(s16) : null,
+      visits: visits ? parseInt(visits) : null,
+      note,
+      source_date: srcDate,
+      submitter_token: token
+    });
+    if (error) throw error;
+
+    showToast('✅ 薪資回報成功！感謝你的貢獻。', 'ok');
+    recordSubmission();
+    closeModal();
+  } catch (err) {
+    console.error('Submit error:', err);
+    showToast('❌ 送出失敗：' + (err.message || err), 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '送出回報';
+  }
+}
+</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -209,6 +620,139 @@
       .main-grid { grid-template-columns: 1fr; }
       .table-card { grid-column: 1; overflow-x: auto; }
     }
+
+    /* Contribution button */
+    .contribute-btn {
+      margin-left: 12px;
+      background: linear-gradient(135deg, #38a169, #2f855a);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .contribute-btn:hover { background: linear-gradient(135deg, #48bb78, #38a169); transform: translateY(-1px); }
+
+    /* Modal overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 60px;
+      overflow-y: auto;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #1a202c;
+      border: 1px solid #2d3748;
+      border-radius: 16px;
+      width: 560px;
+      max-width: 95vw;
+      padding: 28px;
+      position: relative;
+      margin-bottom: 40px;
+    }
+    .modal h2 { font-size: 1.2rem; color: #f7fafc; margin-bottom: 4px; }
+    .modal .modal-sub { font-size: 0.8rem; color: #718096; margin-bottom: 20px; }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: none; border: none; color: #718096;
+      font-size: 1.5rem; cursor: pointer; line-height: 1;
+    }
+    .modal-close:hover { color: #e2e8f0; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      color: #a0aec0;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      background: #2d3748;
+      border: 1px solid #4a5568;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border 0.15s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: #3182ce;
+    }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .form-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #3182ce, #2b6cb0);
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover { background: linear-gradient(135deg, #4299e1, #3182ce); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .search-results {
+      position: absolute;
+      left: 0; right: 0; top: 100%;
+      background: #2d3748;
+      border: 1px solid #4a5568;
+      border-radius: 0 0 8px 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 10;
+    }
+    .search-results .sr-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      border-bottom: 1px solid #4a5568;
+    }
+    .search-results .sr-item:hover { background: #4a5568; }
+    .search-results .sr-item .sr-region { color: #718096; font-size: 0.75rem; }
+    .search-results .sr-new {
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #48bb78;
+      font-weight: 600;
+    }
+    .search-results .sr-new:hover { background: #4a5568; }
+    .search-wrap { position: relative; }
+    .form-hint { font-size: 0.72rem; color: #718096; margin-top: 4px; }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 14px 24px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #fff;
+      z-index: 2000;
+      transition: opacity 0.3s;
+    }
+    .toast-ok { background: #38a169; }
+    .toast-err { background: #e53e3e; }
+    .new-hospital-fields { display: none; margin-top: 12px; padding: 12px; background: #2d374844; border-radius: 8px; }
+    .new-hospital-fields.open { display: block; }
   </style>
 </head>
 <body>
@@ -221,6 +765,7 @@
     <p style="font-size:0.78rem;color:#f6ad55;margin-top:6px;">⚠️ 本資料為社群貼文人工彙整，屬部分抽樣，非完整調查。如有遺漏歡迎補充。</p>
   </div>
   <div class="header-badge">🔒 私密社團資料 · 僅供參考</div>
+  <button class="contribute-btn" onclick="openModal()">📝 回報薪資</button>
 </div>
 
 <div class="container">
@@ -271,6 +816,92 @@
     </table>
   </div>
 
+
+
+  <!-- Contribution Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <h2>📝 匿名回報薪資</h2>
+      <p class="modal-sub">資料送出後不可修改或刪除，請確認後再送出。每 24 小時最多 3 筆。</p>
+
+      <form id="reportForm" onsubmit="return submitReport(event)">
+        <div class="form-group">
+          <label>🏥 醫院名稱 *</label>
+          <div class="search-wrap">
+            <input type="text" id="hospSearch" placeholder="輸入醫院名稱搜尋..." autocomplete="off" required>
+            <div class="search-results" id="searchResults" style="display:none"></div>
+          </div>
+          <input type="hidden" id="hospId">
+          <div class="form-hint" id="hospHint"></div>
+        </div>
+
+        <div class="new-hospital-fields" id="newHospFields">
+          <div class="form-row">
+            <div class="form-group">
+              <label>地區 *</label>
+              <select id="newRegion" required>
+                <option value="">選擇地區</option>
+                <option>基隆</option><option>台北</option><option>新北</option>
+                <option>桃園</option><option>新竹</option><option>苗栗</option>
+                <option>台中</option><option>彰化</option><option>南投</option>
+                <option>雲林</option><option>嘉義</option><option>台南</option>
+                <option>高雄</option><option>屏東</option><option>宜蘭</option>
+                <option>花蓮</option><option>台東</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>醫院層級</label>
+              <select id="newLevel">
+                <option value="地區醫院">地區醫院</option>
+                <option value="區域醫院">區域醫院</option>
+                <option value="醫學中心">醫學中心</option>
+                <option value="醫學中心分院">醫學中心分院</option>
+                <option value="部立醫院">部立醫院</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row-4">
+          <div class="form-group">
+            <label>10班月薪 (萬)</label>
+            <input type="number" id="fs10" step="0.1" min="0" max="200" placeholder="如 33">
+          </div>
+          <div class="form-group">
+            <label>14班月薪 (萬)</label>
+            <input type="number" id="fs14" step="0.1" min="0" max="200" placeholder="如 40">
+          </div>
+          <div class="form-group">
+            <label>15班月薪 (萬)</label>
+            <input type="number" id="fs15" step="0.1" min="0" max="200" placeholder="如 45">
+          </div>
+          <div class="form-group">
+            <label>16班月薪 (萬)</label>
+            <input type="number" id="fs16" step="0.1" min="0" max="200" placeholder="如 55">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>月來診量</label>
+            <input type="number" id="fvisits" min="0" max="50000" placeholder="如 3500">
+          </div>
+          <div class="form-group">
+            <label>資料日期</label>
+            <input type="date" id="fsrcDate">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>備註</label>
+          <textarea id="fnote" placeholder="班制、福利、NP支援、環境等補充資訊..."></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">送出回報</button>
+      </form>
+    </div>
+  </div>
   <div class="source-note">
     ⚠️ <strong>資料說明：</strong>本表資料取自急診醫師 Facebook 私密社群的徵才貼文（2023–2026）。薪資為稅前金額，實際薪資因個人年資、班數、醫院政策而異。「趨勢」以 history 欄位中最早與最新的 15班薪資計算；↑漲 ↓跌 →持平 ●首次揭露。資料僅供急診醫師職涯規劃參考，不代表官方立場。
   </div>
@@ -974,6 +1605,211 @@ renderStats(data);
 renderTable(data);
 renderCharts(data);
 renderTrendChart();
+
+
+// ─────────────────────────────────────────────
+// Supabase Contribution System
+// ─────────────────────────────────────────────
+const SB_URL = 'https://gjpvzqlsfimuqwditeqf.supabase.co';
+const SB_KEY = 'sb_publishable_P0gPzbp1mg8pgYJumikvTg_RJj8PHYS';
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+// Anonymous token (simple fingerprint hash)
+function getSubmitterToken() {
+  let token = localStorage.getItem('er_salary_token');
+  if (!token) {
+    token = 'anon_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('er_salary_token', token);
+  }
+  return token;
+}
+
+// Rate limit: 3 per 24h
+function checkRateLimit() {
+  const key = 'er_salary_submissions';
+  let subs = JSON.parse(localStorage.getItem(key) || '[]');
+  const cutoff = Date.now() - 24*60*60*1000;
+  subs = subs.filter(t => t > cutoff);
+  localStorage.setItem(key, JSON.stringify(subs));
+  return subs.length < 3;
+}
+function recordSubmission() {
+  const key = 'er_salary_submissions';
+  let subs = JSON.parse(localStorage.getItem(key) || '[]');
+  subs.push(Date.now());
+  localStorage.setItem(key, JSON.stringify(subs));
+}
+
+let selectedHospitalId = null;
+let isNewHospital = false;
+let searchTimeout = null;
+
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('reportForm').reset();
+  selectedHospitalId = null;
+  isNewHospital = false;
+  document.getElementById('hospId').value = '';
+  document.getElementById('hospHint').textContent = '';
+  document.getElementById('newHospFields').classList.remove('open');
+  document.getElementById('searchResults').style.display = 'none';
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+// Close on overlay click
+document.addEventListener('click', e => {
+  if (e.target.id === 'modalOverlay') closeModal();
+});
+
+// Hospital search
+const hospSearchInput = document.getElementById('hospSearch');
+hospSearchInput.addEventListener('input', function() {
+  const q = this.value.trim();
+  if (q.length < 2) {
+    document.getElementById('searchResults').style.display = 'none';
+    return;
+  }
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => searchHospitals(q), 250);
+});
+
+async function searchHospitals(q) {
+  const resultsDiv = document.getElementById('searchResults');
+  try {
+    // Try fuzzy search via RPC
+    let { data, error } = await sb.rpc('search_hospitals', { query: q });
+    // Fallback to LIKE if RPC fails
+    if (error || !data || data.length === 0) {
+      const { data: d2 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q}%`).limit(10);
+      data = d2 || [];
+    }
+    let html = '';
+    if (data.length > 0) {
+      html = data.map(h => 
+        `<div class="sr-item" onclick="selectHospital('${h.id}', '${h.name.replace(/'/g,"\'")}')">` +
+        `${h.name} <span class="sr-region">${h.region}</span></div>`
+      ).join('');
+    }
+    html += `<div class="sr-new" onclick="selectNewHospital()">➕ 新增醫院「${q}」</div>`;
+    resultsDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+  } catch (e) {
+    console.error('Search error:', e);
+  }
+}
+
+function selectHospital(id, name) {
+  selectedHospitalId = id;
+  isNewHospital = false;
+  document.getElementById('hospSearch').value = name;
+  document.getElementById('hospId').value = id;
+  document.getElementById('hospHint').innerHTML = '✅ 已選擇：' + name;
+  document.getElementById('hospHint').style.color = '#68d391';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('newHospFields').classList.remove('open');
+}
+
+function selectNewHospital() {
+  const name = document.getElementById('hospSearch').value.trim();
+  selectedHospitalId = null;
+  isNewHospital = true;
+  document.getElementById('hospId').value = '';
+  document.getElementById('hospHint').innerHTML = '🆕 將申請新增醫院「' + name + '」（需管理員審核）';
+  document.getElementById('hospHint').style.color = '#f6ad55';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('newHospFields').classList.add('open');
+}
+
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.className = 'toast toast-' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+async function submitReport(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '送出中...';
+
+  try {
+    if (!checkRateLimit()) {
+      showToast('⚠️ 24小時內已送出3筆，請稍後再試', 'err');
+      return;
+    }
+
+    const token = getSubmitterToken();
+    const s10 = document.getElementById('fs10').value || null;
+    const s14 = document.getElementById('fs14').value || null;
+    const s15 = document.getElementById('fs15').value || null;
+    const s16 = document.getElementById('fs16').value || null;
+    const visits = document.getElementById('fvisits').value || null;
+    const note = document.getElementById('fnote').value || null;
+    const srcDate = document.getElementById('fsrcDate').value || null;
+
+    // Validate: at least one salary field
+    if (!s10 && !s14 && !s15 && !s16) {
+      showToast('⚠️ 請至少填寫一個薪資欄位', 'err');
+      return;
+    }
+
+    let hospitalId = selectedHospitalId;
+
+    // New hospital request
+    if (isNewHospital) {
+      const name = document.getElementById('hospSearch').value.trim();
+      const region = document.getElementById('newRegion').value;
+      const level = document.getElementById('newLevel').value;
+      if (!region) {
+        showToast('⚠️ 新醫院請選擇地區', 'err');
+        return;
+      }
+      const areaLookup = {"基隆":"北部","台北":"北部","新北":"北部","桃園":"北部","新竹":"北部","苗栗":"北部","台中":"中部","彰化":"中部","南投":"中部","雲林":"中部","嘉義":"南部","台南":"南部","高雄":"南部","屏東":"南部","宜蘭":"北部","花蓮":"東部","台東":"東部"};
+      const { data: reqData, error: reqErr } = await sb.from('hospital_requests').insert({
+        name, region, area: areaLookup[region] || '北部', level,
+        submitter_token: token
+      }).select().single();
+      if (reqErr) throw reqErr;
+      // For new hospital, we save the salary report after admin approves
+      showToast('✅ 新醫院申請已送出！薪資將在管理員審核後顯示。', 'ok');
+      recordSubmission();
+      closeModal();
+      return;
+    }
+
+    if (!hospitalId) {
+      showToast('⚠️ 請先搜尋並選擇醫院', 'err');
+      return;
+    }
+
+    // Submit salary report
+    const { error } = await sb.from('salary_reports').insert({
+      hospital_id: hospitalId,
+      s10: s10 ? parseFloat(s10) : null,
+      s14: s14 ? parseFloat(s14) : null,
+      s15: s15 ? parseFloat(s15) : null,
+      s16: s16 ? parseFloat(s16) : null,
+      visits: visits ? parseInt(visits) : null,
+      note,
+      source_date: srcDate,
+      submitter_token: token
+    });
+    if (error) throw error;
+
+    showToast('✅ 薪資回報成功！感謝你的貢獻。', 'ok');
+    recordSubmission();
+    closeModal();
+  } catch (err) {
+    console.error('Submit error:', err);
+    showToast('❌ 送出失敗：' + (err.message || err), 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '送出回報';
+  }
+}
 </script>
 </body>
 </html>
