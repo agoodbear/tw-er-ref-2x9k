@@ -82,12 +82,19 @@ hospSearchInput.addEventListener('input', function() {
 async function searchHospitals(q) {
   const resultsDiv = document.getElementById('searchResults');
   try {
-    // Try fuzzy search via RPC
+    // Try fuzzy search via RPC (handles 台/臺 variants server-side)
     let { data, error } = await sb.rpc('search_hospitals', { query: q });
     // Fallback to LIKE if RPC fails
     if (error || !data || data.length === 0) {
-      const { data: d2 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q}%`).limit(10);
-      data = d2 || [];
+      // Try original + 台↔臺 variant
+      const q2 = q.includes('台') ? q.replace(/台/g,'臺') : q.includes('臺') ? q.replace(/臺/g,'台') : null;
+      const { data: d1 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q}%`).limit(10);
+      let results = d1 || [];
+      if (q2 && results.length === 0) {
+        const { data: d2 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q2}%`).limit(10);
+        results = d2 || [];
+      }
+      data = results;
     }
     let html = '';
     if (data.length > 0) {
@@ -324,12 +331,19 @@ hospSearchInput.addEventListener('input', function() {
 async function searchHospitals(q) {
   const resultsDiv = document.getElementById('searchResults');
   try {
-    // Try fuzzy search via RPC
+    // Try fuzzy search via RPC (handles 台/臺 variants server-side)
     let { data, error } = await sb.rpc('search_hospitals', { query: q });
     // Fallback to LIKE if RPC fails
     if (error || !data || data.length === 0) {
-      const { data: d2 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q}%`).limit(10);
-      data = d2 || [];
+      // Try original + 台↔臺 variant
+      const q2 = q.includes('台') ? q.replace(/台/g,'臺') : q.includes('臺') ? q.replace(/臺/g,'台') : null;
+      const { data: d1 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q}%`).limit(10);
+      let results = d1 || [];
+      if (q2 && results.length === 0) {
+        const { data: d2 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q2}%`).limit(10);
+        results = d2 || [];
+      }
+      data = results;
     }
     let html = '';
     if (data.length > 0) {
@@ -1755,12 +1769,19 @@ hospSearchInput.addEventListener('input', function() {
 async function searchHospitals(q) {
   const resultsDiv = document.getElementById('searchResults');
   try {
-    // Try fuzzy search via RPC
+    // Try fuzzy search via RPC (handles 台/臺 variants server-side)
     let { data, error } = await sb.rpc('search_hospitals', { query: q });
     // Fallback to LIKE if RPC fails
     if (error || !data || data.length === 0) {
-      const { data: d2 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q}%`).limit(10);
-      data = d2 || [];
+      // Try original + 台↔臺 variant
+      const q2 = q.includes('台') ? q.replace(/台/g,'臺') : q.includes('臺') ? q.replace(/臺/g,'台') : null;
+      const { data: d1 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q}%`).limit(10);
+      let results = d1 || [];
+      if (q2 && results.length === 0) {
+        const { data: d2 } = await sb.from('hospitals').select('id, name, region, area, level').ilike('name', `%${q2}%`).limit(10);
+        results = d2 || [];
+      }
+      data = results;
     }
     let html = '';
     if (data.length > 0) {
