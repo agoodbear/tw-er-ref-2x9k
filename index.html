@@ -63,6 +63,12 @@ document.addEventListener('click', e => {
 
 // Hospital search
 const hospSearchInput = document.getElementById('hospSearch');
+hospSearchInput.addEventListener('blur', function() {
+  setTimeout(() => { document.getElementById('searchResults').style.display = 'none'; }, 200);
+});
+hospSearchInput.addEventListener('focus', function() {
+  if (this.value.trim().length >= 2) searchHospitals(this.value.trim());
+});
 hospSearchInput.addEventListener('input', function() {
   const q = this.value.trim();
   if (q.length < 2) {
@@ -173,15 +179,45 @@ async function submitReport(e) {
       }).select().single();
       if (reqErr) throw reqErr;
       // For new hospital, we save the salary report after admin approves
-      showToast('✅ 新醫院申請已送出！薪資將在管理員審核後顯示。', 'ok');
+      // Also save salary data in the note of the request
+      const salaryInfo = [];
+      if (s10) salaryInfo.push('s10:' + s10 + '萬');
+      if (s14) salaryInfo.push('s14:' + s14 + '萬');
+      if (s15) salaryInfo.push('s15:' + s15 + '萬');
+      if (s16) salaryInfo.push('s16:' + s16 + '萬');
+      if (visits) salaryInfo.push('月量:' + visits);
+      if (note) salaryInfo.push(note);
+      if (srcDate) salaryInfo.push('日期:' + srcDate);
+      // Update the request with salary info in a second column or via note
+      if (reqData && reqData.id) {
+        await sb.from('hospital_requests').update({
+          status: 'pending:' + salaryInfo.join('；')
+        }).eq('id', reqData.id);
+      }
+      showToast('✅ 新醫院「' + name + '」申請已送出！管理員審核後將加入 Dashboard。', 'ok');
       recordSubmission();
       closeModal();
       return;
     }
 
     if (!hospitalId) {
-      showToast('⚠️ 請先搜尋並選擇醫院', 'err');
-      return;
+      // Auto-detect: user typed a name but didn't click search result
+      const typedName = document.getElementById('hospSearch').value.trim();
+      if (typedName) {
+        // Auto-switch to new hospital mode
+        isNewHospital = true;
+        document.getElementById('newHospFields').classList.add('open');
+        const region = document.getElementById('newRegion').value;
+        if (!region) {
+          showToast('⚠️ 「' + typedName + '」不在資料庫中，請選擇地區後再送出', 'err');
+          document.getElementById('hospHint').innerHTML = '🆕 資料庫中無此醫院，請選擇地區以申請新增';
+          document.getElementById('hospHint').style.color = '#f6ad55';
+          return;
+        }
+      } else {
+        showToast('⚠️ 請輸入醫院名稱', 'err');
+        return;
+      }
     }
 
     // Submit salary report
@@ -269,6 +305,12 @@ document.addEventListener('click', e => {
 
 // Hospital search
 const hospSearchInput = document.getElementById('hospSearch');
+hospSearchInput.addEventListener('blur', function() {
+  setTimeout(() => { document.getElementById('searchResults').style.display = 'none'; }, 200);
+});
+hospSearchInput.addEventListener('focus', function() {
+  if (this.value.trim().length >= 2) searchHospitals(this.value.trim());
+});
 hospSearchInput.addEventListener('input', function() {
   const q = this.value.trim();
   if (q.length < 2) {
@@ -379,15 +421,45 @@ async function submitReport(e) {
       }).select().single();
       if (reqErr) throw reqErr;
       // For new hospital, we save the salary report after admin approves
-      showToast('✅ 新醫院申請已送出！薪資將在管理員審核後顯示。', 'ok');
+      // Also save salary data in the note of the request
+      const salaryInfo = [];
+      if (s10) salaryInfo.push('s10:' + s10 + '萬');
+      if (s14) salaryInfo.push('s14:' + s14 + '萬');
+      if (s15) salaryInfo.push('s15:' + s15 + '萬');
+      if (s16) salaryInfo.push('s16:' + s16 + '萬');
+      if (visits) salaryInfo.push('月量:' + visits);
+      if (note) salaryInfo.push(note);
+      if (srcDate) salaryInfo.push('日期:' + srcDate);
+      // Update the request with salary info in a second column or via note
+      if (reqData && reqData.id) {
+        await sb.from('hospital_requests').update({
+          status: 'pending:' + salaryInfo.join('；')
+        }).eq('id', reqData.id);
+      }
+      showToast('✅ 新醫院「' + name + '」申請已送出！管理員審核後將加入 Dashboard。', 'ok');
       recordSubmission();
       closeModal();
       return;
     }
 
     if (!hospitalId) {
-      showToast('⚠️ 請先搜尋並選擇醫院', 'err');
-      return;
+      // Auto-detect: user typed a name but didn't click search result
+      const typedName = document.getElementById('hospSearch').value.trim();
+      if (typedName) {
+        // Auto-switch to new hospital mode
+        isNewHospital = true;
+        document.getElementById('newHospFields').classList.add('open');
+        const region = document.getElementById('newRegion').value;
+        if (!region) {
+          showToast('⚠️ 「' + typedName + '」不在資料庫中，請選擇地區後再送出', 'err');
+          document.getElementById('hospHint').innerHTML = '🆕 資料庫中無此醫院，請選擇地區以申請新增';
+          document.getElementById('hospHint').style.color = '#f6ad55';
+          return;
+        }
+      } else {
+        showToast('⚠️ 請輸入醫院名稱', 'err');
+        return;
+      }
     }
 
     // Submit salary report
@@ -829,7 +901,7 @@ async function submitReport(e) {
         <div class="form-group">
           <label>🏥 醫院名稱 *</label>
           <div class="search-wrap">
-            <input type="text" id="hospSearch" placeholder="輸入醫院名稱搜尋..." autocomplete="off" required>
+            <input type="text" id="hospSearch" placeholder="輸入醫院名稱（如：台大雲林、員林基督教）..." autocomplete="off" required>
             <div class="search-results" id="searchResults" style="display:none"></div>
           </div>
           <input type="hidden" id="hospId">
@@ -1664,6 +1736,12 @@ document.addEventListener('click', e => {
 
 // Hospital search
 const hospSearchInput = document.getElementById('hospSearch');
+hospSearchInput.addEventListener('blur', function() {
+  setTimeout(() => { document.getElementById('searchResults').style.display = 'none'; }, 200);
+});
+hospSearchInput.addEventListener('focus', function() {
+  if (this.value.trim().length >= 2) searchHospitals(this.value.trim());
+});
 hospSearchInput.addEventListener('input', function() {
   const q = this.value.trim();
   if (q.length < 2) {
@@ -1774,15 +1852,45 @@ async function submitReport(e) {
       }).select().single();
       if (reqErr) throw reqErr;
       // For new hospital, we save the salary report after admin approves
-      showToast('✅ 新醫院申請已送出！薪資將在管理員審核後顯示。', 'ok');
+      // Also save salary data in the note of the request
+      const salaryInfo = [];
+      if (s10) salaryInfo.push('s10:' + s10 + '萬');
+      if (s14) salaryInfo.push('s14:' + s14 + '萬');
+      if (s15) salaryInfo.push('s15:' + s15 + '萬');
+      if (s16) salaryInfo.push('s16:' + s16 + '萬');
+      if (visits) salaryInfo.push('月量:' + visits);
+      if (note) salaryInfo.push(note);
+      if (srcDate) salaryInfo.push('日期:' + srcDate);
+      // Update the request with salary info in a second column or via note
+      if (reqData && reqData.id) {
+        await sb.from('hospital_requests').update({
+          status: 'pending:' + salaryInfo.join('；')
+        }).eq('id', reqData.id);
+      }
+      showToast('✅ 新醫院「' + name + '」申請已送出！管理員審核後將加入 Dashboard。', 'ok');
       recordSubmission();
       closeModal();
       return;
     }
 
     if (!hospitalId) {
-      showToast('⚠️ 請先搜尋並選擇醫院', 'err');
-      return;
+      // Auto-detect: user typed a name but didn't click search result
+      const typedName = document.getElementById('hospSearch').value.trim();
+      if (typedName) {
+        // Auto-switch to new hospital mode
+        isNewHospital = true;
+        document.getElementById('newHospFields').classList.add('open');
+        const region = document.getElementById('newRegion').value;
+        if (!region) {
+          showToast('⚠️ 「' + typedName + '」不在資料庫中，請選擇地區後再送出', 'err');
+          document.getElementById('hospHint').innerHTML = '🆕 資料庫中無此醫院，請選擇地區以申請新增';
+          document.getElementById('hospHint').style.color = '#f6ad55';
+          return;
+        }
+      } else {
+        showToast('⚠️ 請輸入醫院名稱', 'err');
+        return;
+      }
     }
 
     // Submit salary report
