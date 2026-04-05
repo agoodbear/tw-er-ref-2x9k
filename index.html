@@ -767,7 +767,7 @@ function selectNewHospital() {
   selectedHospitalId = null;
   isNewHospital = true;
   document.getElementById('hospId').value = '';
-  document.getElementById('hospHint').innerHTML = '\ud83c\udd95 \u5c07\u7533\u8acb\u65b0\u589e\u91ab\u9662\u300c' + name + '\u300d\uff08\u9700\u7ba1\u7406\u54e1\u5be9\u6838\uff09';
+  document.getElementById('hospHint').innerHTML = '\ud83c\udd95 \u5c07\u65b0\u589e\u91ab\u9662\u300c' + name + '\u300d';
   document.getElementById('hospHint').style.color = '#f6ad55';
   document.getElementById('searchResults').style.display = 'none';
   document.getElementById('newHospFields').classList.add('open');
@@ -812,7 +812,7 @@ async function submitReport(e) {
         var region = document.getElementById('newRegion').value;
         if (!region) {
           showToast('\u26a0\ufe0f \u300c' + typedName + '\u300d\u4e0d\u5728\u8cc7\u6599\u5eab\u4e2d\uff0c\u8acb\u9078\u64c7\u5730\u5340\u5f8c\u518d\u9001\u51fa', 'err');
-          document.getElementById('hospHint').innerHTML = '\ud83c\udd95 \u8cc7\u6599\u5eab\u4e2d\u7121\u6b64\u91ab\u9662\uff0c\u8acb\u9078\u64c7\u5730\u5340\u4ee5\u7533\u8acb\u65b0\u589e';
+          document.getElementById('hospHint').innerHTML = '\ud83c\udd95 \u8cc7\u6599\u5eab\u4e2d\u7121\u6b64\u91ab\u9662\uff0c\u9078\u64c7\u5730\u5340\u5f8c\u5373\u53ef\u9001\u51fa';
           document.getElementById('hospHint').style.color = '#f6ad55';
           return;
         }
