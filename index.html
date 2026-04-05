@@ -351,437 +351,59 @@
 </div>
 
 <script>
+// Supabase config
+const SB_URL = 'https://gjpvzqlsfimuqwditeqf.supabase.co';
+const SB_KEY = 'sb_publishable_P0gPzbp1mg8pgYJumikvTg_RJj8PHYS';
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
 // ─────────────────────────────────────────────
 // hospitals data
 // history: array of { date, s15, note } newest-first
 // ─────────────────────────────────────────────
-const data = [
-  {
-    hospital: "臺大醫院雲林分院", region: "雲林", area: "中部",
-    level: "醫學中心分院",
-    s10: null, s14: null, s15: 50, s16: null,
-    visits: 5000, pph: 1.72, pphEst: false,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2026-03-25",
-    note: "12班43-45萬；底薪11.7萬/年調；績效疊加；節稅空間大",
-    history: []
-  },
-  {
-    hospital: "汐止國泰醫院", region: "新北", area: "北部",
-    level: "區域醫院",
-    s10: null, s14: null, s15: null, s16: 60,
-    visits: 4250, pph: 2.25, pphEst: false,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2025-12-17",
-    note: "8白+8夜>55萬；16夜60萬；≥12班+4萬,≥16班+6萬；扣5%基金",
-    history: []
-  },
-  {
-    hospital: "員林基督教醫院", region: "彰化", area: "中部",
-    level: "區域醫院",
-    s10: 36, s14: null, s15: 50, s16: 60,
-    visits: 5150, pph: 3.0,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2026-04-03",
-    note: "16班保證60萬起；10班36萬起；3醫師/班(內科含婦兒2+外傷1)；24h NP(白3小夜3大夜1)；月量4800-5500；L1-2佔10%/L3佔85%；PPH 2.5-3.5；無研究強制要求；Line: ospet80 李旭雲主任",
-    history: [
-      { date: "2026-04-03", s10: 36, s16: 60, note: "16班60萬起，10班36萬起；月量4800-5500" },
-      { date: "2025-10-31", s15: 47, note: "15班47萬起，16班保證60萬；年終底薪×2.8" },
-      { date: "2024-07-01", s15: 44, note: "15班約44萬；招募擴編中" }
-    ]
-  },
-  {
-    hospital: "光田醫院", region: "台中", area: "中部",
-    level: "區域醫院",
-    s10: null, s14: null, s15: 45, s16: null,
-    visits: null, pph: null,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2026-04-05",
-    note: "向上院區+大甲院區；中部海線",
-    history: []
-  },
-  {
-    hospital: "為恭紀念醫院", region: "苗栗", area: "北部",
-    level: "區域醫院",
-    s10: 33, s14: null, s15: 50, s16: null,
-    visits: null, pph: null,
-    public: false, np: true, shift: null,
-    lastUpdated: "2025-05-18",
-    note: "15班(180h)49-52萬(含PPF)；10班32-35萬；全天兩線+假日多一中班；宿舍；中醫大聯盟；徐主任0918555511",
-    history: []
-  },
-  {
-    hospital: "台北市立聯合醫院和平院區", region: "台北", area: "北部",
-    level: "市立醫院（公立）",
-    s10: null, s14: 37, s15: null, s16: null,
-    visits: 3500, pph: 2.4,
-    public: true, np: true, shift: 12,
-    lastUpdated: "2025-03-01",
-    note: "14班37萬；固定薪15萬+值班費12萬+PPF10萬；月量3500；重症15%；無節稅",
-    history: [
-      { date: "2025-03-01", s15: null, s14: 37, note: "14班37萬（2025最新）；超班獎勵新增" },
-      { date: "2024-01-01", s15: null, s14: 37, note: "14班37萬；結構固定" },
-      { date: "2023-03-01", s15: null, s14: 35, note: "2023 Q1：14班約35萬；疫情後過渡期" }
-    ]
-  },
-  {
-    hospital: "台大竹東分院", region: "新竹", area: "北部",
-    level: "醫學中心分院",
-    s10: null, s14: null, s15: 30, s16: null,
-    visits: 900, pph: 1.2, pphEst: true,
-    public: true, np: null, shift: null,
-    lastUpdated: null,
-    note: "保證至少30萬；月來診900人；偏鄉型；名額競爭激烈",
-    history: []
-  },
-  {
-    hospital: "漢銘基督教醫院", region: "彰化", area: "中部",
-    level: "地區醫院（彰基體系分院）",
-    s10: null, s14: null, s15: 40, s16: null,
-    visits: 700, pph: 1.0, pphEst: true,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2026-01-19",
-    note: "15班保障40萬；白班07-19/夜班19-07；日均23人次；嚴重病人可轉彰基；不需管理責任；劉小姐 04-7113456-8405",
-    history: []
-  },
-  {
-    hospital: "衛福部台北醫院", region: "新北", area: "北部",
-    level: "部立醫院（公立）",
-    s10: null, s14: null, s15: 44, s16: null,
-    visits: 5000, pph: 2.3, pphEst: true,
-    public: true, np: true, shift: null,
-    lastUpdated: "2025-08-11",
-    note: "15班平均43-45萬(含年終)；平日白25k/夜29k/假日白29k/夜31k；20-40%免稅；端午中秋各3萬；年終≥6萬；月量4700-5300；游秉勳主任",
-    history: []
-  },
-  {
-    hospital: "羅東博愛醫院", region: "宜蘭", area: "北部",
-    level: "重度急救責任醫院",
-    s10: null, s14: 40, s15: null, s16: null,
-    visits: 5500, pph: 2.5, pphEst: true,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2025-02-08",
-    note: "14班38-42萬；班薪26000-32000含PPF；宿舍；可訓練重症+急診雙專科；實際常15-16班",
-    history: []
-  },
-  {
-    hospital: "中壢長榮醫院", region: "桃園", area: "北部",
-    level: "地區醫院",
-    s10: null, s14: null, s15: 36, s16: null,
-    visits: 1200, pph: 1.7, pphEst: true,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2024-01-26",
-    note: "15班36萬；時薪2000；月量1200±200；一線班；非急救責任醫院；150床；近內壢車站",
-    history: []
-  },
-  {
-    hospital: "台北榮總新竹分院", region: "新竹", area: "北部",
-    level: "醫學中心分院（公立）",
-    s10: null, s14: null, s15: 56, s16: null,
-    visits: 1400, pph: 1.9, pphEst: true,
-    public: true, np: null, shift: 12,
-    lastUpdated: "2025-06-16",
-    note: "15-16班保障45萬+偏遠留任獎金10.5萬=55.5萬；到職後2年偏遠獎金；可升公務員；竹東；李國瑋醫師",
-    history: []
-  },
-  {
-    hospital: "振興醫院", region: "台北", area: "北部",
-    level: "準醫學中心",
-    s10: null, s14: null, s15: 45, s16: null,
-    visits: 4200, pph: 1.9, pphEst: true,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2025-08-10",
-    note: "15班base 40萬+夜班加給(平日5000/假日10000)=44-46萬；每日130-150人；白班三線/夜班二線",
-    history: []
-  },
-  {
-    hospital: "樂生醫院", region: "新北", area: "北部",
-    level: "地區醫院",
-    s10: null, s14: null, s15: 33, s16: null,
-    visits: 1000, pph: 1.4, pphEst: true,
-    public: true, np: false, shift: 12,
-    lastUpdated: "2024-01-01",
-    note: "15班約30萬；加住院人頭PPF可到33-35萬；月均900-1000；單線輕鬆型；可兼任",
-    history: []
-  },
-  {
-    hospital: "新北永和耕莘醫院", region: "新北", area: "北部",
-    level: "區域醫院（天主教耕莘體系）",
-    s10: null, s14: null, s15: 44, s16: null,
-    visits: 3200, pph: 1.5, pphEst: true,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2026-02-27",
-    note: "平日班2萬/假日班2.2萬；底薪4萬；節稅50-70萬/年；月量3000-3400；三線；近頂溪捷運",
-    history: []
-  },
-  {
-    hospital: "部立桃園醫院", region: "桃園", area: "北部",
-    level: "部立醫院（公立）",
-    s10: null, s14: null, s15: 43, s16: null,
-    visits: null, pph: null,
-    public: true, np: null, shift: 12,
-    lastUpdated: "2024-01-01",
-    note: "底薪53000+；值班費平日白18000/夜23160；假日白23160/夜30840；共計15班約42-45萬",
-    history: []
-  },
-  {
-    hospital: "楊梅天成醫院", region: "桃園", area: "北部",
-    level: "地區醫院",
-    s10: 32, s14: null, s15: 45, s16: null,
-    visits: null, pph: null,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2025-02-09",
-    note: "10班31-32萬；15班(180h)遠大於45萬；超額每人+800；節稅15-18%；楊梅最大醫院",
-    history: []
-  },
-  {
-    hospital: "屏東基督教醫院", region: "屏東", area: "南部",
-    level: "區域醫院",
-    s10: null, s14: null, s15: 45, s16: null,
-    visits: 6000, pph: 2.8, pphEst: true,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2025-07-05",
-    note: "180h絕對≥45萬；8h班頭費200/人；不輪大夜；月量6000；14急診主治+2兒科；每班1-2 NP；宿舍；邱文智醫師",
-    history: []
-  },
-  {
-    hospital: "屏東枋寮醫院", region: "屏東", area: "南部",
-    level: "地區醫院",
-    s10: null, s14: null, s15: 44, s16: null,
-    visits: 2250, pph: 3.1, pphEst: true,
-    public: false, np: null, shift: 12,
-    lastUpdated: "2025-01-01",
-    note: "底薪39萬+簽約金1萬/月+PPF4-5萬≈44-45萬；年來診27000；南屏東偏鄉",
-    history: []
-  },
-  {
-    hospital: "高雄市立民生醫院", region: "高雄", area: "南部",
-    level: "市立醫院（公立）",
-    s10: null, s14: null, s15: 42, s16: null,
-    visits: 1400, pph: 1.9, pphEst: true,
-    public: true, np: true, shift: 12,
-    lastUpdated: "2025-07-21",
-    note: "15班40-43萬（視住院人數浮動）；月量1250-1550；4位急專單線；無研究壓力；兒科建議轉診",
-    history: []
-  },
-  {
-    hospital: "高醫岡山醫院", region: "高雄", area: "南部",
-    level: "區域醫院（高醫體系）",
-    s10: null, s14: null, s15: 45, s16: null,
-    visits: 2750, pph: 1.9, pphEst: false,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2025-10-06",
-    note: "15班45萬(含值班費+PPF)；免稅15班約5萬/16班約7萬；月量2500-3000；PPH白班2/夜班1.2；高雄捷運紅線共構",
-    history: []
-  },
-  {
-    hospital: "台中榮總嘉義分院", region: "嘉義", area: "南部",
-    level: "醫學中心分院（公立）",
-    s10: null, s14: null, s15: 46, s16: null,
-    visits: 1450, pph: 2.6, pphEst: false,
-    public: true, np: true, shift: 12,
-    lastUpdated: "2025-08-25",
-    note: "15班45-46萬（7月起調薪）；月量1400-1500；PPH白班2.6/夜班1.2；高度彈性排班",
-    history: []
-  },
-  {
-    hospital: "部立台南醫院新化分院", region: "台南", area: "南部",
-    level: "部立醫院分院（公立）",
-    s10: null, s14: null, s15: 42, s16: null,
-    visits: 1300, pph: 1.8, pphEst: true,
-    public: true, np: true, shift: null,
-    lastUpdated: "2026-02-06",
-    note: "15班=42萬；每月46h可報加班免稅；月量1300；白班小夜有NP；Line changyaojen5153",
-    history: []
-  },
-  {
-    hospital: "竹山秀傳醫院", region: "南投", area: "中部",
-    level: "地區醫院（秀傳體系）",
-    s10: null, s14: null, s15: 43, s16: null,
-    visits: 2500, pph: 1.7, pphEst: true,
-    public: false, np: false, shift: null,
-    lastUpdated: "2024-10-16",
-    note: "15班+PPF=42-43萬；月量2500；全天兩線12h班；24h心導管+開腦；洪順世主任 0911756971",
-    history: []
-  },
-  {
-    hospital: "草屯佑民醫院", region: "南投", area: "中部",
-    level: "地區醫院",
-    s10: null, s14: null, s15: 42, s16: null,
-    visits: 4700, pph: 3.3, pphEst: true,
-    public: false, np: true, shift: null,
-    lastUpdated: "2026-03-13",
-    note: "時薪：白1200/夜1600；PPF450/位；15班(6夜)≈42萬；包夜班可破50萬；月量4700；14位急專；台中哈佛",
-    history: []
-  },
-  {
-    hospital: "埔里基督教醫院", region: "南投", area: "中部",
-    level: "地區醫院",
-    s10: null, s14: null, s15: 44, s16: null,
-    visits: 2400, pph: 3.3, pphEst: true,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2025-08-19",
-    note: "15班保障44萬（稅前超46萬+PPF）；週間白26k/夜28k；假日白30k/夜31k；NP週一四08-24；宿舍；節稅20%",
-    history: []
-  },
-  {
-    hospital: "部立台中醫院", region: "台中", area: "中部",
-    level: "部立醫院（公立）",
-    s10: null, s14: null, s15: 44, s16: null,
-    visits: 2600, pph: 1.8, pphEst: true,
-    public: true, np: true, shift: null,
-    lastUpdated: "2025-04-17",
-    note: "時薪制(無PPF)：白2200/夜2600/假日白2300/假日夜2800；180h≈43.9萬；節稅25%；每日87人",
-    history: []
-  },
-  {
-    hospital: "台中慈濟醫院", region: "台中", area: "中部",
-    level: "醫學中心",
-    s10: null, s14: null, s15: 38, s16: null,
-    visits: 4000, pph: 2.8, pphEst: true,
-    public: false, np: true, shift: null,
-    lastUpdated: "2025-01-01",
-    note: "15班(172-176h)稅前38萬+；8成報稅；24h NP；約350人次/醫師/月",
-    history: []
-  },
-  {
-    hospital: "彰濱秀傳醫院", region: "彰化", area: "中部",
-    level: "區域醫院（秀傳體系）",
-    s10: null, s14: null, s15: 35, s16: null,
-    visits: 2500, pph: 1.7, pphEst: true,
-    public: false, np: true, shift: 12,
-    lastUpdated: "2023-09-14",
-    note: "15班30-40萬；月量2500；全天二線；需支援外院；康秘書0975-617-158",
-    history: []
-  },
-  {
-    hospital: "高雄路竹秀傳醫院", region: "高雄", area: "南部",
-    level: "區域醫院（秀傳體系）",
-    s10: null, s14: null, s15: 44, s16: null,
-    visits: null, pph: null,
-    public: false, np: null, shift: null,
-    lastUpdated: "2024-08-16",
-    note: "44萬(不含PPF)；秀傳體系；路竹科學園區；700床規劃中；南部醫學中心建教合作；莊佳璋醫師 0921565932",
-    history: []
-  },
-  {
-    hospital: "虎尾若瑟醫院", region: "雲林", area: "中部",
-    level: "地區醫院",
-    s10: null, s14: null, s15: 45, s16: null,
-    visits: null, pph: null,
-    public: false, np: true, shift: null,
-    lastUpdated: "2025-09-02",
-    note: "15班≥45萬(值班費+PF+procedure+超音波)；5位NP班班都有；輕症多；候鐘閔主任 erdrhou@gmail.com",
-    history: []
-  },
-  {
-    hospital: "衛福部豐原醫院", region: "台中", area: "中部",
-    level: "部立醫院（公立）",
-    s10: null, s12: 40, s15: 45, s16: null,
-    visits: 4500, pph: 2.5, pphEst: true,
-    public: true, np: true, shift: 12,
-    lastUpdated: "2026-01-16",
-    note: "重度急救責任醫院；日來診150；2.5線；24h NP；12-13班≈40萬；15班滿班前段班薪資但難排滿；11位醫師；戴笠修代理主任",
-    history: []
-  },
-  {
-    hospital: "衛生福利部苗栗醫院", region: "苗栗", area: "北部",
-    level: "區域教學醫院（公立）",
-    s10: null, s14: null, s15: 44, s16: null,
-    visits: 2150, pph: 3.0, pphEst: true,
-    public: true, np: true, shift: 12,
-    lastUpdated: "2026-01-19",
-    note: "17班/月≈50萬(含假日班4班)；增減班2.8萬/班；15班換算≈44萬；簽約金10萬(2年期)；年終獎金5萬(達會議比例6成)；中度急救責任；月急診量2000-2300；NP成熟支援高；兒科3歲以上；無論文壓力；不需繳交科費/回饋金；宿舍/停車可租；苗栗火車站7分/高鐵站10分",
-    history: []
-  }
-,
-  {
-    hospital: "桃園聖保祿醫院", region: "桃園", area: "北部",
-    level: "中度責任醫院（天主教體系）",
-    s10: null, s12: 36, s15: 45, s16: null,
-    visits: 6750, pph: 3.1, pphEst: true,
-    public: false, np: true, shift: null,
-    lastUpdated: "2024-09-19",
-    note: "12班(133.5h)約36萬；換算15班≈45萬；業績好可破50萬；月量6500-7000；一二級10%/三級70%；統包+業績獎金制；全時段NP；人事室協助節稅；年終獎金；中度責任醫院，夜間後援較弱；桃園來診第三高(長庚/部桃之後)；陳永昌副主任",
-    history: []
-  }
-,
-  {
-    hospital: "南投基督教醫院", region: "南投", area: "中部",
-    level: "地區醫院（彰基體系）",
-    s10: null, s14: null, s15: 40, s16: null,
-    visits: 1020, pph: 1.4, pphEst: true,
-    public: false, np: true, shift: null,
-    lastUpdated: "2026-01-27",
-    note: "15班40萬起+提成；白夜輪班；日均33-36人次；急診NP協助；急診床位安排權；豐厚年節獎金；免費本人配偶團保；徵4人；049-2225595#2112 600094@cch.org.tw",
-    history: []
-  }
-,
-  {
-    hospital: "台中榮總埔里分院", region: "南投", area: "中部",
-    level: "地區醫院（榮總體系，公立）",
-    s10: null, s14: null, s15: 40, s16: null,
-    visits: 1400, pph: 1.9, pphEst: true,
-    public: true, np: false, shift: null,
-    lastUpdated: "2025-02-26",
-    note: "15班：純白班33萬~純夜班43萬；混班約40萬；170-180h/月；每班看診約230人次；公務人員底薪；不要求研究；宿舍30坪三房1000/月；停車免費；無ICU滯留；後線轉台中榮總(50分車程)；NP積極招募中；黃順祥醫師",
-    history: []
-  }
-,
-  {
-    hospital: "高雄聖功醫院", region: "高雄", area: "南部",
-    level: "一般急救責任醫院",
-    s10: null, s14: null, s15: 42, s16: null,
-    visits: 1300, pph: 0.9, pphEst: true,
-    public: false, np: false, shift: 12,
-    lastUpdated: "2026-02-16",
-    note: "班薪：平日白23200/夜25000；假日白30000/夜35000；假日二線33000；PPF另計；換算15班(混班)≈42萬不含PPF；月量1200-1400；平日單線/週日二線12-24；高雄市中心；謝忠霖醫師",
-    history: []
-  },
-  {
-    hospital: "台南郭綜合醫院", region: "台南", area: "南部",
-    level: "地區醫院",
-    s10: null, s14: null, s15: 46, s16: null,
-    visits: 2850, pph: 2.25, pphEst: false,
-    public: false, np: false, shift: 8,
-    lastUpdated: "2025-12-13",
-    note: "8小時制；時薪2500-3000元(大夜>3000)；月工時168h×均薪2750≈46萬；白班/小夜二線/大夜一線；大夜NP招募中；月量2700-3000；PPH2.0-2.5；一二級重症5%；重症轉診率1.4%；Leo Wu醫師",
-    history: []
-  },
-  {
-    hospital: "屏東潮州安泰醫院", region: "屏東", area: "南部",
-    level: "地區醫院",
-    s10: null, s14: 39, s15: null, s16: null,
-    visits: 1600, pph: 1.1, pphEst: true,
-    public: false, np: false, shift: 12,
-    lastUpdated: "2024-09-22",
-    note: "14班(8白6夜)稅前約39萬；月量1600；平日單線/假日二線(11-23)；全時段助理協助管路縫合；直接簽床；零學術業績壓力；88快速道路5分；目前全員由高雄通勤",
-    history: []
-  }
-,
-  {
-    hospital: "台北榮總玉里分院", region: "花蓮", area: "東部",
-    level: "地區醫院（榮總體系）",
-    s10: null, s14: null, s15: 40, s16: null,
-    visits: 1350, pph: 1.5, pphEst: false,
-    public: true, np: false, shift: 12,
-    lastUpdated: "2025-12-30",
-    note: "15班保障40萬；多一班+3萬；PPH1.5；月量1300-1400；無NP(白小夜3護理師協助)；簽床權；大夜不收住院；轉院花蓮北區60分鐘；每月交通費補助；宿舍提供；臺北榮總專案主治(醫中計畫)；6位急專專任；無論文要求；葉穎澤主任",
-    history: []
-  }
-,
-  {
-    hospital: "台北榮總鳳林分院", region: "花蓮", area: "東部",
-    level: "地區醫院（榮總體系）",
-    s10: null, s14: null, s15: 35, s16: null,
-    visits: 675, pph: 1.0, pphEst: false,
-    public: true, np: false, shift: 12,
-    lastUpdated: "2025-12-22",
-    note: "15班保障35萬(第一年)；多一白班+2.2萬/夜班+2.4萬；兼任：白班2.2萬/夜班2.4萬；月量600-750；PPH≈1；大夜<5人次；無NP(全時段2護理師)；17:30後兼全院病房值班(ICU4床+普通病房10-20床)；無次專後線；轉花蓮北區30分；幾乎無待床；葉穎澤主任代轉",
-    history: []
-  }
+let data = []; // Will be loaded from Supabase
 
-];
+async function loadDashboardData() {
+  try {
+    document.getElementById('statsGrid').innerHTML = '<div class="stat-card" style="grid-column:1/-1;text-align:center;padding:40px"><div class="value">⏳</div><div class="sub">載入資料中...</div></div>';
+    
+    const resp = await fetch(SB_URL + '/rest/v1/dashboard_data?select=*', {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const rows = await resp.json();
+    
+    // Transform to frontend format
+    data = rows.map(function(r) {
+      return {
+        hospital: r.hospital,
+        region: r.region,
+        area: r.area,
+        level: r.level || '地區醫院',
+        s10: r.s10 ? parseFloat(r.s10) : null,
+        s14: r.s14 ? parseFloat(r.s14) : null,
+        s15: r.s15 ? parseFloat(r.s15) : null,
+        s16: r.s16 ? parseFloat(r.s16) : null,
+        visits: r.visits ? parseInt(r.visits) : null,
+        pph: r.pph ? parseFloat(r.pph) : null,
+        pphEst: r.pphEst || false,
+        public: r.public || false,
+        np: r.np || false,
+        shift: r.shift || 12,
+        lastUpdated: r.lastUpdated || null,
+        note: r.note || '',
+        history: [] // History loaded separately if needed
+      };
+    });
+    
+    console.log('Loaded ' + data.length + ' hospitals from Supabase');
+    renderStats(data);
+    renderTable(data);
+    renderCharts(data);
+  } catch(e) {
+    console.error('Failed to load data:', e);
+    document.getElementById('statsGrid').innerHTML = '<div class="stat-card" style="grid-column:1/-1;text-align:center;padding:40px;color:#fc8181"><div class="value">❌</div><div class="sub">載入失敗：' + e.message + '</div></div>';
+  }
+}
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -1043,17 +665,12 @@ function filterRegion(area, btn) {
   renderCharts(filtered);
 }
 
-renderStats(data);
-renderTable(data);
-renderCharts(data);
-// renderTrendChart(); // trend chart removed
+// Load data from Supabase (replaces static data)
+loadDashboardData();
 
 // ─────────────────────────────────────────────
-// Supabase Contribution System
+// Supabase Contribution System (SB_URL/SB_KEY defined at top of script)
 // ─────────────────────────────────────────────
-const SB_URL = 'https://gjpvzqlsfimuqwditeqf.supabase.co';
-const SB_KEY = 'sb_publishable_P0gPzbp1mg8pgYJumikvTg_RJj8PHYS';
-const sb = window.supabase.createClient(SB_URL, SB_KEY);
 
 function getSubmitterToken() {
   let t = localStorage.getItem('er_salary_token');
@@ -1209,22 +826,30 @@ async function submitReport(e) {
       var name = document.getElementById('hospSearch').value.trim();
       var region = document.getElementById('newRegion').value;
       var level = document.getElementById('newLevel').value;
-      if (!region) { showToast('\u26a0\ufe0f \u65b0\u91ab\u9662\u8acb\u9078\u64c7\u5730\u5340', 'err'); return; }
-      var areaLookup = {'\u57fa\u9686':'\u5317\u90e8','\u53f0\u5317':'\u5317\u90e8','\u65b0\u5317':'\u5317\u90e8','\u6843\u5712':'\u5317\u90e8','\u65b0\u7af9':'\u5317\u90e8','\u82d7\u6817':'\u5317\u90e8','\u53f0\u4e2d':'\u4e2d\u90e8','\u5f70\u5316':'\u4e2d\u90e8','\u5357\u6295':'\u4e2d\u90e8','\u96f2\u6797':'\u4e2d\u90e8','\u5609\u7fa9':'\u5357\u90e8','\u53f0\u5357':'\u5357\u90e8','\u9ad8\u96c4':'\u5357\u90e8','\u5c4f\u6771':'\u5357\u90e8','\u5b9c\u862d':'\u5317\u90e8','\u82b1\u84ee':'\u6771\u90e8','\u53f0\u6771':'\u6771\u90e8'};
-      var reqResp = await sb.from('hospital_requests').insert({ name: name, region: region, area: areaLookup[region] || '\u5317\u90e8', level: level, submitter_token: token }).select().single();
-      if (reqResp.error) throw reqResp.error;
-      var salaryParts = [];
-      if (s10) salaryParts.push('s10:'+s10+'\u842c');
-      if (s14) salaryParts.push('s14:'+s14+'\u842c');
-      if (s15) salaryParts.push('s15:'+s15+'\u842c');
-      if (s16) salaryParts.push('s16:'+s16+'\u842c');
-      if (visits) salaryParts.push('\u6708\u91cf:'+visits);
-      if (note) salaryParts.push(note);
-      if (srcDate) salaryParts.push('\u65e5\u671f:'+srcDate);
-      if (reqResp.data && reqResp.data.id) {
-        await sb.from('hospital_requests').update({ status: 'pending:' + salaryParts.join('\uff1b') }).eq('id', reqResp.data.id);
+      if (!region) { showToast('⚠️ 新醫院請選擇地區', 'err'); return; }
+      var areaLookup = {'基隆':'北部','台北':'北部','新北':'北部','桃園':'北部','新竹':'北部','苗栗':'北部','台中':'中部','彰化':'中部','南投':'中部','雲林':'中部','嘉義':'南部','台南':'南部','高雄':'南部','屏東':'南部','宜蘭':'北部','花蓮':'東部','台東':'東部'};
+      // Auto-create hospital
+      var hospResp = await sb.from('hospitals').insert({ name: name, region: region, area: areaLookup[region] || '北部', level: level }).select().single();
+      if (hospResp.error) {
+        if (hospResp.error.code === '23505') {
+          var existing = await sb.from('hospitals').select('id').eq('name', name).single();
+          if (existing.data) hospitalId = existing.data.id;
+          else throw hospResp.error;
+        } else throw hospResp.error;
+      } else {
+        hospitalId = hospResp.data.id;
       }
-      showToast('\u2705 \u65b0\u91ab\u9662\u300c' + name + '\u300d\u7533\u8acb\u5df2\u9001\u51fa\uff01\u7ba1\u7406\u54e1\u5be9\u6838\u5f8c\u5c07\u52a0\u5165 Dashboard\u3002', 'ok');
+      // Insert salary report
+      var salResp = await sb.from('salary_reports').insert({
+        hospital_id: hospitalId,
+        s10: s10 ? parseFloat(s10) : null, s14: s14 ? parseFloat(s14) : null,
+        s15: s15 ? parseFloat(s15) : null, s16: s16 ? parseFloat(s16) : null,
+        visits: visits ? parseInt(visits) : null,
+        note: note, source_date: srcDate, submitter_token: token
+      });
+      if (salResp.error) throw salResp.error;
+      showToast('✅ 「' + name + '」已新增！重新整理即可看到。', 'ok');
+      loadDashboardData();
       recordSubmission(); closeModal(); return;
     }
 
@@ -1241,6 +866,7 @@ async function submitReport(e) {
     });
     if (insertResp.error) throw insertResp.error;
     showToast('\u2705 \u85aa\u8cc7\u56de\u5831\u6210\u529f\uff01\u611f\u8b1d\u4f60\u7684\u8ca2\u737b\u3002', 'ok');
+    loadDashboardData(); // Refresh dashboard
     recordSubmission(); closeModal();
   } catch(err) {
     console.error('Submit error:', err);
