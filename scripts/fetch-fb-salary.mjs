@@ -196,7 +196,7 @@ async function fetchPostTexts() {
 }
 
 // ── Step 2: AI 解析貼文 ──────────────────────────
-function parsePostsWithAI(posts) {
+async function parsePostsWithAI(posts) {
   log('\n🤖 Step 2: AI 解析貼文內容...');
 
   if (posts.length === 0) {
@@ -244,38 +244,50 @@ ${postsText}`;
   const tmpFile = join(tmpdir(), 'er-salary-posts.txt');
   writeFileSync(tmpFile, prompt);
 
-  try {
-    const result = execSync(
-      `cat "${tmpFile}" | claude -p --output-format json 2>/dev/null`,
-      { encoding: 'utf-8', timeout: 120000, maxBuffer: 10 * 1024 * 1024 }
-    );
-
-    let parsed;
+  // 最多重試 3 次（API 500 error 重試通常會成功）
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const wrapper = JSON.parse(result);
-      const content = wrapper.result || wrapper;
-      if (typeof content === 'string') {
-        const match = content.match(/\[[\s\S]*\]/);
+      if (attempt > 1) log(`   🔄 重試第 ${attempt} 次...`);
+
+      const result = execSync(
+        `cat "${tmpFile}" | claude -p --output-format json`,
+        { encoding: 'utf-8', timeout: 180000, maxBuffer: 10 * 1024 * 1024 }
+      );
+
+      let parsed;
+      try {
+        const wrapper = JSON.parse(result);
+        const content = wrapper.result || wrapper;
+        if (typeof content === 'string') {
+          const match = content.match(/\[[\s\S]*\]/);
+          parsed = match ? JSON.parse(match[0]) : [];
+        } else {
+          parsed = Array.isArray(content) ? content : [];
+        }
+      } catch {
+        const match = result.match(/\[[\s\S]*\]/);
         parsed = match ? JSON.parse(match[0]) : [];
-      } else {
-        parsed = Array.isArray(content) ? content : [];
       }
-    } catch {
-      const match = result.match(/\[[\s\S]*\]/);
-      parsed = match ? JSON.parse(match[0]) : [];
+
+      log(`   ✅ AI 提取到 ${parsed.length} 筆薪資資料`);
+
+      const parsedPath = join(RESULTS_DIR, `parsed-${new Date().toISOString().slice(0, 10)}.json`);
+      writeFileSync(parsedPath, JSON.stringify(parsed, null, 2));
+      log(`   💾 存於：${parsedPath}`);
+
+      return parsed;
+    } catch (err) {
+      const isRetryable = err.message.includes('500') || err.message.includes('Internal') || err.message.includes('overloaded');
+      if (isRetryable && attempt < 3) {
+        log(`   ⚠️ API 錯誤（${attempt}/3），30 秒後重試...`);
+        await new Promise(r => setTimeout(r, 30000));
+        continue;
+      }
+      console.error(`   ❌ AI 解析失敗: ${err.message}`);
+      return [];
     }
-
-    log(`   ✅ AI 提取到 ${parsed.length} 筆薪資資料`);
-
-    const parsedPath = join(RESULTS_DIR, `parsed-${new Date().toISOString().slice(0, 10)}.json`);
-    writeFileSync(parsedPath, JSON.stringify(parsed, null, 2));
-    log(`   💾 存於：${parsedPath}`);
-
-    return parsed;
-  } catch (err) {
-    console.error('   ❌ AI 解析失敗:', err.message);
-    return [];
   }
+  return [];
 }
 
 // ── Step 3: 寫入 Supabase ──────────────────────────
@@ -301,15 +313,32 @@ async function writeToSupabase(entries) {
   const currentData = await dashResp.json();
   let added = 0, skipped = 0, newHospitals = 0;
 
+  // 常用簡稱 → 全名映射
+  const aliasMap = {
+    '員基': '員林基督教醫院', '員林基督教': '員林基督教醫院',
+    '中醫北港': '中國醫藥大學北港附設醫院', '北港媽祖': '中國醫藥大學北港附設醫院',
+    '台大雲林': '台大醫院雲林分院', '台東馬偕': '台東馬偕紀念醫院',
+    '光田': '光田醫院', '署苗': '衛生福利部苗栗醫院',
+    '聯醫': '台北市立聯合醫院', '高醫岡山': '高雄醫學大學附設岡山醫院',
+    '彰濱秀傳': '彰濱秀傳紀念醫院', '埔基': '埔里基督教醫院',
+    '輔大醫院': '輔仁大學附設醫院',
+  };
+
   for (const entry of entries) {
     try {
+      // 先查簡稱映射
+      const resolvedName = aliasMap[entry.hospital] || entry.hospital;
+
       let hospital = hospitals.find(h => {
         const n1 = h.name.replace(/醫院/g, '');
-        const n2 = entry.hospital.replace(/醫院/g, '');
-        if (h.name === entry.hospital) return true;
+        const n2 = resolvedName.replace(/醫院/g, '');
+        const n3 = entry.hospital.replace(/醫院/g, '');
+        if (h.name === resolvedName || h.name === entry.hospital) return true;
         if (n1.includes(n2) || n2.includes(n1)) return true;
+        if (n1.includes(n3) || n3.includes(n1)) return true;
         if (h.aliases && h.aliases.some(a =>
-          a === entry.hospital || entry.hospital.includes(a) || a.includes(entry.hospital)
+          a === entry.hospital || a === resolvedName ||
+          entry.hospital.includes(a) || a.includes(entry.hospital)
         )) return true;
         return false;
       });
@@ -391,7 +420,7 @@ async function main() {
 
   try {
     const posts = await fetchPostTexts();
-    const entries = parsePostsWithAI(posts);
+    const entries = await parsePostsWithAI(posts);
     const result = await writeToSupabase(entries);
 
     const logEntry = {
