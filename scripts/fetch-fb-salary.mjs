@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 /**
- * FB 急診薪資爬取 Pipeline v2 — Screenshot + AI Vision
+ * FB 急診薪資爬取 Pipeline v3 — Scroll + Read + Expand
  *
- * 策略：
- * FB 的 CSS font substitution 讓 innerText 全是亂碼，
- * 所以改用截圖 + Claude Vision 來辨識貼文內容。
+ * 核心發現：
+ * - FB m版用 virtual scroll，只有 viewport 內的貼文 visible=true
+ * - div.native-text 的 textContent 是可讀中文（非亂碼）
+ * - 必須「邊捲動邊讀取」，因為離開 viewport 後元素會被 recycle
+ * - 「查看更多」按鈕是 <span class="f1">，必須捲到可見時才能點擊
  *
  * 流程：
- * 1. Playwright 開 m.facebook.com 社團，捲動+截圖（每段一張）
- * 2. claude -p (vision) 辨識每張截圖中的薪資貼文
- * 3. 合併解析結果，比對 Supabase 現有醫院，寫入新資料
+ * 1. Playwright 開 m.facebook.com 社團
+ * 2. 逐步捲動，每步：展開「查看更多」→ 讀取可見的貼文文字
+ * 3. claude -p 解析所有貼文，提取薪資
+ * 4. 比對 Supabase，寫入新資料
  *
  * Usage:
  *   node scripts/fetch-fb-salary.mjs [--days 7] [--dry-run]
@@ -33,7 +36,6 @@ const CHROMIUM_PATH = '/Users/tsaojian-hsiung/Library/Caches/ms-playwright/chrom
 const COOKIE_FILE = join(process.env.HOME, '.fb-cookies.json');
 const RESULTS_DIR = join(__dirname, '..', 'data');
 const LOG_FILE = join(RESULTS_DIR, 'fetch-log.json');
-
 const DEFAULT_GROUP = 'https://m.facebook.com/groups/Taiwan.ER';
 
 const args = process.argv.slice(2);
@@ -42,7 +44,7 @@ const DRY_RUN = args.includes('--dry-run');
 const GROUP_URL = args.find((_, i, a) => a[i - 1] === '--group') || DEFAULT_GROUP;
 const EXPORT_COOKIES = args.includes('--export-cookies');
 
-console.log(`\n🏥 急診薪資爬取 Pipeline v2（Screenshot + Vision）`);
+console.log(`\n🏥 急診薪資爬取 Pipeline v3（Scroll + Read + Expand）`);
 console.log(`   社團：${GROUP_URL}`);
 console.log(`   期間：最近 ${DAYS} 天`);
 console.log(`   模式：${DRY_RUN ? '🔍 Dry Run（不寫入）' : '✍️ 寫入 Supabase'}`);
@@ -59,24 +61,17 @@ function log(msg) {
 // ── Cookie 管理 ──────────────────────────────────
 async function exportCookiesInteractive() {
   log('🍪 互動式 Cookie 擷取...');
-
   const browser = await chromium.launch({
-    executablePath: CHROMIUM_PATH,
-    headless: false,
+    executablePath: CHROMIUM_PATH, headless: false,
     args: ['--disable-blink-features=AutomationControlled']
   });
-
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
     viewport: { width: 390, height: 844 }
   });
-
   const page = await context.newPage();
   await page.goto('https://m.facebook.com/', { waitUntil: 'networkidle' });
-
-  console.log('\n⏳ 請在瀏覽器中登入 Facebook...');
-  console.log('   登入完成後會自動偵測並儲存 cookie。\n');
-
+  console.log('\n⏳ 請在瀏覽器中登入 Facebook...\n');
   for (let i = 0; i < 120; i++) {
     await sleep(5000);
     const cookies = await context.cookies();
@@ -94,10 +89,7 @@ async function exportCookiesInteractive() {
 
 function loadCookies() {
   if (!existsSync(COOKIE_FILE)) {
-    throw new Error(
-      `找不到 cookie (${COOKIE_FILE})。\n` +
-      `請先執行：node scripts/fetch-fb-salary.mjs --export-cookies`
-    );
+    throw new Error(`找不到 cookie (${COOKIE_FILE})。\n請先執行：node scripts/fetch-fb-salary.mjs --export-cookies`);
   }
   const raw = JSON.parse(readFileSync(COOKIE_FILE, 'utf-8'));
   const cUser = raw.find(c => c.name === 'c_user');
@@ -106,23 +98,21 @@ function loadCookies() {
   return raw;
 }
 
-// ── Step 1: 截圖社團頁面 ──────────────────────────
-async function captureGroupScreenshots() {
-  log('📱 Step 1: 擷取社團頁面截圖...');
+// ── Step 1: 邊捲動邊讀取貼文 ──────────────────────
+async function fetchPostTexts() {
+  log('📱 Step 1: 爬取社團貼文（邊捲動、邊展開、邊讀取）...');
 
   const cookies = loadCookies();
 
   const browser = await chromium.launch({
-    executablePath: CHROMIUM_PATH,
-    headless: false,
+    executablePath: CHROMIUM_PATH, headless: false,
     args: ['--disable-blink-features=AutomationControlled']
   });
 
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
     viewport: { width: 390, height: 844 },
-    locale: 'zh-TW',
-    timezoneId: 'Asia/Taipei'
+    locale: 'zh-TW', timezoneId: 'Asia/Taipei'
   });
 
   await context.addCookies(cookies);
@@ -137,37 +127,67 @@ async function captureGroupScreenshots() {
     }
     log('   ✅ 已進入社團頁面');
 
-    // 策略：捲動 → 每段截一張全畫面圖
-    // 估算：7 天大概需要捲 10-15 次（每次約 2-3 篇貼文）
-    const scrollRounds = Math.min(Math.ceil(DAYS * 2), 25);
-    const screenshots = [];
-    const screenshotDir = join(RESULTS_DIR, `screenshots-${new Date().toISOString().slice(0, 10)}`);
-    if (!existsSync(screenshotDir)) mkdirSync(screenshotDir, { recursive: true });
+    const scrollRounds = Math.min(Math.ceil(DAYS * 3), 40);
+    const allTexts = new Set(); // 用 Set 去重
+    const posts = [];
 
     for (let i = 0; i < scrollRounds; i++) {
-      // 展開「更多」按鈕（每次捲動後都試）
+      // Step A: 展開當前可見的「查看更多」
       await page.evaluate(() => {
-        document.querySelectorAll('a[href*="see_more"], span.see_more_link_inner').forEach(btn => {
-          try { btn.click(); } catch {}
+        // FB m 版的「查看更多」按鈕在 span.f1 或文字包含「查看更多」的元素
+        document.querySelectorAll('span.f1, a, div[role="button"]').forEach(el => {
+          const t = (el.textContent || '').trim();
+          if (t === '查看更多' || t === '……查看更多' || t === 'See more' || t === 'See More') {
+            const rect = el.getBoundingClientRect();
+            // 只點可見且在 viewport 內的
+            if (rect.height > 0 && rect.top > -100 && rect.top < window.innerHeight + 100) {
+              try { el.click(); } catch {}
+            }
+          }
         });
       });
-      await sleep(800);
+      await sleep(600);
 
-      // 截圖當前畫面
-      const path = join(screenshotDir, `page-${String(i).padStart(2, '0')}.png`);
-      await page.screenshot({ path, fullPage: false });
-      screenshots.push(path);
+      // Step B: 讀取當前可見的貼文內容
+      const visibleTexts = await page.evaluate(() => {
+        const results = [];
+        // 找所有 native-text 元素
+        document.querySelectorAll('div.native-text').forEach(el => {
+          const rect = el.getBoundingClientRect();
+          // 只讀可見且在 viewport 附近的
+          if (rect.height > 0 && rect.top > -500 && rect.top < window.innerHeight + 500) {
+            const text = el.textContent || '';
+            if (text.length > 30) {
+              results.push(text.trim());
+            }
+          }
+        });
+        return results;
+      });
 
-      // 捲動
-      await page.evaluate(() => window.scrollBy(0, 750));
-      await sleep(2500);
-      process.stdout.write(`\r   📜 捲動+截圖 ${i + 1}/${scrollRounds}...`);
+      for (const text of visibleTexts) {
+        if (!allTexts.has(text.slice(0, 100))) { // 用前 100 字作為 key 去重
+          allTexts.add(text.slice(0, 100));
+          posts.push(text);
+        }
+      }
+
+      // Step C: 捲動
+      await page.evaluate(() => window.scrollBy(0, 600));
+      await sleep(2000);
+      process.stdout.write(`\r   📜 捲動 ${i + 1}/${scrollRounds}，已收集 ${posts.length} 段文字...`);
     }
     console.log('');
-    log(`   ✅ 共截取 ${screenshots.length} 張截圖`);
+    log(`   ✅ 共收集 ${posts.length} 段不重複文字`);
 
     await browser.close();
-    return screenshots;
+
+    // 儲存原始文字
+    const rawPath = join(RESULTS_DIR, `raw-${new Date().toISOString().slice(0, 10)}.json`);
+    writeFileSync(rawPath, JSON.stringify(posts, null, 2));
+    log(`   💾 原始文字存於：${rawPath}`);
+
+    return posts;
 
   } catch (err) {
     await browser.close();
@@ -175,101 +195,87 @@ async function captureGroupScreenshots() {
   }
 }
 
-// ── Step 2: Claude Vision 辨識薪資貼文 ──────────────
-function analyzeScreenshotsWithVision(screenshots) {
-  log('\n🤖 Step 2: Claude Vision 辨識截圖中的薪資資訊...');
+// ── Step 2: AI 解析貼文 ──────────────────────────
+function parsePostsWithAI(posts) {
+  log('\n🤖 Step 2: AI 解析貼文內容...');
 
-  if (screenshots.length === 0) {
-    log('   ⚠️ 沒有截圖，跳過');
+  if (posts.length === 0) {
+    log('   ⚠️ 沒有收集到文字，跳過');
     return [];
   }
 
-  // 分批處理：每次送 3-4 張圖（避免太大）
-  const batchSize = 4;
-  const allEntries = [];
+  // 先篩選可能包含薪資的貼文（減少 AI 處理量）
+  const salaryKeywords = ['薪', '月薪', '時薪', '萬', '徵才', '誠徵', '招募', '保證', '稅前', '班'];
+  const candidates = posts.filter(text =>
+    salaryKeywords.some(kw => text.includes(kw))
+  );
 
-  for (let batchStart = 0; batchStart < screenshots.length; batchStart += batchSize) {
-    const batch = screenshots.slice(batchStart, batchStart + batchSize);
-    const batchNum = Math.floor(batchStart / batchSize) + 1;
-    const totalBatches = Math.ceil(screenshots.length / batchSize);
+  log(`   📋 ${posts.length} 段文字中，${candidates.length} 段可能包含薪資`);
 
-    log(`   📸 處理批次 ${batchNum}/${totalBatches}（${batch.length} 張圖）...`);
+  if (candidates.length === 0) {
+    log('   ⚠️ 沒有找到薪資相關貼文');
+    return [];
+  }
 
-    // 建構 claude -p 的指令，用圖片路徑
-    const imageArgs = batch.map(p => `"${p}"`).join(' ');
+  const postsText = candidates.map((text, i) =>
+    `--- 貼文 #${i + 1} ---\n${text}\n`
+  ).join('\n');
 
-    const prompt = `你是急診薪資資料分析助手。以下截圖來自 Facebook「急診醫師的秘密花園」私密社團。
+  const prompt = `你是急診薪資資料分析助手。以下是從 Facebook「急診醫師的秘密花園」私密社團爬到的貼文文字。
 
-請仔細閱讀每張截圖，找出任何「急診醫師薪資 / 徵才」相關的貼文。
+請從中提取「急診醫師薪資 / 徵才」資訊。
 
-提取規則：
-1. 只提取明確提到月薪數字的貼文（不含「待遇優」、「面議」等）
-2. 薪資單位為「萬」（如 50.5萬 → 50.5）
+規則：
+1. 只提取明確提到月薪數字的貼文（不含「待遇優」「面議」等模糊描述）
+2. 薪資單位為「萬」（如 50.5萬 → 50.5, 450000 → 45）
 3. 班數通常是 10/14/15/16 班制
-4. 醫院名稱用社群常用簡稱
+4. 醫院名稱用社群常用簡稱（如「中醫北港」「員基」「台東馬偕」）
 5. 地區：基隆/台北/新北/桃園/新竹/苗栗/台中/彰化/南投/雲林/嘉義/台南/高雄/屏東/宜蘭/花蓮/台東
 6. 醫院層級：醫學中心/區域醫院/地區醫院/部立醫院
-7. source_date 填貼文日期（從貼文上方的時間判斷，如「4月11日」→ 2026-04-11）
+7. source_date 盡量從文中判斷貼文日期，無法判斷則填 ${new Date().toISOString().slice(0, 10)}
 
-如果截圖中沒有薪資相關貼文（只是討論、新聞、閒聊），回覆空陣列 []
+只回覆 JSON array，不加說明：
+[{"hospital":"醫院","region":"地區","level":"層級","s10":null,"s14":null,"s15":45,"s16":null,"visits":null,"note":"備註","source_date":"2026-04-11"}]
 
-只回覆 JSON，不加說明：
-[{"hospital":"醫院","region":"地區","level":"層級","s10":null,"s14":null,"s15":45,"s16":null,"visits":null,"note":"備註","source_date":"2026-04-11"}]`;
+如果沒有可提取的薪資資料，回覆 []
 
-    const tmpPrompt = join(tmpdir(), `er-vision-batch-${batchNum}.txt`);
-    writeFileSync(tmpPrompt, prompt);
+${postsText}`;
 
+  const tmpFile = join(tmpdir(), 'er-salary-posts.txt');
+  writeFileSync(tmpFile, prompt);
+
+  try {
+    const result = execSync(
+      `cat "${tmpFile}" | claude -p --output-format json 2>/dev/null`,
+      { encoding: 'utf-8', timeout: 120000, maxBuffer: 10 * 1024 * 1024 }
+    );
+
+    let parsed;
     try {
-      const cmd = `cat "${tmpPrompt}" | claude -p --output-format json ${batch.map(p => `"${p}"`).join(' ')} 2>/dev/null`;
-      const result = execSync(cmd, {
-        encoding: 'utf-8',
-        timeout: 180000,
-        maxBuffer: 10 * 1024 * 1024
-      });
-
-      let parsed;
-      try {
-        const wrapper = JSON.parse(result);
-        const content = wrapper.result || wrapper;
-        if (typeof content === 'string') {
-          const match = content.match(/\[[\s\S]*\]/);
-          parsed = match ? JSON.parse(match[0]) : [];
-        } else {
-          parsed = Array.isArray(content) ? content : [];
-        }
-      } catch {
-        const match = result.match(/\[[\s\S]*\]/);
+      const wrapper = JSON.parse(result);
+      const content = wrapper.result || wrapper;
+      if (typeof content === 'string') {
+        const match = content.match(/\[[\s\S]*\]/);
         parsed = match ? JSON.parse(match[0]) : [];
+      } else {
+        parsed = Array.isArray(content) ? content : [];
       }
-
-      if (parsed.length > 0) {
-        log(`   ✅ 批次 ${batchNum}: 提取到 ${parsed.length} 筆薪資資料`);
-        allEntries.push(...parsed);
-      }
-
-    } catch (err) {
-      log(`   ⚠️ 批次 ${batchNum} 解析失敗: ${err.message}`);
+    } catch {
+      const match = result.match(/\[[\s\S]*\]/);
+      parsed = match ? JSON.parse(match[0]) : [];
     }
+
+    log(`   ✅ AI 提取到 ${parsed.length} 筆薪資資料`);
+
+    const parsedPath = join(RESULTS_DIR, `parsed-${new Date().toISOString().slice(0, 10)}.json`);
+    writeFileSync(parsedPath, JSON.stringify(parsed, null, 2));
+    log(`   💾 存於：${parsedPath}`);
+
+    return parsed;
+  } catch (err) {
+    console.error('   ❌ AI 解析失敗:', err.message);
+    return [];
   }
-
-  // 去重（同醫院同日期只留一筆）
-  const deduped = [];
-  const seen = new Set();
-  for (const e of allEntries) {
-    const key = `${e.hospital}_${e.source_date}`;
-    if (!seen.has(key)) {
-      seen.add(key);
-      deduped.push(e);
-    }
-  }
-
-  log(`   ✅ 共提取 ${deduped.length} 筆不重複薪資資料`);
-
-  const parsedPath = join(RESULTS_DIR, `parsed-${new Date().toISOString().slice(0, 10)}.json`);
-  writeFileSync(parsedPath, JSON.stringify(deduped, null, 2));
-  log(`   💾 存於：${parsedPath}`);
-
-  return deduped;
 }
 
 // ── Step 3: 寫入 Supabase ──────────────────────────
@@ -282,10 +288,8 @@ async function writeToSupabase(entries) {
   }
 
   const headers = {
-    'apikey': SB_KEY,
-    'Authorization': `Bearer ${SB_KEY}`,
-    'Content-Type': 'application/json',
-    'Prefer': 'return=representation'
+    'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`,
+    'Content-Type': 'application/json', 'Prefer': 'return=representation'
   };
 
   const [hospResp, dashResp] = await Promise.all([
@@ -295,12 +299,10 @@ async function writeToSupabase(entries) {
 
   const hospitals = await hospResp.json();
   const currentData = await dashResp.json();
-
   let added = 0, skipped = 0, newHospitals = 0;
 
   for (const entry of entries) {
     try {
-      // 模糊比對醫院
       let hospital = hospitals.find(h => {
         const n1 = h.name.replace(/醫院/g, '');
         const n2 = entry.hospital.replace(/醫院/g, '');
@@ -312,7 +314,6 @@ async function writeToSupabase(entries) {
         return false;
       });
 
-      // 比對薪資是否已有
       if (hospital) {
         const current = currentData.find(d => d.hospital === hospital.name);
         if (current) {
@@ -355,16 +356,15 @@ async function writeToSupabase(entries) {
       }
 
       const report = {
-        hospital_id: hospital.id,
-        s10: entry.s10 || null, s14: entry.s14 || null,
-        s15: entry.s15 || null, s16: entry.s16 || null,
-        visits: entry.visits || null, note: entry.note || null,
+        hospital_id: hospital.id, s10: entry.s10 || null, s14: entry.s14 || null,
+        s15: entry.s15 || null, s16: entry.s16 || null, visits: entry.visits || null,
+        note: entry.note || null,
         source_date: entry.source_date || new Date().toISOString().slice(0, 10),
         submitter_token: 'auto_pipeline'
       };
 
       if (DRY_RUN) {
-        log(`   📋 [DRY RUN] ${entry.hospital}: s15=${report.s15 || '—'}萬`);
+        log(`   📋 [DRY RUN] ${entry.hospital}: s10=${report.s10 || '—'} s15=${report.s15 || '—'} s16=${report.s16 || '—'}萬`);
         added++;
         continue;
       }
@@ -382,25 +382,21 @@ async function writeToSupabase(entries) {
       console.error(`   ❌ ${entry.hospital}:`, err.message);
     }
   }
-
   return { added, skipped, newHospitals };
 }
 
 // ── Main ──────────────────────────────────────
 async function main() {
-  if (EXPORT_COOKIES) {
-    await exportCookiesInteractive();
-    return;
-  }
+  if (EXPORT_COOKIES) { await exportCookiesInteractive(); return; }
 
   try {
-    const screenshots = await captureGroupScreenshots();
-    const entries = analyzeScreenshotsWithVision(screenshots);
+    const posts = await fetchPostTexts();
+    const entries = parsePostsWithAI(posts);
     const result = await writeToSupabase(entries);
 
     const logEntry = {
       date: new Date().toISOString(),
-      screenshots: screenshots.length,
+      postsCollected: posts.length,
       entriesParsed: entries.length,
       ...result
     };
@@ -414,13 +410,12 @@ async function main() {
 
     console.log(`\n${'═'.repeat(50)}`);
     console.log(`✅ Pipeline 完成！`);
-    console.log(`   截圖數量：${screenshots.length} 張`);
+    console.log(`   收集文字：${posts.length} 段`);
     console.log(`   解析薪資：${entries.length} 筆`);
     console.log(`   新增寫入：${result.added} 筆`);
     console.log(`   薪資未變：${result.skipped} 筆`);
     console.log(`   新增醫院：${result.newHospitals} 間`);
     console.log(`${'═'.repeat(50)}\n`);
-
   } catch (err) {
     console.error('\n❌ Pipeline 失敗:', err.message);
     console.error(err.stack);
