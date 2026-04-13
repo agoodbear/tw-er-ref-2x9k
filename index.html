@@ -282,6 +282,11 @@
     </div>
   </div>
 
+  <div class="card" style="grid-column:1/-1">
+    <h2>📈 薪資時序趨勢（有多筆資料的醫院）</h2>
+    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+  </div>
+
   <div class="card table-card">
     <h2>📋 各醫院詳細資料（點選「歷史」展開時間軸）</h2>
     <table id="mainTable">
@@ -366,15 +371,33 @@ async function loadDashboardData() {
   try {
     document.getElementById('statsGrid').innerHTML = '<div class="stat-card" style="grid-column:1/-1;text-align:center;padding:40px"><div class="value">⏳</div><div class="sub">載入資料中...</div></div>';
     
-    const resp = await fetch(SB_URL + '/rest/v1/dashboard_data?select=*', {
-      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
-    });
+    const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+    const [resp, histResp] = await Promise.all([
+      fetch(SB_URL + '/rest/v1/dashboard_data?select=*', { headers }),
+      fetch(SB_URL + '/rest/v1/hospital_history?select=*', { headers })
+    ]);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const rows = await resp.json();
-    
+
+    // Build history map: hospital_id -> [{date, s14, s15, note}]
+    const historyMap = {};
+    if (histResp.ok) {
+      const histRows = await histResp.json();
+      histRows.forEach(function(h) {
+        if (!historyMap[h.hospital_id]) historyMap[h.hospital_id] = [];
+        historyMap[h.hospital_id].push({
+          date: h.source_date || (h.created_at ? h.created_at.slice(0,10) : ''),
+          s14: h.s14 ? parseFloat(h.s14) : null,
+          s15: h.s15 ? parseFloat(h.s15) : null,
+          note: h.note || ''
+        });
+      });
+    }
+
     // Transform to frontend format
     data = rows.map(function(r) {
       return {
+        id: r.id,
         hospital: r.hospital,
         region: r.region,
         area: r.area,
@@ -391,14 +414,15 @@ async function loadDashboardData() {
         shift: r.shift || 12,
         lastUpdated: r.lastUpdated || null,
         note: r.note || '',
-        history: [] // History loaded separately if needed
+        history: historyMap[r.id] || []
       };
     });
-    
+
     console.log('Loaded ' + data.length + ' hospitals from Supabase');
     renderStats(data);
     renderTable(data);
     renderCharts(data);
+    renderTrendChart();
   } catch(e) {
     console.error('Failed to load data:', e);
     document.getElementById('statsGrid').innerHTML = '<div class="stat-card" style="grid-column:1/-1;text-align:center;padding:40px;color:#fc8181"><div class="value">❌</div><div class="sub">載入失敗：' + e.message + '</div></div>';
@@ -595,7 +619,7 @@ function renderCharts(d) {
   });
 }
 
-function renderTrendChart() { return; // trend chart canvas removed
+function renderTrendChart() {
   // Build trend series from hospitals that have history
   const trendSeries = data
     .filter(x => x.history && x.history.length >= 2)
@@ -643,7 +667,7 @@ function renderTrendChart() { return; // trend chart canvas removed
       },
       scales: {
         x: { ticks: { color: '#718096' }, grid: { color: '#2d3748' } },
-        y: { ticks: { color: '#718096', callback: v => v + '萬' }, grid: { color: '#2d3748' }, min: 30, max: 65 }
+        y: { ticks: { color: '#718096', callback: v => v + '萬' }, grid: { color: '#2d3748' } }
       }
     }
   });
