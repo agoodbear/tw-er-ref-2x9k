@@ -1,0 +1,4 @@
+node_modules/
+scripts/node_modules/
+data/
+.fb-cookies.json

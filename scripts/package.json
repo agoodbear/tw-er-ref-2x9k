@@ -1,0 +1,13 @@
+{
+  "name": "er-salary-pipeline",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "fetch": "node fetch-fb-salary.mjs",
+    "fetch:dry": "node fetch-fb-salary.mjs --dry-run",
+    "cookies": "node fetch-fb-salary.mjs --export-cookies"
+  },
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}
