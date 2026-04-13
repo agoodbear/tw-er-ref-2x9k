@@ -37,7 +37,7 @@ const RESULTS_DIR = join(__dirname, '..', 'data');
 const LOG_FILE = join(RESULTS_DIR, 'fetch-log.json');
 
 // 預設社團 URL（行動版）
-const DEFAULT_GROUP = 'https://m.facebook.com/groups/1839abornewtw';
+const DEFAULT_GROUP = 'https://m.facebook.com/groups/Taiwan.ER';
 
 const args = process.argv.slice(2);
 const DAYS = parseInt(args.find((_, i, a) => a[i - 1] === '--days') || '7');
