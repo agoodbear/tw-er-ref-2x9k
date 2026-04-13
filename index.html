@@ -97,8 +97,8 @@
       letter-spacing: 0.05em;
     }
 
-    .table-card { grid-column: 1 / -1; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .table-card { grid-column: 1 / -1; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; table-layout: auto; }
     thead th {
       text-align: left;
       padding: 10px 12px;
@@ -160,7 +160,7 @@
     .hist-sal { color: #f6e05e; font-weight: 600; white-space: nowrap; }
     .hist-note { color: #a0aec0; }
 
-    .note-text { font-size: 0.78rem; color: #718096; line-height: 1.5; max-width: 260px; }
+    .note-text { font-size: 0.78rem; color: #718096; line-height: 1.5; min-width: 180px; max-width: 360px; word-break: break-word; }
     .tag {
       display: inline-block;
       padding: 2px 6px;
