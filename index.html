@@ -692,6 +692,7 @@ function renderCharts(d) {
 }
 
 function renderTrendChart() {
+  if (!document.getElementById('trendChart')) return;
   // Build trend series from hospitals that have history
   const trendSeries = data
     .filter(x => x.history && x.history.length >= 2)
