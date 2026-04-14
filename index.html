@@ -115,6 +115,7 @@
     tbody tr { border-bottom: 1px solid #2d3748; transition: background 0.1s; }
     tbody tr:hover { background: #2d3748; }
     tbody td { padding: 12px 12px; color: #e2e8f0; vertical-align: top; }
+    tbody td:first-child { min-width: 160px; position: relative; overflow: visible; }
 
     .region-badge {
       display: inline-block;
@@ -146,19 +147,22 @@
     .history-panel {
       display: none;
       margin-top: 6px;
-      padding: 8px;
+      padding: 10px 12px;
       background: #2d3748;
       border-radius: 6px;
       font-size: 0.75rem;
       color: #a0aec0;
       line-height: 1.8;
+      min-width: 320px;
+      width: max-content;
+      max-width: 500px;
     }
     .history-panel.open { display: block; }
-    .hist-row { display: flex; gap: 8px; align-items: flex-start; }
+    .hist-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: nowrap; }
     .hist-dot { width: 6px; height: 6px; border-radius: 50%; background: #4a5568; margin-top: 6px; flex-shrink: 0; }
-    .hist-date { color: #718096; white-space: nowrap; }
-    .hist-sal { color: #f6e05e; font-weight: 600; white-space: nowrap; }
-    .hist-note { color: #a0aec0; }
+    .hist-date { color: #718096; white-space: nowrap; flex-shrink: 0; }
+    .hist-sal { color: #f6e05e; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+    .hist-note { color: #a0aec0; word-break: break-word; min-width: 0; }
 
     .note-text { font-size: 0.78rem; color: #718096; line-height: 1.5; min-width: 180px; max-width: 360px; word-break: break-word; }
     .tag {
