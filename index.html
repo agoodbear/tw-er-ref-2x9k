@@ -253,7 +253,23 @@
     .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,0.1); }
     .form-group textarea { resize:vertical; min-height:60px; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
     .form-row-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
+    @media (max-width: 600px) { .form-row-4, .form-row-3 { grid-template-columns:1fr 1fr; } }
+    .form-section { margin-bottom:20px; padding:16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; }
+    .form-section-title { font-size:.82rem; font-weight:600; color:#2563eb; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+    .confirm-preview { background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:16px; margin-bottom:16px; font-size:.85rem; color:#1e293b; line-height:1.7; display:none; }
+    .confirm-preview.open { display:block; }
+    .confirm-preview strong { color:#2563eb; }
+    .confirm-preview .preview-row { display:flex; gap:8px; margin:2px 0; }
+    .confirm-preview .preview-label { color:#64748b; min-width:80px; flex-shrink:0; }
+    .chip-group { display:flex; gap:8px; flex-wrap:wrap; }
+    .chip { padding:6px 14px; border:1px solid #d1d5db; border-radius:20px; font-size:.82rem; color:#475569; cursor:pointer; transition:all .15s; background:#fff; }
+    .chip:hover { border-color:#2563eb; color:#2563eb; }
+    .chip.active { background:#2563eb; color:#fff; border-color:#2563eb; }
+    .submit-row { display:flex; gap:12px; margin-top:12px; }
+    .back-btn { flex:1; background:#f1f5f9; border:1px solid #d1d5db; border-radius:8px; padding:12px; color:#475569; font-size:.9rem; font-weight:600; cursor:pointer; transition:all .15s; }
+    .back-btn:hover { background:#e2e8f0; }
     .submit-btn { width:100%; background:linear-gradient(135deg,#2563eb,#1d4ed8); border:none; border-radius:8px; padding:12px; color:#fff; font-size:.95rem; font-weight:600; cursor:pointer; margin-top:8px; transition:all .15s; }
     .submit-btn:hover { background:linear-gradient(135deg,#3b82f6,#2563eb); box-shadow:0 4px 6px rgba(37,99,235,0.25); }
     .submit-btn:disabled { opacity:.5; cursor:not-allowed; }
@@ -353,35 +369,88 @@
     <div class="modal">
       <button class="modal-close" onclick="closeModal()">&times;</button>
       <h2>✍️ 匿名回報薪資</h2>
-      <p class="modal-sub">資料送出後不可修改或刪除，請確認後再送出。每 24 小時最多 3 筆。</p>
+      <p class="modal-sub">資料送出後不可修改或刪除。每 24 小時最多 3 筆。</p>
       <form id="reportForm" onsubmit="return submitReport(event)">
-        <div class="form-group">
-          <label>🏥 醫院名稱 *</label>
-          <div class="search-wrap">
-            <input type="text" id="hospSearch" placeholder="輸入醫院名稱（如：台大雲林、員林基督教）..." autocomplete="off" required>
-            <div class="search-results" id="searchResults" style="display:none"></div>
+
+        <!-- Section 1: 醫院 -->
+        <div class="form-section">
+          <div class="form-section-title">🏥 醫院資訊</div>
+          <div class="form-group">
+            <label>醫院名稱 *</label>
+            <div class="search-wrap">
+              <input type="text" id="hospSearch" placeholder="輸入醫院名稱（如：台大雲林、員林基督教）..." autocomplete="off" required>
+              <div class="search-results" id="searchResults" style="display:none"></div>
+            </div>
+            <input type="hidden" id="hospId">
+            <div class="form-hint" id="hospHint"></div>
           </div>
-          <input type="hidden" id="hospId">
-          <div class="form-hint" id="hospHint"></div>
+          <div class="new-hospital-fields" id="newHospFields">
+            <div class="form-row">
+              <div class="form-group"><label>地區 *</label><select id="newRegion"><option value="">選擇地區</option><option>基隆</option><option>台北</option><option>新北</option><option>桃園</option><option>新竹</option><option>苗栗</option><option>台中</option><option>彰化</option><option>南投</option><option>雲林</option><option>嘉義</option><option>台南</option><option>高雄</option><option>屏東</option><option>宜蘭</option><option>花蓮</option><option>台東</option></select></div>
+              <div class="form-group"><label>醫院層級</label><select id="newLevel"><option value="地區醫院">地區醫院</option><option value="區域醫院">區域醫院</option><option value="醫學中心">醫學中心</option><option value="部立醫院">部立醫院</option></select></div>
+            </div>
+          </div>
         </div>
-        <div class="new-hospital-fields" id="newHospFields">
+
+        <!-- Section 2: 薪資 -->
+        <div class="form-section">
+          <div class="form-section-title">💰 薪資資訊（至少填一項）</div>
+          <div class="form-group">
+            <label>你上幾班？（可複選填入對應薪資）</label>
+            <div class="form-hint" style="margin-bottom:8px">填你知道的班數即可，不用全填</div>
+          </div>
+          <div class="form-row-4">
+            <div class="form-group"><label>10班/月薪(萬)</label><input type="number" id="fs10" step="0.1" min="10" max="100" placeholder="如 33"></div>
+            <div class="form-group"><label>14班/月薪(萬)</label><input type="number" id="fs14" step="0.1" min="10" max="100" placeholder="如 40"></div>
+            <div class="form-group"><label>15班/月薪(萬)</label><input type="number" id="fs15" step="0.1" min="10" max="100" placeholder="如 45"></div>
+            <div class="form-group"><label>16班/月薪(萬)</label><input type="number" id="fs16" step="0.1" min="10" max="100" placeholder="如 55"></div>
+          </div>
+        </div>
+
+        <!-- Section 3: 醫院特色 -->
+        <div class="form-section">
+          <div class="form-section-title">🏷️ 醫院特色（選填）</div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>班制</label>
+              <div class="chip-group">
+                <span class="chip" data-field="fShift" data-value="8" onclick="toggleChip(this)">8小時制</span>
+                <span class="chip" data-field="fShift" data-value="12" onclick="toggleChip(this)">12小時制</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>公立醫院？</label>
+              <div class="chip-group">
+                <span class="chip" data-field="fPublic" data-value="1" onclick="toggleChip(this)">是（公立）</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>NP 支援？</label>
+              <div class="chip-group">
+                <span class="chip" data-field="fNP" data-value="1" onclick="toggleChip(this)">有 NP</span>
+              </div>
+            </div>
+          </div>
           <div class="form-row">
-            <div class="form-group"><label>地區 *</label><select id="newRegion"><option value="">選擇地區</option><option>基隆</option><option>台北</option><option>新北</option><option>桃園</option><option>新竹</option><option>苗栗</option><option>台中</option><option>彰化</option><option>南投</option><option>雲林</option><option>嘉義</option><option>台南</option><option>高雄</option><option>屏東</option><option>宜蘭</option><option>花蓮</option><option>台東</option></select></div>
-            <div class="form-group"><label>醫院層級</label><select id="newLevel"><option value="地區醫院">地區醫院</option><option value="區域醫院">區域醫院</option><option value="醫學中心">醫學中心</option><option value="部立醫院">部立醫院</option></select></div>
+            <div class="form-group"><label>月來診量</label><input type="number" id="fvisits" min="0" max="50000" placeholder="如 3500"></div>
+            <div class="form-group"><label>資料日期</label><input type="date" id="fsrcDate"></div>
           </div>
+          <div class="form-group"><label>備註</label><textarea id="fnote" placeholder="福利、環境、值班模式等補充..."></textarea></div>
         </div>
-        <div class="form-row-4">
-          <div class="form-group"><label>10班月薪(萬)</label><input type="number" id="fs10" step="0.1" min="0" max="200" placeholder="如 33"></div>
-          <div class="form-group"><label>14班月薪(萬)</label><input type="number" id="fs14" step="0.1" min="0" max="200" placeholder="如 40"></div>
-          <div class="form-group"><label>15班月薪(萬)</label><input type="number" id="fs15" step="0.1" min="0" max="200" placeholder="如 45"></div>
-          <div class="form-group"><label>16班月薪(萬)</label><input type="number" id="fs16" step="0.1" min="0" max="200" placeholder="如 55"></div>
+
+        <!-- Preview -->
+        <div class="confirm-preview" id="confirmPreview">
+          <strong>📋 送出前確認：</strong>
+          <div id="previewContent"></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>月來診量</label><input type="number" id="fvisits" min="0" max="50000" placeholder="如 3500"></div>
-          <div class="form-group"><label>資料日期</label><input type="date" id="fsrcDate"></div>
+
+        <div class="submit-row" id="submitRow">
+          <button type="button" class="submit-btn" id="previewBtn" onclick="showPreview()" style="flex:1">預覽確認</button>
         </div>
-        <div class="form-group"><label>備註</label><textarea id="fnote" placeholder="班制、福利、NP支援、環境等補充資訊..."></textarea></div>
-        <button type="submit" class="submit-btn" id="submitBtn">送出回報</button>
+        <div class="submit-row" id="confirmRow" style="display:none">
+          <button type="button" class="back-btn" onclick="hidePreview()">← 返回修改</button>
+          <button type="submit" class="submit-btn" id="submitBtn" style="flex:2">確認送出</button>
+        </div>
       </form>
     </div>
   </div>
@@ -794,8 +863,83 @@ function openModal() {
   document.getElementById('hospHint').textContent = '';
   document.getElementById('newHospFields').classList.remove('open');
   document.getElementById('searchResults').style.display = 'none';
+  // 預設今天日期
+  document.getElementById('fsrcDate').value = new Date().toISOString().slice(0, 10);
+  // 重置 chips
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  // 重置 preview
+  hidePreview();
 }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+// Chip toggle
+function toggleChip(el) {
+  var field = el.dataset.field;
+  // 同 group 的 chip 互斥（除了單選的）
+  if (field === 'fShift') {
+    el.parentElement.querySelectorAll('.chip').forEach(c => { if (c !== el) c.classList.remove('active'); });
+  }
+  el.classList.toggle('active');
+}
+
+function getChipValue(field) {
+  var active = document.querySelector('.chip[data-field="' + field + '"].active');
+  return active ? active.dataset.value : null;
+}
+
+// Preview / Confirm
+function showPreview() {
+  var hospName = document.getElementById('hospSearch').value.trim();
+  if (!hospName) { showToast('⚠️ 請輸入醫院名稱', 'err'); return; }
+
+  var s10 = document.getElementById('fs10').value;
+  var s14 = document.getElementById('fs14').value;
+  var s15 = document.getElementById('fs15').value;
+  var s16 = document.getElementById('fs16').value;
+  if (!s10 && !s14 && !s15 && !s16) { showToast('⚠️ 請至少填寫一個薪資欄位', 'err'); return; }
+
+  // 合理範圍檢查
+  var vals = [s10, s14, s15, s16].filter(Boolean).map(Number);
+  if (vals.some(v => v < 15 || v > 100)) {
+    showToast('⚠️ 月薪應在 15~100 萬之間，請確認數字', 'err');
+    return;
+  }
+
+  var visits = document.getElementById('fvisits').value;
+  var srcDate = document.getElementById('fsrcDate').value;
+  var note = document.getElementById('fnote').value;
+  var shift = getChipValue('fShift');
+  var isPublic = getChipValue('fPublic');
+  var hasNP = getChipValue('fNP');
+
+  var html = '';
+  html += '<div class="preview-row"><span class="preview-label">醫院</span><strong>' + hospName + '</strong></div>';
+  var salaryParts = [];
+  if (s10) salaryParts.push('10班 ' + s10 + '萬');
+  if (s14) salaryParts.push('14班 ' + s14 + '萬');
+  if (s15) salaryParts.push('15班 ' + s15 + '萬');
+  if (s16) salaryParts.push('16班 ' + s16 + '萬');
+  html += '<div class="preview-row"><span class="preview-label">薪資</span>' + salaryParts.join('、') + '</div>';
+  if (visits) html += '<div class="preview-row"><span class="preview-label">月診量</span>' + parseInt(visits).toLocaleString() + ' 人次</div>';
+  var tags = [];
+  if (shift) tags.push(shift + '小時制');
+  if (isPublic) tags.push('公立');
+  if (hasNP) tags.push('NP支援');
+  if (tags.length) html += '<div class="preview-row"><span class="preview-label">特色</span>' + tags.join('、') + '</div>';
+  if (srcDate) html += '<div class="preview-row"><span class="preview-label">日期</span>' + srcDate + '</div>';
+  if (note) html += '<div class="preview-row"><span class="preview-label">備註</span>' + note + '</div>';
+
+  document.getElementById('previewContent').innerHTML = html;
+  document.getElementById('confirmPreview').classList.add('open');
+  document.getElementById('submitRow').style.display = 'none';
+  document.getElementById('confirmRow').style.display = 'flex';
+}
+
+function hidePreview() {
+  document.getElementById('confirmPreview').classList.remove('open');
+  document.getElementById('submitRow').style.display = 'flex';
+  document.getElementById('confirmRow').style.display = 'none';
+}
 document.addEventListener('click', function(e) { if (e.target.id === 'modalOverlay') closeModal(); });
 
 var hospSearchInput = document.getElementById('hospSearch');
@@ -893,10 +1037,17 @@ async function submitReport(e) {
     var s15 = document.getElementById('fs15').value || null;
     var s16 = document.getElementById('fs16').value || null;
     var visits = document.getElementById('fvisits').value || null;
-    var note = document.getElementById('fnote').value || null;
+    var userNote = document.getElementById('fnote').value || '';
     var srcDate = document.getElementById('fsrcDate').value || null;
+    // 收集 chip 資訊附加到 note
+    var chipParts = [];
+    var shift = getChipValue('fShift');
+    if (shift) chipParts.push(shift + 'h制');
+    if (getChipValue('fPublic')) chipParts.push('公立');
+    if (getChipValue('fNP')) chipParts.push('NP支援');
+    var note = (chipParts.length ? chipParts.join('；') + '。' : '') + userNote || null;
 
-    if (!s10 && !s14 && !s15 && !s16) { showToast('\u26a0\ufe0f \u8acb\u81f3\u5c11\u586b\u5beb\u4e00\u500b\u85aa\u8cc7\u6b04\u4f4d', 'err'); return; }
+    if (!s10 && !s14 && !s15 && !s16) { showToast('⚠️ 請至少填寫一個薪資欄位', 'err'); return; }
 
     var hospitalId = selectedHospitalId;
 
