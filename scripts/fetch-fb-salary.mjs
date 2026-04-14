@@ -422,40 +422,61 @@ async function writeToSupabase(entries) {
 }
 
 // ── Main ──────────────────────────────────────
+const MAX_RETRIES = 2;       // 最多重試 2 次（含首次共 3 次）
+const RETRY_DELAY = 3600000; // 1 小時 = 3,600,000 ms
+
+async function run() {
+  const posts = await fetchPostTexts();
+  const entries = await parsePostsWithAI(posts);
+  const result = await writeToSupabase(entries);
+
+  const logEntry = {
+    date: new Date().toISOString(),
+    postsCollected: posts.length,
+    entriesParsed: entries.length,
+    ...result
+  };
+
+  let logs = [];
+  if (existsSync(LOG_FILE)) {
+    try { logs = JSON.parse(readFileSync(LOG_FILE, 'utf-8')); } catch {}
+  }
+  logs.push(logEntry);
+  writeFileSync(LOG_FILE, JSON.stringify(logs, null, 2));
+
+  console.log(`\n${'═'.repeat(50)}`);
+  console.log(`✅ Pipeline 完成！`);
+  console.log(`   收集文字：${posts.length} 段`);
+  console.log(`   解析薪資：${entries.length} 筆`);
+  console.log(`   新增寫入：${result.added} 筆`);
+  console.log(`   薪資未變：${result.skipped} 筆`);
+  console.log(`   新增醫院：${result.newHospitals} 間`);
+  console.log(`${'═'.repeat(50)}\n`);
+}
+
 async function main() {
   if (EXPORT_COOKIES) { await exportCookiesInteractive(); return; }
 
-  try {
-    const posts = await fetchPostTexts();
-    const entries = await parsePostsWithAI(posts);
-    const result = await writeToSupabase(entries);
+  for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
+    try {
+      if (attempt > 1) {
+        log(`🔄 第 ${attempt} 次嘗試（上次失敗後等了 1 小時）`);
+      }
+      await run();
+      return; // 成功就結束
+    } catch (err) {
+      console.error(`\n❌ Pipeline 失敗（第 ${attempt} 次）: ${err.message}`);
 
-    const logEntry = {
-      date: new Date().toISOString(),
-      postsCollected: posts.length,
-      entriesParsed: entries.length,
-      ...result
-    };
-
-    let logs = [];
-    if (existsSync(LOG_FILE)) {
-      try { logs = JSON.parse(readFileSync(LOG_FILE, 'utf-8')); } catch {}
+      if (attempt <= MAX_RETRIES) {
+        const nextTime = new Date(Date.now() + RETRY_DELAY).toLocaleTimeString('zh-TW');
+        log(`⏳ 將在 1 小時後自動重試（預計 ${nextTime}）...`);
+        await new Promise(r => setTimeout(r, RETRY_DELAY));
+      } else {
+        console.error('❌ 已達最大重試次數，放棄本次執行。');
+        console.error(err.stack);
+        process.exit(1);
+      }
     }
-    logs.push(logEntry);
-    writeFileSync(LOG_FILE, JSON.stringify(logs, null, 2));
-
-    console.log(`\n${'═'.repeat(50)}`);
-    console.log(`✅ Pipeline 完成！`);
-    console.log(`   收集文字：${posts.length} 段`);
-    console.log(`   解析薪資：${entries.length} 筆`);
-    console.log(`   新增寫入：${result.added} 筆`);
-    console.log(`   薪資未變：${result.skipped} 筆`);
-    console.log(`   新增醫院：${result.newHospitals} 間`);
-    console.log(`${'═'.repeat(50)}\n`);
-  } catch (err) {
-    console.error('\n❌ Pipeline 失敗:', err.message);
-    console.error(err.stack);
-    process.exit(1);
   }
 }
 
