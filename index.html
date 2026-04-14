@@ -104,26 +104,38 @@
       letter-spacing: 0.05em;
     }
 
-    .table-card { grid-column: 1 / -1; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; table-layout: auto; }
+    .table-card { grid-column: 1 / -1; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; table-layout: fixed; }
     thead th {
       text-align: left;
-      padding: 10px 12px;
+      padding: 8px 6px;
       background: #f1f5f9;
       color: #475569;
       font-weight: 600;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
       white-space: nowrap;
+      overflow: hidden;
     }
     thead th:first-child { border-radius: 8px 0 0 8px; }
     thead th:last-child { border-radius: 0 8px 8px 0; }
     tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.1s; }
     tbody tr:nth-child(even) { background: #fafbfc; }
     tbody tr:hover { background: #eff6ff; }
-    tbody td { padding: 12px 12px; color: #334155; vertical-align: top; }
-    tbody td:first-child { min-width: 160px; position: relative; overflow: visible; }
+    tbody td { padding: 8px 6px; color: #334155; vertical-align: top; font-size: 0.8rem; }
+    tbody td:first-child { position: relative; overflow: visible; }
+    /* Column widths: total 13 columns */
+    col.col-hospital { width: 13%; }
+    col.col-region { width: 4%; }
+    col.col-level { width: 6%; }
+    col.col-trend { width: 5%; }
+    col.col-salary { width: 6%; }
+    col.col-visits { width: 6%; }
+    col.col-pph { width: 4%; }
+    col.col-tags { width: 7%; }
+    col.col-note { width: 22%; }
+    col.col-date { width: 7%; }
 
     .region-badge {
       display: inline-block;
@@ -173,7 +185,7 @@
     .hist-sal { color: #d97706; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
     .hist-note { color: #64748b; word-break: break-word; min-width: 0; }
 
-    .note-text { font-size: 0.78rem; color: #64748b; line-height: 1.5; min-width: 180px; max-width: 360px; word-break: break-word; }
+    .note-text { font-size: 0.75rem; color: #64748b; line-height: 1.4; word-break: break-word; overflow-wrap: break-word; }
     .tag {
       display: inline-block;
       padding: 2px 6px;
@@ -305,21 +317,36 @@
   <div class="card table-card">
     <h2>📋 各醫院詳細資料（點選「歷史」展開時間軸）</h2>
     <table id="mainTable">
+      <colgroup>
+        <col class="col-hospital">
+        <col class="col-region">
+        <col class="col-level">
+        <col class="col-trend">
+        <col class="col-salary">
+        <col class="col-salary">
+        <col class="col-salary">
+        <col class="col-salary">
+        <col class="col-visits">
+        <col class="col-pph">
+        <col class="col-tags">
+        <col class="col-note">
+        <col class="col-date">
+      </colgroup>
       <thead>
         <tr>
           <th>醫院</th>
           <th>地區</th>
-          <th>醫院層級</th>
+          <th>層級</th>
           <th>趨勢</th>
-          <th>10班/月</th>
-          <th>14班/月</th>
-          <th>15班/月</th>
-          <th>16班/月</th>
-          <th>月來診量</th>
+          <th>10班</th>
+          <th>14班</th>
+          <th>15班</th>
+          <th>16班</th>
+          <th>月診量</th>
           <th title="每位醫師每小時看診量(估算)">PPH</th>
           <th>特色</th>
           <th>備註</th>
-          <th>更新日期</th>
+          <th>更新</th>
         </tr>
       </thead>
       <tbody id="tableBody"></tbody>
