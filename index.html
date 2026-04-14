@@ -4,35 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>全台急診醫師薪資 Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, 'SF Pro Display', 'PingFang TC', 'Noto Sans TC', sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
+      font-family: 'Inter', -apple-system, 'SF Pro Display', 'PingFang TC', 'Noto Sans TC', sans-serif;
+      background: #f5f7fa;
+      color: #1e293b;
       min-height: 100vh;
     }
     .header {
-      background: linear-gradient(135deg, #1a1d2e 0%, #16213e 50%, #0f3460 100%);
-      border-bottom: 1px solid #2d3748;
+      background: linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%);
+      border-bottom: 1px solid #e2e8f0;
       padding: 24px 32px;
       display: flex;
       align-items: center;
       gap: 16px;
     }
     .header-icon { font-size: 2rem; }
-    .header h1 { font-size: 1.6rem; font-weight: 700; color: #f7fafc; }
-    .header p { font-size: 0.85rem; color: #a0aec0; margin-top: 4px; }
+    .header h1 { font-size: 1.6rem; font-weight: 700; color: #1e293b; }
+    .header p { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
     .header-badge {
       margin-left: auto;
-      background: #2d3748;
-      border: 1px solid #4a5568;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
       border-radius: 8px;
       padding: 8px 16px;
       font-size: 0.8rem;
-      color: #68d391;
+      color: #16a34a;
+      font-weight: 500;
     }
     .container { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
 
@@ -43,14 +47,15 @@
       margin-bottom: 24px;
     }
     .stat-card {
-      background: #1a202c;
-      border: 1px solid #2d3748;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 12px;
       padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     }
-    .stat-card .label { font-size: 0.75rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
-    .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #f7fafc; margin: 6px 0 4px; }
-    .stat-card .sub { font-size: 0.8rem; color: #68d391; }
+    .stat-card .label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+    .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #1e293b; margin: 6px 0 4px; }
+    .stat-card .sub { font-size: 0.8rem; color: #16a34a; font-weight: 500; }
 
     .filters {
       display: flex;
@@ -60,21 +65,22 @@
       align-items: center;
     }
     .filter-btn {
-      background: #2d3748;
-      border: 1px solid #4a5568;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
       border-radius: 8px;
       padding: 7px 14px;
       font-size: 0.82rem;
-      color: #a0aec0;
+      color: #64748b;
       cursor: pointer;
       transition: all 0.15s;
+      font-weight: 500;
     }
     .filter-btn:hover, .filter-btn.active {
-      background: #3182ce;
-      border-color: #3182ce;
+      background: #2563eb;
+      border-color: #2563eb;
       color: #fff;
     }
-    .filter-label { font-size: 0.8rem; color: #718096; margin-right: 4px; }
+    .filter-label { font-size: 0.8rem; color: #64748b; margin-right: 4px; font-weight: 500; }
 
     .main-grid {
       display: grid;
@@ -83,15 +89,16 @@
       margin-bottom: 20px;
     }
     .card {
-      background: #1a202c;
-      border: 1px solid #2d3748;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 12px;
       padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     }
     .card h2 {
       font-size: 0.9rem;
       font-weight: 600;
-      color: #a0aec0;
+      color: #475569;
       margin-bottom: 16px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -102,8 +109,8 @@
     thead th {
       text-align: left;
       padding: 10px 12px;
-      background: #2d3748;
-      color: #a0aec0;
+      background: #f1f5f9;
+      color: #475569;
       font-weight: 600;
       font-size: 0.75rem;
       text-transform: uppercase;
@@ -112,9 +119,10 @@
     }
     thead th:first-child { border-radius: 8px 0 0 8px; }
     thead th:last-child { border-radius: 0 8px 8px 0; }
-    tbody tr { border-bottom: 1px solid #2d3748; transition: background 0.1s; }
-    tbody tr:hover { background: #2d3748; }
-    tbody td { padding: 12px 12px; color: #e2e8f0; vertical-align: top; }
+    tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.1s; }
+    tbody tr:nth-child(even) { background: #fafbfc; }
+    tbody tr:hover { background: #eff6ff; }
+    tbody td { padding: 12px 12px; color: #334155; vertical-align: top; }
     tbody td:first-child { min-width: 160px; position: relative; overflow: visible; }
 
     .region-badge {
@@ -125,20 +133,20 @@
       font-weight: 600;
       color: #fff;
     }
-    .salary-high { color: #68d391; font-weight: 700; }
-    .salary-mid { color: #f6e05e; font-weight: 600; }
-    .salary-low { color: #fc8181; }
+    .salary-high { color: #16a34a; font-weight: 700; }
+    .salary-mid { color: #d97706; font-weight: 600; }
+    .salary-low { color: #dc2626; }
 
     /* Trend badge */
-    .trend-up   { color: #68d391; font-size: 0.8rem; font-weight: 700; }
-    .trend-down { color: #fc8181; font-size: 0.8rem; font-weight: 700; }
-    .trend-flat { color: #a0aec0; font-size: 0.8rem; }
+    .trend-up   { color: #16a34a; font-size: 0.8rem; font-weight: 700; }
+    .trend-down { color: #dc2626; font-size: 0.8rem; font-weight: 700; }
+    .trend-flat { color: #64748b; font-size: 0.8rem; }
 
     /* History expand */
     .history-toggle {
       cursor: pointer;
       font-size: 0.72rem;
-      color: #3182ce;
+      color: #2563eb;
       text-decoration: underline;
       background: none;
       border: none;
@@ -148,10 +156,11 @@
       display: none;
       margin-top: 6px;
       padding: 10px 12px;
-      background: #2d3748;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
       border-radius: 6px;
       font-size: 0.75rem;
-      color: #a0aec0;
+      color: #475569;
       line-height: 1.8;
       min-width: 320px;
       width: max-content;
@@ -159,54 +168,56 @@
     }
     .history-panel.open { display: block; }
     .hist-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: nowrap; }
-    .hist-dot { width: 6px; height: 6px; border-radius: 50%; background: #4a5568; margin-top: 6px; flex-shrink: 0; }
-    .hist-date { color: #718096; white-space: nowrap; flex-shrink: 0; }
-    .hist-sal { color: #f6e05e; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
-    .hist-note { color: #a0aec0; word-break: break-word; min-width: 0; }
+    .hist-dot { width: 6px; height: 6px; border-radius: 50%; background: #94a3b8; margin-top: 6px; flex-shrink: 0; }
+    .hist-date { color: #64748b; white-space: nowrap; flex-shrink: 0; }
+    .hist-sal { color: #d97706; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+    .hist-note { color: #64748b; word-break: break-word; min-width: 0; }
 
-    .note-text { font-size: 0.78rem; color: #718096; line-height: 1.5; min-width: 180px; max-width: 360px; word-break: break-word; }
+    .note-text { font-size: 0.78rem; color: #64748b; line-height: 1.5; min-width: 180px; max-width: 360px; word-break: break-word; }
     .tag {
       display: inline-block;
       padding: 2px 6px;
       border-radius: 4px;
       font-size: 0.7rem;
       margin: 1px;
+      font-weight: 500;
     }
-    .tag-public { background: #2c5282; color: #90cdf4; }
-    .tag-np { background: #276749; color: #9ae6b4; }
-    .tag-8h { background: #44337a; color: #d6bcfa; }
-    .tag-12h { background: #2d3748; color: #a0aec0; }
+    .tag-public { background: #dbeafe; color: #1d4ed8; }
+    .tag-np { background: #dcfce7; color: #15803d; }
+    .tag-8h { background: #ede9fe; color: #6d28d9; }
+    .tag-12h { background: #f1f5f9; color: #64748b; }
 
     .chart-wrap { position: relative; height: 280px; }
 
-    /* Region badge colors */
-    .r-台北 { background: #3182ce; }
-    .r-新北 { background: #2b6cb0; }
-    .r-桃園 { background: #2c7a7b; }
-    .r-新竹 { background: #285e61; }
-    .r-苗栗 { background: #276749; }
-    .r-台中 { background: #2f855a; }
-    .r-彰化 { background: #c05621; }
-    .r-雲林 { background: #975a16; }
-    .r-嘉義 { background: #6b46c1; }
-    .r-台南 { background: #b7791f; }
-    .r-高雄 { background: #c53030; }
-    .r-南投 { background: #38a169; }
-    .r-屏東 { background: #d53f8c; }
-    .r-花蓮 { background: #0987a0; }
-    .r-宜蘭 { background: #6b46c1; }
-    .r-台東 { background: #702459; }
+    /* Region badge colors - softer pastels for light mode */
+    .r-台北 { background: #3b82f6; }
+    .r-新北 { background: #2563eb; }
+    .r-桃園 { background: #0d9488; }
+    .r-新竹 { background: #0f766e; }
+    .r-苗栗 { background: #16a34a; }
+    .r-台中 { background: #059669; }
+    .r-彰化 { background: #ea580c; }
+    .r-雲林 { background: #ca8a04; }
+    .r-嘉義 { background: #7c3aed; }
+    .r-台南 { background: #d97706; }
+    .r-高雄 { background: #dc2626; }
+    .r-南投 { background: #22c55e; }
+    .r-屏東 { background: #db2777; }
+    .r-花蓮 { background: #0891b2; }
+    .r-宜蘭 { background: #6366f1; }
+    .r-台東 { background: #9333ea; }
 
     .source-note {
       margin-top: 16px;
       padding: 12px 16px;
-      background: #1a202c;
-      border: 1px solid #2d3748;
-      border-left: 3px solid #3182ce;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-left: 3px solid #2563eb;
       border-radius: 4px;
       font-size: 0.78rem;
-      color: #718096;
+      color: #64748b;
       line-height: 1.6;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
 
     @media (max-width: 900px) {
@@ -215,37 +226,37 @@
       .table-card { grid-column: 1; overflow-x: auto; }
     }
 
-    .contribute-btn { margin-left:12px; background:linear-gradient(135deg,#38a169,#2f855a); border:none; border-radius:8px; padding:10px 20px; color:#fff; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all .2s; white-space:nowrap; }
-    .contribute-btn:hover { background:linear-gradient(135deg,#48bb78,#38a169); transform:translateY(-1px); }
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; justify-content:center; align-items:flex-start; padding-top:60px; overflow-y:auto; }
+    .contribute-btn { margin-left:12px; background:linear-gradient(135deg,#16a34a,#15803d); border:none; border-radius:8px; padding:10px 20px; color:#fff; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all .2s; white-space:nowrap; box-shadow:0 1px 3px rgba(0,0,0,0.12); }
+    .contribute-btn:hover { background:linear-gradient(135deg,#22c55e,#16a34a); transform:translateY(-1px); box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); z-index:1000; justify-content:center; align-items:flex-start; padding-top:60px; overflow-y:auto; }
     .modal-overlay.open { display:flex; }
-    .modal { background:#1a202c; border:1px solid #2d3748; border-radius:16px; width:560px; max-width:95vw; padding:28px; position:relative; margin-bottom:40px; }
-    .modal h2 { font-size:1.2rem; color:#f7fafc; margin-bottom:4px; }
-    .modal .modal-sub { font-size:.8rem; color:#718096; margin-bottom:20px; }
-    .modal-close { position:absolute; top:16px; right:16px; background:none; border:none; color:#718096; font-size:1.5rem; cursor:pointer; }
-    .modal-close:hover { color:#e2e8f0; }
+    .modal { background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; width:560px; max-width:95vw; padding:28px; position:relative; margin-bottom:40px; box-shadow:0 20px 60px rgba(0,0,0,0.15); }
+    .modal h2 { font-size:1.2rem; color:#1e293b; margin-bottom:4px; }
+    .modal .modal-sub { font-size:.8rem; color:#64748b; margin-bottom:20px; }
+    .modal-close { position:absolute; top:16px; right:16px; background:none; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; }
+    .modal-close:hover { color:#334155; }
     .form-group { margin-bottom:16px; }
-    .form-group label { display:block; font-size:.8rem; color:#a0aec0; margin-bottom:6px; font-weight:600; }
-    .form-group input,.form-group select,.form-group textarea { width:100%; background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:10px 12px; color:#e2e8f0; font-size:.9rem; outline:none; }
-    .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color:#3182ce; }
+    .form-group label { display:block; font-size:.8rem; color:#475569; margin-bottom:6px; font-weight:600; }
+    .form-group input,.form-group select,.form-group textarea { width:100%; background:#ffffff; border:1px solid #d1d5db; border-radius:8px; padding:10px 12px; color:#1e293b; font-size:.9rem; outline:none; transition:border-color .15s; }
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,0.1); }
     .form-group textarea { resize:vertical; min-height:60px; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     .form-row-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
-    .submit-btn { width:100%; background:linear-gradient(135deg,#3182ce,#2b6cb0); border:none; border-radius:8px; padding:12px; color:#fff; font-size:.95rem; font-weight:600; cursor:pointer; margin-top:8px; }
-    .submit-btn:hover { background:linear-gradient(135deg,#4299e1,#3182ce); }
+    .submit-btn { width:100%; background:linear-gradient(135deg,#2563eb,#1d4ed8); border:none; border-radius:8px; padding:12px; color:#fff; font-size:.95rem; font-weight:600; cursor:pointer; margin-top:8px; transition:all .15s; }
+    .submit-btn:hover { background:linear-gradient(135deg,#3b82f6,#2563eb); box-shadow:0 4px 6px rgba(37,99,235,0.25); }
     .submit-btn:disabled { opacity:.5; cursor:not-allowed; }
-    .search-results { position:absolute; left:0; right:0; top:100%; background:#2d3748; border:1px solid #4a5568; border-radius:0 0 8px 8px; max-height:200px; overflow-y:auto; z-index:10; }
-    .search-results .sr-item { padding:10px 12px; cursor:pointer; font-size:.85rem; color:#e2e8f0; border-bottom:1px solid #4a5568; }
-    .search-results .sr-item:hover { background:#4a5568; }
-    .sr-region { color:#718096; font-size:.75rem; }
-    .search-results .sr-new { padding:10px 12px; cursor:pointer; font-size:.85rem; color:#48bb78; font-weight:600; }
-    .search-results .sr-new:hover { background:#4a5568; }
+    .search-results { position:absolute; left:0; right:0; top:100%; background:#ffffff; border:1px solid #d1d5db; border-radius:0 0 8px 8px; max-height:200px; overflow-y:auto; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    .search-results .sr-item { padding:10px 12px; cursor:pointer; font-size:.85rem; color:#334155; border-bottom:1px solid #f1f5f9; }
+    .search-results .sr-item:hover { background:#eff6ff; }
+    .sr-region { color:#64748b; font-size:.75rem; }
+    .search-results .sr-new { padding:10px 12px; cursor:pointer; font-size:.85rem; color:#16a34a; font-weight:600; }
+    .search-results .sr-new:hover { background:#f0fdf4; }
     .search-wrap { position:relative; }
-    .form-hint { font-size:.72rem; color:#718096; margin-top:4px; }
-    .toast { position:fixed; bottom:24px; right:24px; padding:14px 24px; border-radius:10px; font-size:.9rem; color:#fff; z-index:2000; }
-    .toast-ok { background:#38a169; }
-    .toast-err { background:#e53e3e; }
-    .new-hospital-fields { display:none; margin-top:12px; padding:12px; background:rgba(45,55,72,.27); border-radius:8px; }
+    .form-hint { font-size:.72rem; color:#64748b; margin-top:4px; }
+    .toast { position:fixed; bottom:24px; right:24px; padding:14px 24px; border-radius:10px; font-size:.9rem; color:#fff; z-index:2000; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+    .toast-ok { background:#16a34a; }
+    .toast-err { background:#dc2626; }
+    .new-hospital-fields { display:none; margin-top:12px; padding:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; }
     .new-hospital-fields.open { display:block; }
   </style>
 </head>
@@ -256,7 +267,7 @@
   <div>
     <h1>全台急診醫師薪資 Dashboard</h1>
     <p>資料來源：急診醫師社群 (Facebook 私密社團) · 2023–2026</p>
-    <p style="font-size:0.78rem;color:#f6ad55;margin-top:6px;">⚠️ 本資料為社群貼文人工彙整，屬部分抽樣，非完整調查。如有遺漏歡迎補充。</p>
+    <p style="font-size:0.78rem;color:#b45309;margin-top:6px;">⚠️ 本資料為社群貼文人工彙整，屬部分抽樣，非完整調查。如有遺漏歡迎補充。</p>
   </div>
   <div class="header-badge">🔒 私密社團資料 · 僅供參考</div>
   <button class="contribute-btn" onclick="openModal()">✍️ 回報薪資</button>
@@ -373,7 +384,7 @@ let data = []; // Will be loaded from Supabase
 
 async function loadDashboardData() {
   try {
-    document.getElementById('statsGrid').innerHTML = '<div class="stat-card" style="grid-column:1/-1;text-align:center;padding:40px"><div class="value">⏳</div><div class="sub">載入資料中...</div></div>';
+    document.getElementById('statsGrid').innerHTML = '<div class="stat-card" style="grid-column:1/-1;text-align:center;padding:40px"><div class="value" style="color:#1e293b">⏳</div><div class="sub">載入資料中...</div></div>';
     
     const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
     const [resp, histResp] = await Promise.all([
@@ -429,7 +440,7 @@ async function loadDashboardData() {
     renderTrendChart();
   } catch(e) {
     console.error('Failed to load data:', e);
-    document.getElementById('statsGrid').innerHTML = '<div class="stat-card" style="grid-column:1/-1;text-align:center;padding:40px;color:#fc8181"><div class="value">❌</div><div class="sub">載入失敗：' + e.message + '</div></div>';
+    document.getElementById('statsGrid').innerHTML = '<div class="stat-card" style="grid-column:1/-1;text-align:center;padding:40px;color:#dc2626"><div class="value">❌</div><div class="sub" style="color:#dc2626">載入失敗：' + e.message + '</div></div>';
   }
 }
 
@@ -437,15 +448,15 @@ async function loadDashboardData() {
 // Helpers
 // ─────────────────────────────────────────────
 const regionColors = {
-  "台北": "#3182ce", "新北": "#2b6cb0", "桃園": "#2c7a7b",
-  "新竹": "#285e61", "苗栗": "#276749", "台中": "#2f855a",
-  "彰化": "#c05621", "雲林": "#975a16", "嘉義": "#6b46c1",
-  "台南": "#b7791f", "高雄": "#c53030", "南投": "#38a169",
-  "屏東": "#d53f8c", "花蓮": "#0987a0", "宜蘭": "#4c51bf", "台東": "#702459"
+  "台北": "#3b82f6", "新北": "#2563eb", "桃園": "#0d9488",
+  "新竹": "#0f766e", "苗栗": "#16a34a", "台中": "#059669",
+  "彰化": "#ea580c", "雲林": "#ca8a04", "嘉義": "#7c3aed",
+  "台南": "#d97706", "高雄": "#dc2626", "南投": "#22c55e",
+  "屏東": "#db2777", "花蓮": "#0891b2", "宜蘭": "#6366f1", "台東": "#9333ea"
 };
 
 function fmtSalary(val) {
-  if (!val) return '<span style="color:#4a5568">—</span>';
+  if (!val) return '<span style="color:#cbd5e1">—</span>';
   const cls = val >= 55 ? 'salary-high' : val >= 45 ? 'salary-mid' : 'salary-low';
   return `<span class="${cls}">${val}萬</span>`;
 }
@@ -526,14 +537,14 @@ function renderTable(d) {
     return `<tr>
       <td><strong>${row.hospital}</strong>${renderHistoryBtn(row)}</td>
       <td><span class="region-badge r-${row.region}">${row.region}</span></td>
-      <td style="font-size:0.78rem;color:#a0aec0">${row.level}</td>
+      <td style="font-size:0.78rem;color:#64748b">${row.level}</td>
       <td title="${trend.tip}"><span class="${trend.cls}">${trend.icon}</span></td>
       <td>${fmtSalary(row.s10)}</td>
       <td>${fmtSalary(row.s14)}</td>
       <td>${fmtSalary(row.s15)}</td>
       <td>${fmtSalary(row.s16)}</td>
-      <td style="color:#a0aec0">${row.visits ? row.visits.toLocaleString() : '—'}</td>
-      <td style="color:#a0aec0;font-size:0.85rem;line-height:1.4">${row.pph != null ? row.pph + (row.pphEst ? '<br><span style="font-size:0.7rem;color:#718096">估算</span>' : '') : '—'}</td>
+      <td style="color:#64748b">${row.visits ? row.visits.toLocaleString() : '—'}</td>
+      <td style="color:#64748b;font-size:0.85rem;line-height:1.4">${row.pph != null ? row.pph + (row.pphEst ? '<br><span style="font-size:0.7rem;color:#94a3b8">估算</span>' : '') : '—'}</td>
       <td>
         ${row.public ? '<span class="tag tag-public">公立</span>' : ''}
         ${row.np === true ? '<span class="tag tag-np">NP支援</span>' : ''}
@@ -541,7 +552,7 @@ function renderTable(d) {
         ${row.shift === 12 ? '<span class="tag tag-12h">12h制</span>' : ''}
       </td>
       <td class="note-text">${row.note}</td>
-      <td style="color:#718096;font-size:0.78rem;white-space:nowrap">${row.lastUpdated || '—'}</td>
+      <td style="color:#94a3b8;font-size:0.78rem;white-space:nowrap">${row.lastUpdated || '—'}</td>
     </tr>`;
   }).join('');
 }
@@ -555,7 +566,7 @@ function renderCharts(d) {
       label: x.hospital.replace('醫院','院').replace('台北市立聯合醫院','聯醫'),
       s15: x.s15 || null,
       s16: x.s16 || null,
-      color: regionColors[x.region] || '#4a5568',
+      color: regionColors[x.region] || '#94a3b8',
       region: x.region
     }))
     .sort(regionSortFn);
@@ -580,8 +591,13 @@ function renderCharts(d) {
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { labels: { color: '#a0aec0', font: { size: 11 } } },
+        legend: { labels: { color: '#475569', font: { size: 11 } } },
         tooltip: {
+          backgroundColor: '#1e293b',
+          titleColor: '#f8fafc',
+          bodyColor: '#e2e8f0',
+          borderColor: '#334155',
+          borderWidth: 1,
           callbacks: {
             title: ctx => {
               const idx = ctx[0].dataIndex;
@@ -592,8 +608,8 @@ function renderCharts(d) {
         }
       },
       scales: {
-        x: { ticks: { color: '#718096', font: { size: 10 }, maxRotation: 45, minRotation: 30 }, grid: { color: '#2d3748' } },
-        y: { ticks: { color: '#718096', callback: v => v + '萬' }, grid: { color: '#2d3748' }, min: 0, max: 70 }
+        x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45, minRotation: 30 }, grid: { color: '#e2e8f0' } },
+        y: { ticks: { color: '#64748b', callback: v => v + '萬' }, grid: { color: '#e2e8f0' }, min: 0, max: 70 }
       },
       onClick: function(evt, elements) {
         if (!elements.length) return;
@@ -606,7 +622,7 @@ function renderCharts(d) {
           if (firstCell && firstCell.textContent === hospName) {
             row.scrollIntoView({ behavior: 'smooth', block: 'center' });
             // 閃爍高亮效果
-            row.style.background = '#3182ce44';
+            row.style.background = '#dbeafe';
             setTimeout(() => { row.style.background = ''; }, 2000);
             return;
           }
@@ -646,8 +662,8 @@ function renderCharts(d) {
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'right', labels: { color: '#a0aec0', font: { size: 11 }, padding: 12 } },
-        tooltip: { callbacks: { label: ctx => `${ctx.label}: 平均 ${ctx.raw} 萬` } }
+        legend: { position: 'right', labels: { color: '#475569', font: { size: 11 }, padding: 12 } },
+        tooltip: { backgroundColor: '#1e293b', titleColor: '#f8fafc', bodyColor: '#e2e8f0', borderColor: '#334155', borderWidth: 1, callbacks: { label: ctx => `${ctx.label}: 平均 ${ctx.raw} 萬` } }
       }
     }
   });
@@ -658,7 +674,7 @@ function renderTrendChart() {
   const trendSeries = data
     .filter(x => x.history && x.history.length >= 2)
     .map(x => {
-      const color = regionColors[x.region] || '#4a5568';
+      const color = regionColors[x.region] || '#94a3b8';
       return {
         label: x.hospital.replace('醫院','院'),
         color,
@@ -669,7 +685,7 @@ function renderTrendChart() {
 
   if (trendSeries.length === 0) {
     document.getElementById('trendChart').parentElement.innerHTML =
-      '<p style="color:#718096;padding:20px;text-align:center">尚無多時間點資料，持續收集中...</p>';
+      '<p style="color:#64748b;padding:20px;text-align:center">尚無多時間點資料，持續收集中...</p>';
     return;
   }
 
@@ -696,12 +712,12 @@ function renderTrendChart() {
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { labels: { color: '#a0aec0', font: { size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ctx.raw ? `${ctx.dataset.label}: ${ctx.raw}萬` : null } }
+        legend: { labels: { color: '#475569', font: { size: 11 } } },
+        tooltip: { backgroundColor: '#1e293b', titleColor: '#f8fafc', bodyColor: '#e2e8f0', borderColor: '#334155', borderWidth: 1, callbacks: { label: ctx => ctx.raw ? `${ctx.dataset.label}: ${ctx.raw}萬` : null } }
       },
       scales: {
-        x: { ticks: { color: '#718096' }, grid: { color: '#2d3748' } },
-        y: { ticks: { color: '#718096', callback: v => v + '萬' }, grid: { color: '#2d3748' } }
+        x: { ticks: { color: '#64748b' }, grid: { color: '#e2e8f0' } },
+        y: { ticks: { color: '#64748b', callback: v => v + '萬' }, grid: { color: '#e2e8f0' } }
       }
     }
   });
@@ -815,7 +831,7 @@ function selectHospital(id, name) {
   document.getElementById('hospSearch').value = name;
   document.getElementById('hospId').value = id;
   document.getElementById('hospHint').innerHTML = '\u2705 \u5df2\u9078\u64c7\uff1a' + name;
-  document.getElementById('hospHint').style.color = '#68d391';
+  document.getElementById('hospHint').style.color = '#16a34a';
   document.getElementById('searchResults').style.display = 'none';
   document.getElementById('newHospFields').classList.remove('open');
 }
@@ -826,7 +842,7 @@ function selectNewHospital() {
   isNewHospital = true;
   document.getElementById('hospId').value = '';
   document.getElementById('hospHint').innerHTML = '\ud83c\udd95 \u5c07\u65b0\u589e\u91ab\u9662\u300c' + name + '\u300d';
-  document.getElementById('hospHint').style.color = '#f6ad55';
+  document.getElementById('hospHint').style.color = '#d97706';
   document.getElementById('searchResults').style.display = 'none';
   document.getElementById('newHospFields').classList.add('open');
 }
@@ -871,7 +887,7 @@ async function submitReport(e) {
         if (!region) {
           showToast('\u26a0\ufe0f \u300c' + typedName + '\u300d\u4e0d\u5728\u8cc7\u6599\u5eab\u4e2d\uff0c\u8acb\u9078\u64c7\u5730\u5340\u5f8c\u518d\u9001\u51fa', 'err');
           document.getElementById('hospHint').innerHTML = '\ud83c\udd95 \u8cc7\u6599\u5eab\u4e2d\u7121\u6b64\u91ab\u9662\uff0c\u9078\u64c7\u5730\u5340\u5f8c\u5373\u53ef\u9001\u51fa';
-          document.getElementById('hospHint').style.color = '#f6ad55';
+          document.getElementById('hospHint').style.color = '#d97706';
           return;
         }
       } else {
