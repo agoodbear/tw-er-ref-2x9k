@@ -148,27 +148,42 @@ async function fetchPostTexts() {
       });
       await sleep(600);
 
-      // Step B: 讀取當前可見的貼文內容
-      const visibleTexts = await page.evaluate(() => {
+      // Step B: 讀取當前可見的貼文內容 + 時間戳
+      const visiblePosts = await page.evaluate(() => {
         const results = [];
-        // 找所有 native-text 元素
         document.querySelectorAll('div.native-text').forEach(el => {
           const rect = el.getBoundingClientRect();
-          // 只讀可見且在 viewport 附近的
           if (rect.height > 0 && rect.top > -500 && rect.top < window.innerHeight + 500) {
             const text = el.textContent || '';
             if (text.length > 30) {
-              results.push(text.trim());
+              // 往上找時間戳：通常在同一個貼文容器內的上方
+              let timeText = '';
+              let parent = el.parentElement;
+              for (let depth = 0; depth < 10 && parent; depth++) {
+                const containerText = parent.textContent || '';
+                // FB m 版時間格式：「X分鐘」「X小時」「X天」「4月11日」「昨天」等
+                const timeMatch = containerText.match(/(\d+\s*分鐘|\d+\s*小時|\d+\s*天|昨天|\d{1,2}月\d{1,2}日|\d{4}年\d{1,2}月\d{1,2}日)/);
+                if (timeMatch) {
+                  timeText = timeMatch[1];
+                  break;
+                }
+                parent = parent.parentElement;
+              }
+              results.push({ text: text.trim(), timeText });
             }
           }
         });
         return results;
       });
 
-      for (const text of visibleTexts) {
-        if (!allTexts.has(text.slice(0, 100))) { // 用前 100 字作為 key 去重
-          allTexts.add(text.slice(0, 100));
-          posts.push(text);
+      for (const post of visiblePosts) {
+        if (!allTexts.has(post.text.slice(0, 100))) {
+          allTexts.add(post.text.slice(0, 100));
+          // 在文字前面加上時間標記，讓 AI 可以參考
+          const withTime = post.timeText
+            ? `[貼文時間：${post.timeText}]\n${post.text}`
+            : post.text;
+          posts.push(withTime);
         }
       }
 
@@ -237,7 +252,7 @@ async function parsePostsWithAI(posts) {
 5. 醫院名稱用社群常用簡稱（如「中醫北港」「員基」「台東馬偕」「輔大醫院」）
 6. 地區：基隆/台北/新北/桃園/新竹/苗栗/台中/彰化/南投/雲林/嘉義/台南/高雄/屏東/宜蘭/花蓮/台東
 7. 醫院層級：醫學中心/區域醫院/地區醫院/部立醫院
-8. source_date 盡量從文中判斷貼文日期，無法判斷則填 ${new Date().toISOString().slice(0, 10)}
+8. source_date：每段貼文前面可能有 [貼文時間：X天] 或 [貼文時間：4月11日] 標記，請據此推算實際日期（今天是 ${new Date().toISOString().slice(0, 10)}，「2天」=前天，「4月11日」=2026-04-11）。無標記則填今天。
 9. 非徵才文（如純討論、新聞轉貼、求助文）即使提到「薪」「萬」等字也不要提取
 10. note 欄位記錄班制（如「固定班薪制，平日白/中/夜班 2.4/2.5/2.8萬」）、特殊福利等
 
@@ -320,33 +335,20 @@ async function writeToSupabase(entries) {
   const currentData = await dashResp.json();
   let added = 0, skipped = 0, newHospitals = 0;
 
-  // 常用簡稱 → 全名映射
-  const aliasMap = {
-    '員基': '員林基督教醫院', '員林基督教': '員林基督教醫院',
-    '中醫北港': '中國醫藥大學北港附設醫院', '北港媽祖': '中國醫藥大學北港附設醫院',
-    '台大雲林': '台大醫院雲林分院', '台東馬偕': '台東馬偕紀念醫院',
-    '光田': '光田醫院', '署苗': '衛生福利部苗栗醫院',
-    '聯醫': '台北市立聯合醫院', '高醫岡山': '高雄醫學大學附設岡山醫院',
-    '彰濱秀傳': '彰濱秀傳紀念醫院', '埔基': '埔里基督教醫院',
-    '輔大醫院': '輔仁大學附設醫院',
-  };
-
+  // 比對邏輯全部依賴 Supabase hospitals.aliases 欄位（不再硬編碼）
   for (const entry of entries) {
     try {
-      // 先查簡稱映射
-      const resolvedName = aliasMap[entry.hospital] || entry.hospital;
+      const inputName = entry.hospital;
 
       let hospital = hospitals.find(h => {
+        // 完全匹配
+        if (h.name === inputName) return true;
+        // aliases 匹配（Supabase 維護）
+        if (h.aliases && h.aliases.some(a => a === inputName)) return true;
+        // 模糊匹配：去掉「醫院」後互相包含
         const n1 = h.name.replace(/醫院/g, '');
-        const n2 = resolvedName.replace(/醫院/g, '');
-        const n3 = entry.hospital.replace(/醫院/g, '');
-        if (h.name === resolvedName || h.name === entry.hospital) return true;
-        if (n1.includes(n2) || n2.includes(n1)) return true;
-        if (n1.includes(n3) || n3.includes(n1)) return true;
-        if (h.aliases && h.aliases.some(a =>
-          a === entry.hospital || a === resolvedName ||
-          entry.hospital.includes(a) || a.includes(entry.hospital)
-        )) return true;
+        const n2 = inputName.replace(/醫院/g, '');
+        if (n1.length > 2 && n2.length > 2 && (n1.includes(n2) || n2.includes(n1))) return true;
         return false;
       });
 
