@@ -260,10 +260,85 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
 
+    /* ── Tablet ── */
     @media (max-width: 900px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .main-grid { grid-template-columns: 1fr; }
       .table-card { grid-column: 1; overflow-x: auto; }
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 600px) {
+      .header { flex-wrap: wrap; padding: 16px; gap: 8px; }
+      .header h1 { font-size: 1.2rem; }
+      .header p { font-size: 0.75rem; }
+      .header-badge { display: none; }
+      .contribute-btn { margin-left: 0; padding: 8px 14px; font-size: 0.82rem; }
+      .container { padding: 12px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+      .stat-card { padding: 12px; }
+      .stat-card .value { font-size: 1.4rem; }
+      .stat-card .label { font-size: 0.68rem; }
+      .filters { gap: 6px; margin-bottom: 12px; }
+      .filter-btn { padding: 6px 10px; font-size: 0.75rem; }
+      .main-grid { gap: 12px; margin-bottom: 12px; }
+      .card { padding: 12px; }
+      .card h2 { font-size: 0.8rem; margin-bottom: 10px; }
+      .chart-wrap { height: 220px; }
+
+      /* 表格改卡片式 */
+      .table-card { overflow-x: visible; }
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
+      colgroup { display: none; }
+      tbody tr {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      }
+      tbody tr:nth-child(even) { background: #fff; }
+      tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 4px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.82rem;
+      }
+      tbody td:last-child { border-bottom: none; }
+      tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #64748b;
+        font-size: 0.75rem;
+        min-width: 70px;
+        flex-shrink: 0;
+      }
+      tbody td:first-child {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1e293b;
+        padding-bottom: 6px;
+        border-bottom: 2px solid #e2e8f0;
+        margin-bottom: 4px;
+      }
+      tbody td:first-child::before { display: none; }
+      .note-text { font-size: 0.75rem; max-width: 100%; }
+      .history-panel { min-width: unset; max-width: 100%; width: 100%; }
+
+      /* Modal */
+      .modal { padding: 16px; border-radius: 12px; }
+      .modal-overlay { padding-top: 20px; }
+      .form-section { padding: 12px; }
+      .form-row-3 { grid-template-columns: 1fr; }
+      .submit-row { flex-direction: column; }
+
+      /* Source note */
+      .source-note { font-size: 0.72rem; padding: 10px 12px; }
     }
 
     .contribute-btn { margin-left:12px; background:linear-gradient(135deg,#16a34a,#15803d); border:none; border-radius:8px; padding:10px 20px; color:#fff; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all .2s; white-space:nowrap; box-shadow:0 1px 3px rgba(0,0,0,0.12); }
@@ -681,23 +756,23 @@ function renderTable(d) {
     const trend = calcTrend(row);
     return `<tr>
       <td><strong>${row.hospital}</strong>${renderHistoryBtn(row)}</td>
-      <td><span class="region-badge r-${row.region}">${row.region}</span></td>
-      <td style="font-size:0.78rem;color:#64748b">${row.level}</td>
-      <td title="${trend.tip}"><span class="${trend.cls}">${trend.icon}</span></td>
-      <td>${fmtSalary(row.s10)}</td>
-      <td>${fmtSalary(row.s14)}</td>
-      <td>${fmtSalary(row.s15)}</td>
-      <td>${fmtSalary(row.s16)}</td>
-      <td style="color:#64748b">${row.visits ? row.visits.toLocaleString() : '—'}</td>
-      <td style="color:#64748b;font-size:0.85rem;line-height:1.4">${row.pph != null ? row.pph + (row.pphEst ? '<br><span style="font-size:0.7rem;color:#94a3b8">估算</span>' : '') : '—'}</td>
-      <td>
+      <td data-label="地區"><span class="region-badge r-${row.region}">${row.region}</span></td>
+      <td data-label="層級" style="font-size:0.78rem;color:#64748b">${row.level}</td>
+      <td data-label="趨勢" title="${trend.tip}"><span class="${trend.cls}">${trend.icon}</span></td>
+      <td data-label="10班">${fmtSalary(row.s10)}</td>
+      <td data-label="14班">${fmtSalary(row.s14)}</td>
+      <td data-label="15班">${fmtSalary(row.s15)}</td>
+      <td data-label="16班">${fmtSalary(row.s16)}</td>
+      <td data-label="月診量" style="color:#64748b">${row.visits ? row.visits.toLocaleString() : '—'}</td>
+      <td data-label="PPH" style="color:#64748b;font-size:0.85rem;line-height:1.4">${row.pph != null ? row.pph + (row.pphEst ? ' <span style="font-size:0.7rem;color:#94a3b8">估算</span>' : '') : '—'}</td>
+      <td data-label="特色">
         ${row.public ? '<span class="tag tag-public">公立</span>' : ''}
         ${row.np === true ? '<span class="tag tag-np">NP支援</span>' : ''}
         ${row.shift === 8 ? '<span class="tag tag-8h">8h制</span>' : ''}
         ${row.shift === 12 ? '<span class="tag tag-12h">12h制</span>' : ''}
       </td>
-      <td class="note-text">${row.note}</td>
-      <td style="color:#94a3b8;font-size:0.78rem;white-space:nowrap">${row.lastUpdated || '—'}</td>
+      <td data-label="備註" class="note-text">${row.note}</td>
+      <td data-label="更新" style="color:#94a3b8;font-size:0.78rem">${row.lastUpdated || '—'}</td>
     </tr>`;
   }).join('');
 }
