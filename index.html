@@ -201,7 +201,35 @@
 
     .chart-wrap { position: relative; height: 280px; }
 
+    /* Taiwan map styles */
+    .map-wrap { position: relative; height: 340px; display: flex; align-items: center; justify-content: center; }
+    .map-wrap svg { width: 100%; height: 100%; }
+    .tw-county { fill: #e5e7eb; stroke: #fff; stroke-width: 1.2; cursor: pointer; transition: fill 0.2s, opacity 0.2s; }
+    .tw-county:hover { opacity: 0.8; stroke: #1e293b; stroke-width: 2; }
+    .tw-county.active-county { stroke: #1e293b; stroke-width: 2.5; }
+    .map-tooltip {
+      position: absolute;
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      pointer-events: none;
+      z-index: 100;
+      max-width: 260px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      display: none;
+      white-space: nowrap;
+    }
+    .map-tooltip .tt-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+    .map-tooltip .tt-salary { color: #4ade80; font-weight: 600; }
+    .map-tooltip .tt-hospitals { color: #94a3b8; font-size: 0.75rem; margin-top: 4px; white-space: normal; }
+    .map-legend { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.72rem; color: #64748b; justify-content: center; }
+    .map-legend-bar { width: 120px; height: 10px; border-radius: 5px; background: linear-gradient(to right, #dcfce7, #15803d); }
+
     /* Region badge colors - softer pastels for light mode */
+    .r-基隆 { background: #64748b; }
     .r-台北 { background: #3b82f6; }
     .r-新北 { background: #2563eb; }
     .r-桃園 { background: #0d9488; }
@@ -320,8 +348,70 @@
       <div class="chart-wrap"><canvas id="salaryChart"></canvas></div>
     </div>
     <div class="card">
-      <h2>🗺️ 各地區薪資分布</h2>
-      <div class="chart-wrap"><canvas id="regionChart"></canvas></div>
+      <h2>🗺️ 各地區薪資地圖</h2>
+      <div class="map-wrap" id="mapWrap">
+        <svg id="twMap" viewBox="0 0 500 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+          <!-- 基隆 -->
+          <path id="map-基隆" class="tw-county" d="M320,95 L340,85 L358,90 L360,105 L345,115 L325,110 Z"/>
+          <!-- 台北 -->
+          <path id="map-台北" class="tw-county" d="M290,110 L320,100 L340,110 L335,130 L310,135 L290,125 Z"/>
+          <!-- 新北 -->
+          <path id="map-新北" class="tw-county" d="M265,85 L290,75 L320,80 L355,90 L365,110 L360,140 L340,160 L310,165 L280,155 L260,135 L255,110 Z M290,110 L320,100 L340,110 L335,130 L310,135 L290,125 Z"/>
+          <!-- 桃園 -->
+          <path id="map-桃園" class="tw-county" d="M230,135 L260,125 L280,145 L275,170 L250,180 L225,165 Z"/>
+          <!-- 新竹 -->
+          <path id="map-新竹" class="tw-county" d="M215,170 L250,175 L265,195 L250,215 L220,210 L205,190 Z"/>
+          <!-- 苗栗 -->
+          <path id="map-苗栗" class="tw-county" d="M200,210 L230,205 L255,220 L260,250 L240,265 L210,255 L195,235 Z"/>
+          <!-- 台中 -->
+          <path id="map-台中" class="tw-county" d="M195,255 L240,260 L270,280 L280,310 L260,335 L225,340 L200,315 L185,285 Z"/>
+          <!-- 彰化 -->
+          <path id="map-彰化" class="tw-county" d="M175,310 L200,315 L210,340 L200,365 L175,370 L160,345 Z"/>
+          <!-- 南投 -->
+          <path id="map-南投" class="tw-county" d="M225,330 L265,325 L290,350 L285,390 L255,405 L225,395 L210,365 L215,340 Z"/>
+          <!-- 雲林 -->
+          <path id="map-雲林" class="tw-county" d="M155,365 L185,360 L200,380 L195,405 L170,415 L145,400 Z"/>
+          <!-- 嘉義 -->
+          <path id="map-嘉義" class="tw-county" d="M150,410 L195,400 L225,420 L240,445 L220,465 L180,460 L150,440 Z"/>
+          <!-- 台南 -->
+          <path id="map-台南" class="tw-county" d="M140,455 L180,455 L210,470 L215,505 L195,525 L160,520 L135,495 Z"/>
+          <!-- 高雄 -->
+          <path id="map-高雄" class="tw-county" d="M185,500 L225,480 L260,500 L270,540 L255,575 L220,590 L190,570 L175,535 Z"/>
+          <!-- 屏東 -->
+          <path id="map-屏東" class="tw-county" d="M210,580 L250,570 L275,590 L280,630 L260,660 L230,670 L210,645 L200,610 Z"/>
+          <!-- 宜蘭 -->
+          <path id="map-宜蘭" class="tw-county" d="M340,120 L370,115 L390,135 L385,170 L355,185 L330,170 L325,145 Z"/>
+          <!-- 花蓮 -->
+          <path id="map-花蓮" class="tw-county" d="M330,185 L365,180 L395,210 L405,280 L395,350 L370,380 L340,370 L310,330 L295,280 L305,230 Z"/>
+          <!-- 台東 -->
+          <path id="map-台東" class="tw-county" d="M305,380 L345,375 L375,400 L385,450 L375,510 L350,550 L310,560 L280,530 L275,470 L285,420 Z"/>
+
+          <!-- County labels -->
+          <text x="345" y="100" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">基隆</text>
+          <text x="315" y="122" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">台北</text>
+          <text x="295" y="145" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">新北</text>
+          <text x="250" y="158" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">桃園</text>
+          <text x="235" y="195" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">新竹</text>
+          <text x="228" y="237" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">苗栗</text>
+          <text x="235" y="295" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">台中</text>
+          <text x="185" y="342" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">彰化</text>
+          <text x="255" y="365" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">南投</text>
+          <text x="172" y="390" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">雲林</text>
+          <text x="195" y="438" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">嘉義</text>
+          <text x="178" y="492" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">台南</text>
+          <text x="230" y="540" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">高雄</text>
+          <text x="245" y="625" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">屏東</text>
+          <text x="360" y="155" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">宜蘭</text>
+          <text x="355" y="280" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">花蓮</text>
+          <text x="340" y="470" font-size="9" fill="#475569" text-anchor="middle" pointer-events="none">台東</text>
+        </svg>
+        <div class="map-tooltip" id="mapTooltip"></div>
+      </div>
+      <div class="map-legend">
+        <span>低薪</span>
+        <div class="map-legend-bar"></div>
+        <span>高薪</span>
+      </div>
     </div>
   </div>
 
@@ -539,7 +629,7 @@ async function loadDashboardData() {
 // Helpers
 // ─────────────────────────────────────────────
 const regionColors = {
-  "台北": "#3b82f6", "新北": "#2563eb", "桃園": "#0d9488",
+  "基隆": "#64748b", "台北": "#3b82f6", "新北": "#2563eb", "桃園": "#0d9488",
   "新竹": "#0f766e", "苗栗": "#16a34a", "台中": "#059669",
   "彰化": "#ea580c", "雲林": "#ca8a04", "嘉義": "#7c3aed",
   "台南": "#d97706", "高雄": "#dc2626", "南投": "#22c55e",
@@ -648,7 +738,7 @@ function renderTable(d) {
   }).join('');
 }
 
-let barChart, doughnutChart, trendChart;
+let barChart, trendChart;
 
 function renderCharts(d) {
   const barData = d.filter(x => x.s15 || x.s16)
@@ -725,39 +815,143 @@ function renderCharts(d) {
     }
   });
 
-  const regionMap = {};
+  // Color the Taiwan map
+  renderTaiwanMap(d);
+}
+
+// ─────────────────────────────────────────────
+// Taiwan Map Heatmap
+// ─────────────────────────────────────────────
+function renderTaiwanMap(d) {
+  // Build region data: avg salary, hospital list
+  const regionData = {};
   d.forEach(x => {
-    if (!regionMap[x.region]) regionMap[x.region] = [];
-    const best = Math.max(...[x.s10,x.s14,x.s15,x.s16].filter(Boolean), 0);
-    if (best > 0) regionMap[x.region].push(best);
-  });
-  const regions = Object.keys(regionMap);
-  const regionAvgs = regions.map(r => {
-    const vals = regionMap[r];
-    return vals.length ? +(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : 0;
+    if (!regionData[x.region]) regionData[x.region] = { hospitals: [], salaries: [] };
+    regionData[x.region].hospitals.push(x);
+    const sal = x.s15 || x.s14 || x.s16 || x.s10;
+    if (sal) regionData[x.region].salaries.push(sal);
   });
 
-  const doCtx = document.getElementById('regionChart').getContext('2d');
-  if (doughnutChart) doughnutChart.destroy();
-  doughnutChart = new Chart(doCtx, {
-    type: 'doughnut',
-    data: {
-      labels: regions,
-      datasets: [{
-        data: regionAvgs,
-        backgroundColor: regions.map(r => (regionColors[r]||'#4a5568') + 'cc'),
-        borderColor: regions.map(r => regionColors[r]||'#4a5568'),
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'right', labels: { color: '#475569', font: { size: 11 }, padding: 12 } },
-        tooltip: { backgroundColor: '#1e293b', titleColor: '#f8fafc', bodyColor: '#e2e8f0', borderColor: '#334155', borderWidth: 1, callbacks: { label: ctx => `${ctx.label}: 平均 ${ctx.raw} 萬` } }
-      }
+  // Find min/max for color scale
+  let allAvgs = [];
+  Object.keys(regionData).forEach(r => {
+    const s = regionData[r].salaries;
+    if (s.length) allAvgs.push(s.reduce((a,b) => a+b, 0) / s.length);
+  });
+  const minAvg = allAvgs.length ? Math.min(...allAvgs) : 30;
+  const maxAvg = allAvgs.length ? Math.max(...allAvgs) : 60;
+
+  // Color interpolation: light green (#dcfce7) to dark green (#15803d)
+  function salaryToColor(avg) {
+    if (maxAvg === minAvg) return '#4ade80';
+    const t = Math.max(0, Math.min(1, (avg - minAvg) / (maxAvg - minAvg)));
+    // RGB interpolation
+    const r = Math.round(220 + (21 - 220) * t);
+    const g = Math.round(252 + (128 - 252) * t);
+    const b = Math.round(231 + (61 - 231) * t);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  // Color each county path
+  const allRegions = ["基隆","台北","新北","桃園","新竹","苗栗","台中","彰化","南投","雲林","嘉義","台南","高雄","屏東","宜蘭","花蓮","台東"];
+  allRegions.forEach(region => {
+    const el = document.getElementById('map-' + region);
+    if (!el) return;
+    const rd = regionData[region];
+    if (rd && rd.salaries.length > 0) {
+      const avg = rd.salaries.reduce((a,b) => a+b, 0) / rd.salaries.length;
+      el.style.fill = salaryToColor(avg);
+    } else {
+      el.style.fill = '#e5e7eb';
     }
   });
+
+  // Store regionData globally for event delegation
+  window._mapRegionData = regionData;
+
+  // Set up event delegation only once
+  if (!window._mapEventsInit) {
+    window._mapEventsInit = true;
+    const tooltip = document.getElementById('mapTooltip');
+    const mapWrap = document.getElementById('mapWrap');
+    const svgEl = document.getElementById('twMap');
+
+    function getRegionFromEl(el) {
+      if (!el || !el.id) return null;
+      return el.id.startsWith('map-') ? el.id.slice(4) : null;
+    }
+
+    svgEl.addEventListener('mouseover', function(e) {
+      const path = e.target.closest('.tw-county');
+      const region = path ? getRegionFromEl(path) : null;
+      if (!region) { tooltip.style.display = 'none'; return; }
+      const rd = window._mapRegionData[region];
+      const count = rd ? rd.hospitals.length : 0;
+      const avg = rd && rd.salaries.length ? (rd.salaries.reduce((a,b) => a+b, 0) / rd.salaries.length).toFixed(1) : null;
+      const hospList = rd ? rd.hospitals.map(h => h.hospital).join('、') : '無資料';
+      tooltip.innerHTML = `<div class="tt-title">${region}</div><div>醫院數：${count} 家</div><div>平均薪資（15班）：<span class="tt-salary">${avg ? avg + '萬' : '—'}</span></div><div class="tt-hospitals">${hospList}</div>`;
+      tooltip.style.display = 'block';
+    });
+
+    svgEl.addEventListener('mousemove', function(e) {
+      const rect = mapWrap.getBoundingClientRect();
+      let x = e.clientX - rect.left + 12;
+      let y = e.clientY - rect.top - 10;
+      if (x + 200 > rect.width) x = e.clientX - rect.left - 220;
+      if (y < 0) y = 10;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    });
+
+    svgEl.addEventListener('mouseout', function(e) {
+      const related = e.relatedTarget;
+      if (!related || !related.closest || !related.closest('.tw-county')) {
+        tooltip.style.display = 'none';
+      }
+    });
+
+    svgEl.addEventListener('click', function(e) {
+      const path = e.target.closest('.tw-county');
+      const region = path ? getRegionFromEl(path) : null;
+      if (!region) return;
+      // Filter to this region
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      const filtered = data.filter(x => x.region === region);
+      renderStats(filtered);
+      renderTable(filtered);
+      // Highlight active county
+      document.querySelectorAll('.tw-county').forEach(p => p.classList.remove('active-county'));
+      path.classList.add('active-county');
+      // Re-render bar chart only (don't re-render map to avoid resetting colors)
+      const barData2 = filtered.filter(x => x.s15 || x.s16)
+        .map(x => ({
+          hospital: x.hospital,
+          label: x.hospital.replace('醫院','院').replace('台北市立聯合醫院','聯醫'),
+          s15: x.s15 || null, s16: x.s16 || null,
+          color: regionColors[x.region] || '#94a3b8', region: x.region
+        }));
+      const barCtx = document.getElementById('salaryChart').getContext('2d');
+      if (barChart) barChart.destroy();
+      barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: barData2.map(x => x.label),
+          datasets: [
+            { label: '15班月薪', data: barData2.map(x => x.s15), backgroundColor: barData2.map(x => x.color + 'cc'), borderColor: barData2.map(x => x.color), borderWidth: 1, borderRadius: 4 },
+            { label: '16班月薪', data: barData2.map(x => x.s16), backgroundColor: barData2.map(x => x.color + '55'), borderColor: barData2.map(x => x.color + 'aa'), borderWidth: 1, borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#475569', font: { size: 11 } } } },
+          scales: {
+            x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45, minRotation: 30 }, grid: { color: '#e2e8f0' } },
+            y: { ticks: { color: '#64748b', callback: v => v + '萬' }, grid: { color: '#e2e8f0' }, min: 0, max: 70 }
+          }
+        }
+      });
+    });
+  }
 }
 
 function renderTrendChart() {
@@ -825,6 +1019,7 @@ const areaMap = {
 function filterRegion(area, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  document.querySelectorAll('.tw-county').forEach(p => p.classList.remove('active-county'));
   const filtered = area === 'all' ? data : data.filter(x => areaMap[area]?.includes(x.region));
   renderStats(filtered);
   renderTable(filtered);
