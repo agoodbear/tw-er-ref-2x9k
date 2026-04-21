@@ -389,6 +389,51 @@
     .toast-err { background:#dc2626; }
     .new-hospital-fields { display:none; margin-top:12px; padding:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; }
     .new-hospital-fields.open { display:block; }
+
+    /* ── Rank Modal ── */
+    .rank-btn { margin-left:8px; background:linear-gradient(135deg,#2563eb,#1d4ed8); border:none; border-radius:8px; padding:10px 20px; color:#fff; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all .2s; white-space:nowrap; box-shadow:0 1px 3px rgba(0,0,0,0.12); }
+    .rank-btn:hover { background:linear-gradient(135deg,#3b82f6,#2563eb); transform:translateY(-1px); box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+    .rank-counter { font-size:3rem; font-weight:700; color:#1e293b; line-height:1.2; }
+    .rank-subtitle { font-size:0.85rem; color:#64748b; margin-top:4px; }
+    .rank-section-title { font-size:1rem; font-weight:700; color:#1e293b; margin-bottom:8px; }
+    .rank-pr-bar-wrap { margin:16px 0; }
+    .rank-pr-track { width:100%; height:28px; background:#e2e8f0; border-radius:14px; overflow:hidden; position:relative; }
+    .rank-pr-fill { height:100%; border-radius:14px; transition:width 1.5s cubic-bezier(.22,1,.36,1); display:flex; align-items:center; justify-content:flex-end; padding-right:10px; font-size:0.78rem; font-weight:700; color:#fff; min-width:40px; }
+    .rank-pr-label { font-size:0.9rem; font-weight:600; margin-top:6px; }
+    .rank-bar-chart { max-height:400px; overflow-y:auto; margin:12px 0; border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px; }
+    .rank-bar-row { display:flex; align-items:center; gap:8px; margin:4px 0; font-size:0.8rem; }
+    .rank-bar-name { min-width:120px; max-width:140px; flex-shrink:0; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#475569; }
+    .rank-bar-track { flex:1; height:22px; background:#e2e8f0; border-radius:4px; overflow:hidden; position:relative; }
+    .rank-bar-fill { height:100%; border-radius:4px; transition:width 1s ease; }
+    .rank-bar-val { min-width:50px; flex-shrink:0; font-weight:600; color:#334155; font-size:0.78rem; }
+    .rank-bar-selected { background:#eff6ff; border-radius:6px; padding:2px 0; }
+    .rank-bar-selected .rank-bar-fill { background:#2563eb !important; }
+    .rank-bar-selected .rank-bar-name { color:#2563eb; font-weight:700; }
+    .rank-bar-selected .rank-bar-val { color:#2563eb; }
+    @keyframes rank-pulse { 0%,100%{ box-shadow:0 0 0 0 rgba(37,99,235,.3); } 50%{ box-shadow:0 0 0 6px rgba(37,99,235,0); } }
+    .rank-bar-selected .rank-bar-track { animation: rank-pulse 2s infinite; }
+    .rank-neighbors { margin-top:16px; }
+    .rank-neighbor-row { display:flex; gap:12px; align-items:center; padding:8px 12px; font-size:0.85rem; border-bottom:1px solid #f1f5f9; }
+    .rank-neighbor-row:last-child { border-bottom:none; }
+    .rank-neighbor-rank { font-weight:700; color:#64748b; min-width:50px; }
+    .rank-neighbor-name { flex:1; color:#334155; }
+    .rank-neighbor-salary { font-weight:600; color:#1e293b; }
+    .rank-neighbor-me { background:#eff6ff; border-radius:8px; }
+    .rank-neighbor-me .rank-neighbor-rank { color:#2563eb; }
+    .rank-neighbor-me .rank-neighbor-name { color:#2563eb; font-weight:600; }
+    .rank-neighbor-me .rank-neighbor-salary { color:#2563eb; }
+    .rank-reset-btn { background:#f1f5f9; border:1px solid #d1d5db; border-radius:8px; padding:10px 20px; color:#475569; font-size:0.88rem; font-weight:600; cursor:pointer; transition:all .15s; margin-top:16px; width:100%; }
+    .rank-reset-btn:hover { background:#e2e8f0; }
+    .rank-search-wrap { position:relative; }
+    .rank-search-results { position:absolute; left:0; right:0; top:100%; background:#ffffff; border:1px solid #d1d5db; border-radius:0 0 8px 8px; max-height:200px; overflow-y:auto; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    .rank-search-results .sr-item { padding:10px 12px; cursor:pointer; font-size:.85rem; color:#334155; border-bottom:1px solid #f1f5f9; }
+    .rank-search-results .sr-item:hover { background:#eff6ff; }
+    @media (max-width: 600px) {
+      .rank-btn { margin-left:0; padding:8px 14px; font-size:0.82rem; }
+      .rank-bar-name { min-width:80px; max-width:100px; font-size:0.72rem; }
+      .rank-bar-val { font-size:0.72rem; min-width:40px; }
+      .rank-counter { font-size:2.4rem; }
+    }
   </style>
 </head>
 <body>
@@ -402,6 +447,7 @@
   </div>
   <div class="header-badge">🔒 私密社團資料 · 僅供參考</div>
   <button class="contribute-btn" onclick="openModal()">✍️ 回報薪資</button>
+  <button class="rank-btn" onclick="openRankModal()">📊 查詢排名</button>
 </div>
 
 <div class="container">
@@ -581,6 +627,45 @@
           <button type="submit" class="submit-btn" id="submitBtn" style="flex:2">確認送出</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Rank Modal -->
+  <div class="modal-overlay" id="rankModalOverlay">
+    <div class="modal" style="max-width:640px">
+      <button class="modal-close" onclick="closeRankModal()">&times;</button>
+      <!-- Step 1: Search -->
+      <div id="rankStep1">
+        <h2>📊 查詢排名</h2>
+        <p class="modal-sub">輸入醫院名稱，查看 15 班月薪在全台的排名</p>
+        <div class="form-group">
+          <label>醫院名稱</label>
+          <div class="rank-search-wrap">
+            <input type="text" id="rankHospSearch" placeholder="輸入醫院名稱..." autocomplete="off">
+            <div class="rank-search-results" id="rankSearchResults" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Step 2: Results -->
+      <div id="rankStep2" style="display:none">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div class="rank-section-title">15 班月薪排名</div>
+          <div class="rank-counter" id="rankNumber">—</div>
+          <div class="rank-subtitle" id="rankTotal"></div>
+        </div>
+        <div class="rank-pr-bar-wrap">
+          <div class="rank-pr-track"><div class="rank-pr-fill" id="rankPrFill" style="width:0%"></div></div>
+          <div class="rank-pr-label" id="rankPrLabel"></div>
+        </div>
+        <div style="margin-top:20px;">
+          <div class="rank-section-title">全部醫院薪資分布</div>
+          <div class="rank-bar-chart" id="rankBarChart"></div>
+        </div>
+        <div class="rank-neighbors" id="rankNeighbors">
+          <div class="rank-section-title">鄰近排名</div>
+        </div>
+        <button class="rank-reset-btn" onclick="resetRankSearch()">🔄 重新查詢</button>
+      </div>
     </div>
   </div>
 
@@ -1357,6 +1442,130 @@ async function submitReport(e) {
     btn.disabled = false;
     btn.textContent = '\u9001\u51fa\u56de\u5831';
   }
+}
+
+// ─────────────────────────────────────────────
+// Rank Modal
+// ─────────────────────────────────────────────
+function openRankModal() {
+  resetRankSearch();
+  document.getElementById('rankModalOverlay').classList.add('open');
+}
+function closeRankModal() {
+  document.getElementById('rankModalOverlay').classList.remove('open');
+}
+function resetRankSearch() {
+  document.getElementById('rankStep1').style.display = 'block';
+  document.getElementById('rankStep2').style.display = 'none';
+  document.getElementById('rankHospSearch').value = '';
+  document.getElementById('rankSearchResults').style.display = 'none';
+}
+
+// Click overlay to close
+document.addEventListener('click', function(e) {
+  if (e.target.id === 'rankModalOverlay') closeRankModal();
+});
+
+// Rank search input
+document.addEventListener('input', function(e) {
+  if (e.target.id !== 'rankHospSearch') return;
+  var q = e.target.value.trim().toLowerCase();
+  var resultsEl = document.getElementById('rankSearchResults');
+  if (!q || q.length < 1) { resultsEl.style.display = 'none'; return; }
+  var ranked = data.filter(function(h) { return h.s15 && h.s15 > 0; });
+  var matches = ranked.filter(function(h) { return h.hospital.toLowerCase().includes(q); });
+  if (matches.length === 0) { resultsEl.style.display = 'none'; return; }
+  resultsEl.innerHTML = matches.slice(0, 10).map(function(h) {
+    return '<div class="sr-item" data-id="' + h.id + '">' + h.hospital + ' <span class="sr-region">' + h.region + ' · ' + h.s15 + '萬</span></div>';
+  }).join('');
+  resultsEl.style.display = 'block';
+});
+
+document.addEventListener('click', function(e) {
+  var item = e.target.closest('#rankSearchResults .sr-item');
+  if (!item) return;
+  var hospId = item.getAttribute('data-id');
+  var hosp = data.find(function(h) { return String(h.id) === String(hospId); });
+  if (hosp) showRankResult(hosp);
+});
+
+function animateCounter(element, from, to, duration) {
+  var start = performance.now();
+  function update(now) {
+    var elapsed = now - start;
+    var progress = Math.min(elapsed / duration, 1);
+    var eased = 1 - Math.pow(1 - progress, 3);
+    var current = Math.round(from - (from - to) * eased);
+    element.textContent = current;
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+function showRankResult(hosp) {
+  // Build ranked list
+  var ranked = data.filter(function(h) { return h.s15 && h.s15 > 0; })
+    .sort(function(a, b) { return b.s15 - a.s15; });
+  var total = ranked.length;
+  var rankIndex = ranked.findIndex(function(h) { return h.id === hosp.id; });
+  if (rankIndex === -1) return;
+  var rank = rankIndex + 1;
+  var pr = Math.round(((total - rank) / total) * 100);
+
+  // Switch to step 2
+  document.getElementById('rankStep1').style.display = 'none';
+  document.getElementById('rankStep2').style.display = 'block';
+
+  // Counter animation
+  var counterEl = document.getElementById('rankNumber');
+  counterEl.textContent = total;
+  animateCounter(counterEl, total, rank, 2000);
+  document.getElementById('rankTotal').textContent = '共 ' + total + ' 間醫院揭露 15 班薪資';
+
+  // PR bar
+  var prFill = document.getElementById('rankPrFill');
+  var prColor = pr >= 70 ? '#16a34a' : pr >= 30 ? '#d97706' : '#dc2626';
+  prFill.style.width = '0%';
+  prFill.style.background = prColor;
+  setTimeout(function() { prFill.style.width = pr + '%'; prFill.textContent = 'PR ' + pr; }, 100);
+  var prLabel = document.getElementById('rankPrLabel');
+  prLabel.textContent = '贏過 ' + pr + '% 的醫院';
+  prLabel.style.color = prColor;
+
+  // Bar chart
+  var maxSalary = ranked[0].s15;
+  var chartEl = document.getElementById('rankBarChart');
+  chartEl.innerHTML = ranked.map(function(h, i) {
+    var pct = (h.s15 / maxSalary * 100).toFixed(1);
+    var isMe = h.id === hosp.id;
+    var rowCls = isMe ? 'rank-bar-row rank-bar-selected' : 'rank-bar-row';
+    var barColor = isMe ? '#2563eb' : '#cbd5e1';
+    return '<div class="' + rowCls + '" id="rank-bar-' + i + '">' +
+      '<div class="rank-bar-name" title="' + h.hospital + '">' + (i + 1) + '. ' + h.hospital + '</div>' +
+      '<div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div>' +
+      '<div class="rank-bar-val">' + h.s15 + '萬</div></div>';
+  }).join('');
+
+  // Auto-scroll to selected
+  setTimeout(function() {
+    var selected = document.getElementById('rank-bar-' + rankIndex);
+    if (selected) selected.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+
+  // Neighbors
+  var neighborsEl = document.getElementById('rankNeighbors');
+  var start = Math.max(0, rankIndex - 2);
+  var end = Math.min(total, rankIndex + 3);
+  var neighborsHtml = '<div class="rank-section-title">鄰近排名</div>';
+  for (var i = start; i < end; i++) {
+    var isMe = ranked[i].id === hosp.id;
+    var cls = isMe ? 'rank-neighbor-row rank-neighbor-me' : 'rank-neighbor-row';
+    neighborsHtml += '<div class="' + cls + '">' +
+      '<div class="rank-neighbor-rank">第' + (i + 1) + '名</div>' +
+      '<div class="rank-neighbor-name">' + ranked[i].hospital + '</div>' +
+      '<div class="rank-neighbor-salary">' + ranked[i].s15 + '萬</div></div>';
+  }
+  neighborsEl.innerHTML = neighborsHtml;
 }
 
 </script>
