@@ -120,6 +120,25 @@
     }
     thead th:first-child { border-radius: 8px 0 0 8px; }
     thead th:last-child { border-radius: 0 8px 8px 0; }
+    thead th.sortable {
+      cursor: pointer;
+      user-select: none;
+      padding-right: 16px;
+      position: relative;
+      transition: background 0.1s;
+    }
+    thead th.sortable:hover { background: #e2e8f0; }
+    thead th.sortable::after {
+      content: '⇅';
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.7rem;
+      opacity: 0.4;
+    }
+    thead th.sortable.sort-desc::after { content: '▼'; opacity: 1; color: #2563eb; }
+    thead th.sortable.sort-asc::after { content: '▲'; opacity: 1; color: #2563eb; }
     tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.1s; }
     tbody tr:nth-child(even) { background: #fafbfc; }
     tbody tr:hover { background: #eff6ff; }
@@ -524,15 +543,15 @@
           <th>地區</th>
           <th>層級</th>
           <th>趨勢</th>
-          <th>10班</th>
-          <th>14班</th>
-          <th>15班</th>
-          <th>16班</th>
-          <th>月診量</th>
-          <th title="每位醫師每小時看診量(估算)">PPH</th>
+          <th class="sortable" data-sort-col="s10">10班</th>
+          <th class="sortable" data-sort-col="s14">14班</th>
+          <th class="sortable" data-sort-col="s15">15班</th>
+          <th class="sortable" data-sort-col="s16">16班</th>
+          <th class="sortable" data-sort-col="visits">月診量</th>
+          <th class="sortable" data-sort-col="pph" title="每位醫師每小時看診量(估算)">PPH</th>
           <th>特色</th>
           <th>備註</th>
-          <th>更新</th>
+          <th class="sortable" data-sort-col="lastUpdated">更新</th>
         </tr>
       </thead>
       <tbody id="tableBody"></tbody>
@@ -834,9 +853,59 @@ function regionSortFn(a, b) {
   return (b.s15||b.s16||0) - (a.s15||a.s16||0);
 }
 
+let currentSort = { col: null, dir: null };
+let lastTableData = [];
+
+function applySort(d) {
+  if (!currentSort.col) return [...d].sort(regionSortFn);
+  const col = currentSort.col;
+  const sign = currentSort.dir === 'asc' ? 1 : -1;
+  const isDate = col === 'lastUpdated';
+  return [...d].sort((a, b) => {
+    const va = a[col], vb = b[col];
+    const aNull = va == null || va === '';
+    const bNull = vb == null || vb === '';
+    if (aNull && bNull) return 0;
+    if (aNull) return 1;
+    if (bNull) return -1;
+    if (isDate) {
+      return (new Date(va).getTime() - new Date(vb).getTime()) * sign;
+    }
+    return (va - vb) * sign;
+  });
+}
+
+function updateSortIndicators() {
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (th.dataset.sortCol === currentSort.col && currentSort.dir) {
+      th.classList.add(currentSort.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+    }
+  });
+}
+
+function setupTableSort() {
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.sortCol;
+      if (currentSort.col !== col) {
+        currentSort = { col, dir: 'desc' };
+      } else if (currentSort.dir === 'desc') {
+        currentSort = { col, dir: 'asc' };
+      } else {
+        currentSort = { col: null, dir: null };
+      }
+      renderTable(lastTableData);
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', setupTableSort);
+
 function renderTable(d) {
   histCounter = 0;
-  const sorted = [...d].sort(regionSortFn);
+  lastTableData = d;
+  const sorted = applySort(d);
+  updateSortIndicators();
   document.getElementById('tableBody').innerHTML = sorted.map(row => {
     const trend = calcTrend(row);
     return `<tr>
