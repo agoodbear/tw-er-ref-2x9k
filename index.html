@@ -40,6 +40,23 @@
         transition-duration: 0.01ms !important;
       }
     }
+    /* Skeleton loading */
+    @keyframes skeleton-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.55; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+      background-size: 200% 100%;
+      border-radius: 6px;
+      animation: skeleton-shimmer 1.4s ease-in-out infinite;
+    }
+    @keyframes skeleton-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .skeleton-bar { height: 14px; margin: 6px 0; }
+    .skeleton-card { padding: 20px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; }
     .header {
       background: linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%);
       border-bottom: 1px solid #e2e8f0;
@@ -77,7 +94,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     }
     .stat-card .label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
-    .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #1e293b; margin: 6px 0 4px; }
+    .stat-card .value { font-size: 2.2rem; font-weight: 600; color: #1e293b; margin: 8px 0 4px; font-variant-numeric: tabular-nums; line-height: 1.1; }
     .stat-card .sub { font-size: 0.8rem; color: #16a34a; font-weight: 500; }
 
     .filters {
@@ -132,7 +149,7 @@
     table { width: 100%; border-collapse: collapse; font-size: 0.82rem; table-layout: fixed; }
     thead th {
       text-align: left;
-      padding: 8px 6px;
+      padding: 10px 6px;
       background: #f1f5f9;
       color: #475569;
       font-weight: 600;
@@ -141,6 +158,10 @@
       letter-spacing: 0.03em;
       white-space: nowrap;
       overflow: hidden;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 1px 0 #e2e8f0;
     }
     thead th:first-child { border-radius: 8px 0 0 8px; }
     thead th:last-child { border-radius: 0 8px 8px 0; }
@@ -178,7 +199,7 @@
     tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.1s; }
     tbody tr:nth-child(even) { background: #fafbfc; }
     tbody tr:hover { background: #eff6ff; }
-    tbody td { padding: 8px 6px; color: #334155; vertical-align: top; font-size: 0.8rem; }
+    tbody td { padding: 11px 6px; color: #334155; vertical-align: top; font-size: 0.8rem; }
     tbody td:first-child { position: relative; overflow: visible; }
     /* Column widths: total 13 columns */
     col.col-hospital { width: 13%; }
@@ -283,24 +304,11 @@
     .map-legend { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.72rem; color: #64748b; justify-content: center; }
     .map-legend-bar { width: 120px; height: 10px; border-radius: 5px; background: linear-gradient(to right, #dcfce7, #15803d); }
 
-    /* Region badge colors - softer pastels for light mode */
-    .r-基隆 { background: #64748b; }
-    .r-台北 { background: #3b82f6; }
-    .r-新北 { background: #2563eb; }
-    .r-桃園 { background: #0d9488; }
-    .r-新竹 { background: #0f766e; }
-    .r-苗栗 { background: #16a34a; }
-    .r-台中 { background: #059669; }
-    .r-彰化 { background: #ea580c; }
-    .r-雲林 { background: #ca8a04; }
-    .r-嘉義 { background: #7c3aed; }
-    .r-台南 { background: #d97706; }
-    .r-高雄 { background: #dc2626; }
-    .r-南投 { background: #22c55e; }
-    .r-屏東 { background: #db2777; }
-    .r-花蓮 { background: #0891b2; }
-    .r-宜蘭 { background: #6366f1; }
-    .r-台東 { background: #9333ea; }
+    /* Region badge colors — grouped by 4 main areas (北/中/南/東) */
+    .r-基隆, .r-台北, .r-新北, .r-桃園, .r-新竹, .r-苗栗, .r-宜蘭 { background: #2563eb; }
+    .r-台中, .r-彰化, .r-南投, .r-雲林 { background: #16a34a; }
+    .r-嘉義, .r-台南, .r-高雄, .r-屏東 { background: #ea580c; }
+    .r-花蓮, .r-台東 { background: #9333ea; }
 
     .source-note {
       margin-top: 16px;
@@ -746,7 +754,19 @@ let data = []; // Will be loaded from Supabase
 
 async function loadDashboardData() {
   try {
-    document.getElementById('statsGrid').innerHTML = '<div class="stat-card" style="grid-column:1/-1;text-align:center;padding:40px"><div class="value" style="color:#1e293b">⏳</div><div class="sub">載入資料中...</div></div>';
+    document.getElementById('statsGrid').innerHTML = Array(4).fill(0).map(() => `
+      <div class="stat-card skeleton-card">
+        <div class="skeleton skeleton-bar" style="width:50%;height:10px"></div>
+        <div class="skeleton skeleton-bar" style="width:65%;height:30px;margin-top:14px"></div>
+        <div class="skeleton skeleton-bar" style="width:45%;height:10px;margin-top:10px"></div>
+      </div>
+    `).join('');
+    const skTbody = document.getElementById('tableBody');
+    if (skTbody) {
+      skTbody.innerHTML = Array(8).fill(0).map(() => `
+        <tr><td colspan="13" style="padding:14px 6px"><div class="skeleton skeleton-bar" style="width:${60 + Math.random()*30}%"></div></td></tr>
+      `).join('');
+    }
     
     const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
     const [resp, histResp] = await Promise.all([
@@ -855,32 +875,59 @@ function toggleHist(id) {
   document.getElementById(id).classList.toggle('open');
 }
 
+function animateNumber(el, target, opts = {}) {
+  const decimals = opts.decimals || 0;
+  const duration = opts.duration || 900;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) {
+    el.textContent = Number(target).toFixed(decimals);
+    return;
+  }
+  const start = performance.now();
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  function tick(now) {
+    const t = Math.min((now - start) / duration, 1);
+    el.textContent = (target * ease(t)).toFixed(decimals);
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 function renderStats(d) {
   const withS15 = d.filter(x => x.s15);
   const withS16 = d.filter(x => x.s16);
-  const avgS15 = withS15.length ? (withS15.reduce((a,b) => a + b.s15, 0) / withS15.length).toFixed(1) : '—';
+  const maxS15 = withS15.length ? Math.max(...withS15.map(x=>x.s15)) : null;
+  const maxS16 = withS16.length ? Math.max(...withS16.map(x=>x.s16)) : null;
+  const avgS15 = withS15.length ? withS15.reduce((a,b) => a + b.s15, 0) / withS15.length : null;
+  const areaCount = [...new Set(d.map(x=>x.area))].length;
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat-card">
       <div class="label">醫院數量</div>
-      <div class="value">${d.length}</div>
-      <div class="sub">涵蓋 ${[...new Set(d.map(x=>x.area))].length} 個區域</div>
+      <div class="value"><span data-count-to="${d.length}" data-decimals="0">0</span></div>
+      <div class="sub">涵蓋 <span data-count-to="${areaCount}" data-decimals="0">0</span> 個區域</div>
     </div>
     <div class="stat-card">
       <div class="label">最高月薪（15班）</div>
-      <div class="value">${withS15.length ? Math.max(...withS15.map(x=>x.s15)) + '萬' : 'N/A'}</div>
+      <div class="value">${maxS15 !== null ? `<span data-count-to="${maxS15}" data-decimals="0">0</span>萬` : 'N/A'}</div>
       <div class="sub">稅前，含績效</div>
     </div>
     <div class="stat-card">
       <div class="label">平均月薪（15班）</div>
-      <div class="value">${withS15.length ? avgS15 + '萬' : 'N/A'}</div>
-      <div class="sub">${withS15.length} 家醫院有揭露</div>
+      <div class="value">${avgS15 !== null ? `<span data-count-to="${avgS15.toFixed(1)}" data-decimals="1">0.0</span>萬` : 'N/A'}</div>
+      <div class="sub"><span data-count-to="${withS15.length}" data-decimals="0">0</span> 家醫院有揭露</div>
     </div>
     <div class="stat-card">
       <div class="label">最高月薪（16班）</div>
-      <div class="value">${withS16.length ? Math.max(...withS16.map(x=>x.s16)) + '萬' : 'N/A'}</div>
+      <div class="value">${maxS16 !== null ? `<span data-count-to="${maxS16}" data-decimals="0">0</span>萬` : 'N/A'}</div>
       <div class="sub">多班保證制</div>
     </div>
   `;
+
+  document.querySelectorAll('#statsGrid [data-count-to]').forEach(el => {
+    const target = parseFloat(el.dataset.countTo);
+    const decimals = parseInt(el.dataset.decimals || '0');
+    if (!isNaN(target)) animateNumber(el, target, { decimals });
+  });
 }
 
 const regionOrder = ["基隆","台北","新北","桃園","新竹","苗栗","台中","彰化","南投","雲林","嘉義","台南","高雄","屏東","宜蘭","花蓮","台東","澎湖","金門","連江"];
