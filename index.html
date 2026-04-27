@@ -91,8 +91,20 @@
       border: 1px solid #e2e8f0;
       border-radius: 12px;
       padding: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      box-shadow: 0 4px 6px -1px rgba(15,23,42,0.06), 0 2px 4px -2px rgba(15,23,42,0.04);
+      transition: box-shadow 0.2s, transform 0.2s;
     }
+    .stat-card:hover {
+      box-shadow: 0 10px 15px -3px rgba(15,23,42,0.08), 0 4px 6px -4px rgba(15,23,42,0.05);
+      transform: translateY(-1px);
+    }
+    .stat-card .sub-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .stat-card .spark { flex-shrink: 0; opacity: 0.85; }
     .stat-card .label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
     .stat-card .value { font-size: 2.2rem; font-weight: 600; color: #1e293b; margin: 8px 0 4px; font-variant-numeric: tabular-nums; line-height: 1.1; }
     .stat-card .sub { font-size: 0.8rem; color: #16a34a; font-weight: 500; }
@@ -134,7 +146,7 @@
       border: 1px solid #e2e8f0;
       border-radius: 12px;
       padding: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      box-shadow: 0 4px 6px -1px rgba(15,23,42,0.06), 0 2px 4px -2px rgba(15,23,42,0.04);
     }
     .card h2 {
       font-size: 0.9rem;
@@ -406,9 +418,10 @@
 
     .contribute-btn { margin-left:12px; background:linear-gradient(135deg,#16a34a,#15803d); border:none; border-radius:8px; padding:10px 20px; color:#fff; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all .2s; white-space:nowrap; box-shadow:0 1px 3px rgba(0,0,0,0.12); }
     .contribute-btn:hover { background:linear-gradient(135deg,#22c55e,#16a34a); transform:translateY(-1px); box-shadow:0 4px 6px rgba(0,0,0,0.1); }
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); z-index:1000; justify-content:center; align-items:flex-start; padding-top:60px; overflow-y:auto; }
-    .modal-overlay.open { display:flex; }
-    .modal { background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; width:560px; max-width:95vw; padding:28px; position:relative; margin-bottom:40px; box-shadow:0 20px 60px rgba(0,0,0,0.15); }
+    .modal-overlay { display:flex; position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); z-index:1000; justify-content:center; align-items:flex-start; padding-top:60px; overflow-y:auto; opacity:0; visibility:hidden; transition: opacity 0.2s ease-out, visibility 0s linear 0.2s; }
+    .modal-overlay.open { opacity:1; visibility:visible; transition: opacity 0.2s ease-out, visibility 0s linear 0s; }
+    .modal { background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; width:560px; max-width:95vw; padding:28px; position:relative; margin-bottom:40px; box-shadow:0 20px 60px rgba(15,23,42,0.18), 0 8px 16px rgba(15,23,42,0.08); transform: scale(0.95) translateY(8px); transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1); }
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
     .modal h2 { font-size:1.2rem; color:#1e293b; margin-bottom:4px; }
     .modal .modal-sub { font-size:.8rem; color:#64748b; margin-bottom:20px; }
     .modal-close { position:absolute; top:8px; right:8px; background:none; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:8px; }
@@ -893,6 +906,68 @@ function animateNumber(el, target, opts = {}) {
   requestAnimationFrame(tick);
 }
 
+function calcMonthlySeries(d, months = 12) {
+  const buckets = [];
+  const now = new Date();
+  for (let i = months - 1; i >= 0; i--) {
+    const dt = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    buckets.push({ ym: dt.toISOString().slice(0,7), s15s: [], s16s: [], firstHospitals: 0 });
+  }
+  const bucketByYM = Object.fromEntries(buckets.map(b => [b.ym, b]));
+  d.forEach(row => {
+    const sorted = (row.history || []).slice().sort((a,b) => new Date(a.date) - new Date(b.date));
+    const earliest = sorted[0];
+    if (earliest && earliest.date) {
+      const eb = bucketByYM[earliest.date.slice(0,7)];
+      if (eb) eb.firstHospitals++;
+    }
+    sorted.forEach(h => {
+      if (!h.date) return;
+      const b = bucketByYM[h.date.slice(0,7)];
+      if (!b) return;
+      if (h.s15 != null) b.s15s.push(h.s15);
+      if (h.s16 != null) b.s16s.push(h.s16);
+    });
+  });
+  let cum = 0;
+  return buckets.map(b => {
+    cum += b.firstHospitals;
+    return {
+      ym: b.ym,
+      hospitalCount: cum,
+      maxS15: b.s15s.length ? Math.max(...b.s15s) : null,
+      avgS15: b.s15s.length ? b.s15s.reduce((a,c) => a+c, 0) / b.s15s.length : null,
+      maxS16: b.s16s.length ? Math.max(...b.s16s) : null
+    };
+  });
+}
+
+function drawSparkline(container, values, color = '#94a3b8') {
+  const w = 64, h = 22;
+  const valid = values.filter(v => v != null);
+  if (valid.length < 2) { container.innerHTML = ''; return; }
+  const min = Math.min(...valid);
+  const max = Math.max(...valid);
+  const range = max - min || 1;
+  const padY = 2;
+  const innerH = h - padY * 2;
+  const pts = values.map((v, i) => {
+    if (v == null) return null;
+    const x = (i / (values.length - 1)) * w;
+    const y = padY + innerH - ((v - min) / range) * innerH;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).filter(Boolean).join(' ');
+  const lastIdx = values.length - 1;
+  const lastV = values[lastIdx];
+  let dot = '';
+  if (lastV != null) {
+    const lx = w;
+    const ly = padY + innerH - ((lastV - min) / range) * innerH;
+    dot = `<circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="1.8" fill="${color}"/>`;
+  }
+  container.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:64px;height:22px;display:block" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>${dot}</svg>`;
+}
+
 function renderStats(d) {
   const withS15 = d.filter(x => x.s15);
   const withS16 = d.filter(x => x.s16);
@@ -900,26 +975,27 @@ function renderStats(d) {
   const maxS16 = withS16.length ? Math.max(...withS16.map(x=>x.s16)) : null;
   const avgS15 = withS15.length ? withS15.reduce((a,b) => a + b.s15, 0) / withS15.length : null;
   const areaCount = [...new Set(d.map(x=>x.area))].length;
+  const series = calcMonthlySeries(d);
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat-card">
       <div class="label">醫院數量</div>
       <div class="value"><span data-count-to="${d.length}" data-decimals="0">0</span></div>
-      <div class="sub">涵蓋 <span data-count-to="${areaCount}" data-decimals="0">0</span> 個區域</div>
+      <div class="sub-row"><div class="sub">涵蓋 <span data-count-to="${areaCount}" data-decimals="0">0</span> 個區域</div><div class="spark" data-spark="hospitalCount"></div></div>
     </div>
     <div class="stat-card">
       <div class="label">最高月薪（15班）</div>
       <div class="value">${maxS15 !== null ? `<span data-count-to="${maxS15}" data-decimals="0">0</span>萬` : 'N/A'}</div>
-      <div class="sub">稅前，含績效</div>
+      <div class="sub-row"><div class="sub">稅前，含績效</div><div class="spark" data-spark="maxS15"></div></div>
     </div>
     <div class="stat-card">
       <div class="label">平均月薪（15班）</div>
       <div class="value">${avgS15 !== null ? `<span data-count-to="${avgS15.toFixed(1)}" data-decimals="1">0.0</span>萬` : 'N/A'}</div>
-      <div class="sub"><span data-count-to="${withS15.length}" data-decimals="0">0</span> 家醫院有揭露</div>
+      <div class="sub-row"><div class="sub"><span data-count-to="${withS15.length}" data-decimals="0">0</span> 家醫院有揭露</div><div class="spark" data-spark="avgS15"></div></div>
     </div>
     <div class="stat-card">
       <div class="label">最高月薪（16班）</div>
       <div class="value">${maxS16 !== null ? `<span data-count-to="${maxS16}" data-decimals="0">0</span>萬` : 'N/A'}</div>
-      <div class="sub">多班保證制</div>
+      <div class="sub-row"><div class="sub">多班保證制</div><div class="spark" data-spark="maxS16"></div></div>
     </div>
   `;
 
@@ -927,6 +1003,12 @@ function renderStats(d) {
     const target = parseFloat(el.dataset.countTo);
     const decimals = parseInt(el.dataset.decimals || '0');
     if (!isNaN(target)) animateNumber(el, target, { decimals });
+  });
+
+  const sparkColors = { hospitalCount: '#2563eb', maxS15: '#16a34a', avgS15: '#0891b2', maxS16: '#9333ea' };
+  document.querySelectorAll('#statsGrid [data-spark]').forEach(el => {
+    const key = el.dataset.spark;
+    drawSparkline(el, series.map(s => s[key]), sparkColors[key]);
   });
 }
 
