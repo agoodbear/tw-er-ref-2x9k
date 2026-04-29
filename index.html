@@ -255,8 +255,8 @@
       letter-spacing: 0.05em;
     }
 
-    .table-card { grid-column: 1 / -1; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; table-layout: fixed; }
+    .table-card { grid-column: 1 / -1; overflow-x: auto; }
+    table { width: 100%; min-width: 1200px; border-collapse: collapse; font-size: 0.82rem; table-layout: fixed; }
     thead th {
       text-align: left;
       padding: 10px 6px;
@@ -286,6 +286,7 @@
     thead th.sortable[data-sort-col="lastUpdated"] { text-align: left; }
     /* Tabular numerals for salary / metric columns */
     tbody td[data-label="10班"],
+    tbody td[data-label="12班"],
     tbody td[data-label="14班"],
     tbody td[data-label="15班"],
     tbody td[data-label="16班"],
@@ -312,6 +313,7 @@
     tbody td { padding: 11px 6px; color: var(--text); vertical-align: top; font-size: 0.8rem; }
     /* Mono font for numeric data columns */
     tbody td[data-label="10班"],
+    tbody td[data-label="12班"],
     tbody td[data-label="14班"],
     tbody td[data-label="15班"],
     tbody td[data-label="16班"],
@@ -323,16 +325,16 @@
       letter-spacing: -0.02em;
     }
     tbody td:first-child { position: relative; overflow: visible; }
-    /* Column widths: total 13 columns */
-    col.col-hospital { width: 13%; }
+    /* Column widths: total 14 columns (含 12 班) */
+    col.col-hospital { width: 12%; }
     col.col-region { width: 4%; }
-    col.col-level { width: 6%; }
-    col.col-trend { width: 5%; }
-    col.col-salary { width: 6%; }
-    col.col-visits { width: 6%; }
+    col.col-level { width: 5%; }
+    col.col-trend { width: 4%; }
+    col.col-salary { width: 5%; }
+    col.col-visits { width: 5%; }
     col.col-pph { width: 4%; }
     col.col-tags { width: 7%; }
-    col.col-note { width: 22%; }
+    col.col-note { width: 21%; }
     col.col-date { width: 7%; }
 
     .region-badge {
@@ -700,6 +702,7 @@
         <col class="col-region">
         <col class="col-level">
         <col class="col-trend">
+        <col class="col-salary">
         <col class="col-salary">
         <col class="col-salary">
         <col class="col-salary">
