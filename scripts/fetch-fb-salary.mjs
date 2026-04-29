@@ -243,11 +243,12 @@ async function parsePostsWithAI(posts) {
 ## 提取規則
 
 1. 提取任何提到具體薪資數字的貼文（月薪、班薪、時薪皆可）
-2. 薪資統一轉換為「月薪（萬）」填入 s10/s14/s15/s16 欄位：
+2. 薪資統一轉換為「月薪（萬）」填入 s10/s12/s14/s15/s16 欄位：
    - 如果貼文直接寫月薪，直接填入（如 50.5萬 → 50.5）
+   - 班數要對應到欄位：10 班→s10、12 班→s12、14 班→s14、15 班→s15、16 班→s16
    - 如果是班薪制（如每班 2.4~3.2 萬），請估算 15 班月薪：取平均班薪 × 15，填入 s15
    - 如果是時薪制（如 1667/hr），請估算：時薪 × 12hr × 15班 / 10000，填入 s15
-3. 班數欄位（s10/s14/s15/s16）填的是「上 N 班的月薪總額（萬）」
+3. 班數欄位（s10/s12/s14/s15/s16）填的是「上 N 班的月薪總額（萬）」
 4. 貼文中如果有人提到「15班稅前50萬」之類的描述（即使語氣是抱怨或討論），也要提取
 5. 醫院名稱用社群常用簡稱（如「中醫北港」「員基」「台東馬偕」「輔大醫院」）
 6. 地區：基隆/台北/新北/桃園/新竹/苗栗/台中/彰化/南投/雲林/嘉義/台南/高雄/屏東/宜蘭/花蓮/台東
@@ -257,7 +258,7 @@ async function parsePostsWithAI(posts) {
 10. note 欄位記錄班制（如「固定班薪制，平日白/中/夜班 2.4/2.5/2.8萬」）、特殊福利等
 
 只回覆 JSON array，不加任何說明文字：
-[{"hospital":"醫院","region":"地區","level":"層級","s10":null,"s14":null,"s15":45,"s16":null,"visits":null,"note":"備註","source_date":"2026-04-11"}]
+[{"hospital":"醫院","region":"地區","level":"層級","s10":null,"s12":null,"s14":null,"s15":45,"s16":null,"visits":null,"note":"備註","source_date":"2026-04-11"}]
 
 如果沒有可提取的薪資資料，回覆 []
 
@@ -328,7 +329,7 @@ async function writeToSupabase(entries) {
 
   const [hospResp, dashResp] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/hospitals?select=id,name,aliases`, { headers }),
-    fetch(`${SB_URL}/rest/v1/dashboard_data?select=hospital,s10,s14,s15,s16`, { headers })
+    fetch(`${SB_URL}/rest/v1/dashboard_data?select=hospital,s10,s12,s14,s15,s16`, { headers })
   ]);
 
   const hospitals = await hospResp.json();
@@ -358,6 +359,8 @@ async function writeToSupabase(entries) {
           const same = (
             ((!entry.s15 && !current.s15) || entry.s15 == current.s15) &&
             ((!entry.s16 && !current.s16) || entry.s16 == current.s16) &&
+            ((!entry.s14 && !current.s14) || entry.s14 == current.s14) &&
+            ((!entry.s12 && !current.s12) || entry.s12 == current.s12) &&
             ((!entry.s10 && !current.s10) || entry.s10 == current.s10)
           );
           if (same) {
@@ -394,15 +397,20 @@ async function writeToSupabase(entries) {
       }
 
       const report = {
-        hospital_id: hospital.id, s10: entry.s10 || null, s14: entry.s14 || null,
-        s15: entry.s15 || null, s16: entry.s16 || null, visits: entry.visits || null,
+        hospital_id: hospital.id, s10: entry.s10 || null, s12: entry.s12 || null,
+        s14: entry.s14 || null, s15: entry.s15 || null, s16: entry.s16 || null,
+        visits: entry.visits || null,
         note: entry.note || null,
         source_date: entry.source_date || new Date().toISOString().slice(0, 10),
         submitter_token: 'auto_pipeline'
       };
 
+      const summary = ['s10','s12','s14','s15','s16']
+        .map(k => report[k] ? `${k.slice(1)}班 ${report[k]}` : null)
+        .filter(Boolean).join(' / ') || '—';
+
       if (DRY_RUN) {
-        log(`   📋 [DRY RUN] ${entry.hospital}: s10=${report.s10 || '—'} s15=${report.s15 || '—'} s16=${report.s16 || '—'}萬`);
+        log(`   📋 [DRY RUN] ${entry.hospital}: ${summary}萬`);
         added++;
         continue;
       }
@@ -411,7 +419,7 @@ async function writeToSupabase(entries) {
         method: 'POST', headers, body: JSON.stringify(report)
       });
       if (insertResp.ok) {
-        log(`   ✅ ${entry.hospital}: s15=${report.s15 || '—'}萬 已寫入`);
+        log(`   ✅ ${entry.hospital}: ${summary}萬 已寫入`);
         added++;
       } else {
         log(`   ❌ ${entry.hospital} 寫入失敗: ${await insertResp.text()}`);

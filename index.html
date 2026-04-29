@@ -717,6 +717,7 @@
           <th>層級</th>
           <th>趨勢</th>
           <th class="sortable" data-sort-col="s10" role="button" tabindex="0" aria-sort="none" title="點擊排序">10班</th>
+          <th class="sortable" data-sort-col="s12" role="button" tabindex="0" aria-sort="none" title="點擊排序">12班</th>
           <th class="sortable" data-sort-col="s14" role="button" tabindex="0" aria-sort="none" title="點擊排序">14班</th>
           <th class="sortable" data-sort-col="s15" role="button" tabindex="0" aria-sort="none" title="點擊排序">15班</th>
           <th class="sortable" data-sort-col="s16" role="button" tabindex="0" aria-sort="none" title="點擊排序">16班</th>
@@ -768,6 +769,7 @@
           </div>
           <div class="form-row-4">
             <div class="form-group"><label>10班/月薪(萬)</label><input type="number" id="fs10" step="0.1" min="10" max="100" placeholder="如 33"></div>
+            <div class="form-group"><label>12班/月薪(萬)</label><input type="number" id="fs12" step="0.1" min="10" max="100" placeholder="如 38"></div>
             <div class="form-group"><label>14班/月薪(萬)</label><input type="number" id="fs14" step="0.1" min="10" max="100" placeholder="如 40"></div>
             <div class="form-group"><label>15班/月薪(萬)</label><input type="number" id="fs15" step="0.1" min="10" max="100" placeholder="如 45"></div>
             <div class="form-group"><label>16班/月薪(萬)</label><input type="number" id="fs16" step="0.1" min="10" max="100" placeholder="如 55"></div>
@@ -903,7 +905,7 @@ async function loadDashboardData() {
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const rows = await resp.json();
 
-    // Build history map: hospital_id -> [{date, s14, s15, note}]
+    // Build history map: hospital_id -> [{date, s10, s12, s14, s15, s16, note}]
     const historyMap = {};
     if (histResp.ok) {
       const histRows = await histResp.json();
@@ -911,8 +913,11 @@ async function loadDashboardData() {
         if (!historyMap[h.hospital_id]) historyMap[h.hospital_id] = [];
         historyMap[h.hospital_id].push({
           date: h.source_date || (h.created_at ? h.created_at.slice(0,10) : ''),
+          s10: h.s10 ? parseFloat(h.s10) : null,
+          s12: h.s12 ? parseFloat(h.s12) : null,
           s14: h.s14 ? parseFloat(h.s14) : null,
           s15: h.s15 ? parseFloat(h.s15) : null,
+          s16: h.s16 ? parseFloat(h.s16) : null,
           note: h.note || ''
         });
       });
@@ -927,6 +932,7 @@ async function loadDashboardData() {
         area: r.area,
         level: r.level || '地區醫院',
         s10: r.s10 ? parseFloat(r.s10) : null,
+        s12: r.s12 ? parseFloat(r.s12) : null,
         s14: r.s14 ? parseFloat(r.s14) : null,
         s15: r.s15 ? parseFloat(r.s15) : null,
         s16: r.s16 ? parseFloat(r.s16) : null,
@@ -975,8 +981,8 @@ function calcTrend(row) {
   if (row.history && row.history.length >= 2) {
     const newest = row.history[0];
     const oldest = row.history[row.history.length - 1];
-    const ns = newest.s15 || newest.s14;
-    const os = oldest.s15 || oldest.s14;
+    const ns = newest.s15 || newest.s14 || newest.s12 || newest.s16 || newest.s10;
+    const os = oldest.s15 || oldest.s14 || oldest.s12 || oldest.s16 || oldest.s10;
     if (ns && os) {
       const diff = ns - os;
       if (diff > 0) return { icon: `↑ +${diff}萬`, cls: 'trend-up', tip: `${oldest.date} → ${newest.date}` };
@@ -992,7 +998,11 @@ function renderHistoryBtn(row) {
   if (!row.history || row.history.length === 0) return '';
   const id = `h${histCounter++}`;
   const rows = row.history.map(h => {
-    const sal = h.s15 ? `${h.s15}萬（15班）` : h.s14 ? `${h.s14}萬（14班）` : '—';
+    const sal = h.s16 ? `${h.s16}萬（16班）`
+              : h.s15 ? `${h.s15}萬（15班）`
+              : h.s14 ? `${h.s14}萬（14班）`
+              : h.s12 ? `${h.s12}萬（12班）`
+              : h.s10 ? `${h.s10}萬（10班）` : '—';
     return `<div class="hist-row"><div class="hist-dot"></div><span class="hist-date">${h.date}</span><span class="hist-sal">${sal}</span><span class="hist-note">${h.note || ''}</span></div>`;
   }).join('');
   return `<button class="history-toggle" onclick="toggleHist('${id}')">歷史 (${row.history.length})</button><div class="history-panel" id="${id}">${rows}</div>`;
@@ -1131,7 +1141,7 @@ function regionSortFn(a, b) {
   const ra = regionOrder.indexOf(a.region), rb = regionOrder.indexOf(b.region);
   const oa = ra === -1 ? 99 : ra, ob = rb === -1 ? 99 : rb;
   if (oa !== ob) return oa - ob;
-  return (b.s15||b.s16||0) - (a.s15||a.s16||0);
+  return ((b.s15||b.s14||b.s12||b.s16||b.s10)||0) - ((a.s15||a.s14||a.s12||a.s16||a.s10)||0);
 }
 
 let currentSort = { col: null, dir: null };
@@ -1225,6 +1235,7 @@ function renderTable(d) {
       <td data-label="層級" style="font-size:0.78rem;color:#64748b">${row.level}</td>
       <td data-label="趨勢" title="${trend.tip}"><span class="${trend.cls}">${trend.icon}</span></td>
       <td data-label="10班">${fmtSalary(row.s10)}</td>
+      <td data-label="12班">${fmtSalary(row.s12)}</td>
       <td data-label="14班">${fmtSalary(row.s14)}</td>
       <td data-label="15班">${fmtSalary(row.s15)}</td>
       <td data-label="16班">${fmtSalary(row.s16)}</td>
@@ -1332,7 +1343,7 @@ function renderTaiwanMap(d) {
   d.forEach(x => {
     if (!regionData[x.region]) regionData[x.region] = { hospitals: [], salaries: [] };
     regionData[x.region].hospitals.push(x);
-    const sal = x.s15 || x.s14 || x.s16 || x.s10;
+    const sal = x.s15 || x.s14 || x.s12 || x.s16 || x.s10;
     if (sal) regionData[x.region].salaries.push(sal);
   });
 
@@ -1469,7 +1480,7 @@ function renderTrendChart() {
         label: x.hospital.replace('醫院','院'),
         color,
         points: x.history.slice().reverse() // oldest first
-          .map(h => ({ x: h.date.slice(0,7), y: h.s15 || h.s14 }))
+          .map(h => ({ x: h.date.slice(0,7), y: h.s15 || h.s14 || h.s12 || h.s16 || h.s10 }))
       };
     });
 
@@ -1592,13 +1603,14 @@ function showPreview() {
   if (!hospName) { showToast('⚠️ 請輸入醫院名稱', 'err'); return; }
 
   var s10 = document.getElementById('fs10').value;
+  var s12 = document.getElementById('fs12').value;
   var s14 = document.getElementById('fs14').value;
   var s15 = document.getElementById('fs15').value;
   var s16 = document.getElementById('fs16').value;
-  if (!s10 && !s14 && !s15 && !s16) { showToast('⚠️ 請至少填寫一個薪資欄位', 'err'); return; }
+  if (!s10 && !s12 && !s14 && !s15 && !s16) { showToast('⚠️ 請至少填寫一個薪資欄位', 'err'); return; }
 
   // 合理範圍檢查
-  var vals = [s10, s14, s15, s16].filter(Boolean).map(Number);
+  var vals = [s10, s12, s14, s15, s16].filter(Boolean).map(Number);
   if (vals.some(v => v < 15 || v > 100)) {
     showToast('⚠️ 月薪應在 15~100 萬之間，請確認數字', 'err');
     return;
@@ -1615,6 +1627,7 @@ function showPreview() {
   html += '<div class="preview-row"><span class="preview-label">醫院</span><strong>' + hospName + '</strong></div>';
   var salaryParts = [];
   if (s10) salaryParts.push('10班 ' + s10 + '萬');
+  if (s12) salaryParts.push('12班 ' + s12 + '萬');
   if (s14) salaryParts.push('14班 ' + s14 + '萬');
   if (s15) salaryParts.push('15班 ' + s15 + '萬');
   if (s16) salaryParts.push('16班 ' + s16 + '萬');
@@ -1732,6 +1745,7 @@ async function submitReport(e) {
 
     var token = getSubmitterToken();
     var s10 = document.getElementById('fs10').value || null;
+    var s12 = document.getElementById('fs12').value || null;
     var s14 = document.getElementById('fs14').value || null;
     var s15 = document.getElementById('fs15').value || null;
     var s16 = document.getElementById('fs16').value || null;
@@ -1746,7 +1760,7 @@ async function submitReport(e) {
     if (getChipValue('fNP')) chipParts.push('NP支援');
     var note = (chipParts.length ? chipParts.join('；') + '。' : '') + userNote || null;
 
-    if (!s10 && !s14 && !s15 && !s16) { showToast('⚠️ 請至少填寫一個薪資欄位', 'err'); return; }
+    if (!s10 && !s12 && !s14 && !s15 && !s16) { showToast('⚠️ 請至少填寫一個薪資欄位', 'err'); return; }
 
     var hospitalId = selectedHospitalId;
 
@@ -1789,7 +1803,8 @@ async function submitReport(e) {
       // Insert salary report
       var salResp = await sb.from('salary_reports').insert({
         hospital_id: hospitalId,
-        s10: s10 ? parseFloat(s10) : null, s14: s14 ? parseFloat(s14) : null,
+        s10: s10 ? parseFloat(s10) : null, s12: s12 ? parseFloat(s12) : null,
+        s14: s14 ? parseFloat(s14) : null,
         s15: s15 ? parseFloat(s15) : null, s16: s16 ? parseFloat(s16) : null,
         visits: visits ? parseInt(visits) : null,
         note: note, source_date: srcDate, submitter_token: token
@@ -1805,6 +1820,7 @@ async function submitReport(e) {
     var insertResp = await sb.from('salary_reports').insert({
       hospital_id: hospitalId,
       s10: s10 ? parseFloat(s10) : null,
+      s12: s12 ? parseFloat(s12) : null,
       s14: s14 ? parseFloat(s14) : null,
       s15: s15 ? parseFloat(s15) : null,
       s16: s16 ? parseFloat(s16) : null,
