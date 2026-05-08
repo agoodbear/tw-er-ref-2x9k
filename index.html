@@ -475,15 +475,20 @@
 
       /* 表格改卡片式 */
       .table-card { overflow-x: visible; }
-      table, thead, tbody, th, td, tr { display: block; }
+      table {
+        width: 100% !important;
+        min-width: 0 !important;
+        table-layout: auto !important;
+      }
+      table, thead, tbody, th, td, tr { display: block; width: 100%; box-sizing: border-box; }
       thead { display: none; }
       colgroup { display: none; }
       tbody tr {
         background: #fff;
         border: 1px solid #e2e8f0;
         border-radius: 10px;
-        margin-bottom: 10px;
-        padding: 12px;
+        margin-bottom: 12px;
+        padding: 14px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       }
       tbody tr:nth-child(even) { background: #fff; }
@@ -491,30 +496,64 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        padding: 4px 0;
+        gap: 12px;
+        padding: 6px 0;
         border-bottom: 1px solid #f1f5f9;
-        font-size: 0.82rem;
+        font-size: 0.85rem;
+        line-height: 1.45;
       }
       tbody td:last-child { border-bottom: none; }
       tbody td::before {
         content: attr(data-label);
         font-weight: 600;
         color: #64748b;
-        font-size: 0.75rem;
-        min-width: 70px;
+        font-size: 0.78rem;
+        min-width: 56px;
         flex-shrink: 0;
+        text-align: left;
       }
+      tbody td > *:not(::before) {
+        text-align: right;
+        flex: 1;
+        min-width: 0;
+        word-break: break-word;
+      }
+      /* 醫院名稱（第一格）特別處理：標題式呈現 */
       tbody td:first-child {
         display: block;
-        font-size: 0.95rem;
+        font-size: 1rem;
         font-weight: 700;
         color: #1e293b;
-        padding-bottom: 6px;
+        padding: 0 0 8px 0;
         border-bottom: 2px solid #e2e8f0;
-        margin-bottom: 4px;
+        margin-bottom: 8px;
+        text-align: left;
       }
       tbody td:first-child::before { display: none; }
-      .note-text { font-size: 0.75rem; max-width: 100%; }
+      /* 備註（多行長文）改成 label 在上、文字在下 */
+      tbody td[data-label="備註"] {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      tbody td[data-label="備註"]::before { margin-bottom: 4px; }
+      .note-text {
+        font-size: 0.78rem;
+        max-width: 100%;
+        text-align: left !important;
+        color: #475569;
+        line-height: 1.55;
+      }
+      /* 薪資、月診量、PPH 等數字欄維持靠右 + 數字字型 */
+      tbody td[data-label="10班"],
+      tbody td[data-label="12班"],
+      tbody td[data-label="14班"],
+      tbody td[data-label="15班"],
+      tbody td[data-label="16班"],
+      tbody td[data-label="月診量"],
+      tbody td[data-label="PPH"],
+      tbody td[data-label="更新"] {
+        font-variant-numeric: tabular-nums;
+      }
       .history-panel { min-width: unset; max-width: 100%; width: 100%; }
 
       /* Modal */
