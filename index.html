@@ -1026,9 +1026,11 @@ function calcTrend(row) {
     const ns = newest.s15 || newest.s14 || newest.s12 || newest.s16 || newest.s10;
     const os = oldest.s15 || oldest.s14 || oldest.s12 || oldest.s16 || oldest.s10;
     if (ns && os) {
-      const diff = ns - os;
-      if (diff > 0) return { icon: `↑ +${diff}萬`, cls: 'trend-up', tip: `${oldest.date} → ${newest.date}` };
-      if (diff < 0) return { icon: `↓ ${diff}萬`, cls: 'trend-down', tip: `${oldest.date} → ${newest.date}` };
+      // 用整數運算避開 JS 浮點誤差（45.4 - 44 → 1.3999999999999986），單位最小到 0.1 萬
+      const diff = Math.round((ns - os) * 10) / 10;
+      const diffStr = Number.isInteger(diff) ? diff.toFixed(0) : diff.toFixed(1);
+      if (diff > 0) return { icon: `↑ +${diffStr}萬`, cls: 'trend-up', tip: `${oldest.date} → ${newest.date}` };
+      if (diff < 0) return { icon: `↓ ${diffStr}萬`, cls: 'trend-down', tip: `${oldest.date} → ${newest.date}` };
       return { icon: '→ 持平', cls: 'trend-flat', tip: `${oldest.date} → ${newest.date}` };
     }
   }
