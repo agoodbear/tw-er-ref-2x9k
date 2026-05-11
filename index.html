@@ -1796,13 +1796,19 @@ async function submitReport(e) {
     var visits = document.getElementById('fvisits').value || null;
     var userNote = document.getElementById('fnote').value || '';
     var srcDate = document.getElementById('fsrcDate').value || null;
-    // 收集 chip 資訊附加到 note
+    // 收集 chip 資訊：權威來源寫進 salary_reports.shift/public/np 三欄，
+    // 同步保留一份在 note 字串裡（給歷史閱讀備援，view 已優先讀新欄位）
     var chipParts = [];
-    var shift = getChipValue('fShift');
-    if (shift) chipParts.push(shift + 'h制');
-    if (getChipValue('fPublic')) chipParts.push('公立');
-    if (getChipValue('fNP')) chipParts.push('NP支援');
+    var shiftChip = getChipValue('fShift');
+    var publicChip = getChipValue('fPublic');
+    var npChip = getChipValue('fNP');
+    if (shiftChip) chipParts.push(shiftChip + 'h制');
+    if (publicChip) chipParts.push('公立');
+    if (npChip) chipParts.push('NP支援');
     var note = (chipParts.length ? chipParts.join('；') + '。' : '') + userNote || null;
+    var shiftCol = shiftChip ? parseInt(shiftChip, 10) : null;
+    var publicCol = publicChip ? true : null;
+    var npCol = npChip ? true : null;
 
     if (!s10 && !s12 && !s14 && !s15 && !s16) { showToast('⚠️ 請至少填寫一個薪資欄位', 'err'); return; }
 
@@ -1851,7 +1857,8 @@ async function submitReport(e) {
         s14: s14 ? parseFloat(s14) : null,
         s15: s15 ? parseFloat(s15) : null, s16: s16 ? parseFloat(s16) : null,
         visits: visits ? parseInt(visits) : null,
-        note: note, source_date: srcDate, submitter_token: token
+        note: note, source_date: srcDate, submitter_token: token,
+        shift: shiftCol, public: publicCol, np: npCol
       });
       if (salResp.error) throw salResp.error;
       showToast('✅ 「' + name + '」已新增！重新整理即可看到。', 'ok');
@@ -1869,7 +1876,8 @@ async function submitReport(e) {
       s15: s15 ? parseFloat(s15) : null,
       s16: s16 ? parseFloat(s16) : null,
       visits: visits ? parseInt(visits) : null,
-      note: note, source_date: srcDate, submitter_token: token
+      note: note, source_date: srcDate, submitter_token: token,
+      shift: shiftCol, public: publicCol, np: npCol
     });
     if (insertResp.error) throw insertResp.error;
     showToast('\u2705 \u85aa\u8cc7\u56de\u5831\u6210\u529f\uff01\u611f\u8b1d\u4f60\u7684\u8ca2\u737b\u3002', 'ok');
