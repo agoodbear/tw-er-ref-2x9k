@@ -2240,7 +2240,7 @@ function showRankResult(hosp) {
         { label:'我的醫院', data:[], parsing:false, pointRadius:11, pointHoverRadius:13, backgroundColor:'#f59e0b', borderColor:'#7c2d12', borderWidth:2 }
       ]},
       options:{ maintainAspectRatio:false,
-        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>`${c.raw.hospital}（${c.raw.region}）：薪資 ${c.raw.x.toFixed(1)}萬、${m.tip} ${c.raw.raw}${m.unit}` } } },
+        plugins:{ legend:{display:false}, tooltip:{ filter:it=>it.datasetIndex===0, callbacks:{ label:c=>`${c.raw.hospital}（${c.raw.region}）：薪資 ${c.raw.x.toFixed(1)}萬、${m.tip} ${c.raw.raw}${m.unit}` } } },
         scales:{ x:{ title:{display:true,text:'各醫院 15班月薪（萬）'} }, y:{ min:0, title:{display:true,text:m.axis}, ticks:{ callback:v=>{ const o=m.sqrt?v*v:v; return (o<10?Math.round(o*10)/10:Math.round(o))+m.unit; } } } }
       },
       plugins:[quadrantPlugin, labelPlugin]
