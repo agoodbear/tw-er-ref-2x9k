@@ -767,6 +767,7 @@
     <p id="corrSummary" style="font-size:.9rem;margin:0 0 12px">分析中…</p>
     <div class="scatter-wrap"><canvas id="scatterChart"></canvas></div>
     <p style="font-size:.72rem;color:var(--text-muted);margin-top:8px">每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院所屬縣市</b>的官方擁塞（故同縣市醫院縱軸等高）。擁塞以「急診滯留人數」衡量＝看診＋等待住院＋推床＋加護病房（不加權，≈ ED census；boarding 為文獻與健保署公認核心）。⚠️ 縣市擁塞為官方即時資料、未做占床率正規化。資料時間：<span id="congSysdate">—</span>（衛福部健保署，每小時更新）。相關不等於因果。</p>
+    <p style="font-size:.74rem;color:var(--text-muted);margin-top:6px;padding-top:6px;border-top:1px dashed var(--border)">註：「擁塞程度」採用衛福部健保署公開的「<a href="https://info.nhi.gov.tw/INAE4000/INAE4001S01" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">重度級急救責任醫院急診即時訊息</a>」，僅涵蓋政府規定須即時通報的急救責任醫院；部分醫院（如多數地區醫院、診所）未納入。本圖即以各縣市「有通報的醫院」代表該縣市的急診擁塞概況。資料來源：<a href="https://info.nhi.gov.tw/INAE4000/INAE4001S01" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">info.nhi.gov.tw/INAE4000/INAE4001S01</a></p>
   </div>
 
   <div class="card table-card">
