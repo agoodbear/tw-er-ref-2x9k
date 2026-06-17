@@ -1,4 +1,7 @@
 node_modules/
 scripts/node_modules/
-data/
+data/*
+!data/congestion-latest.json
+!data/congestion-history.json
 .fb-cookies.json
+.DS_Store

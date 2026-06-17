@@ -1,0 +1,37 @@
+name: 急診壅塞每小時更新
+
+# 每小時抓健保署急診即時訊息 → 更新 data/congestion-latest.json + history
+# 台灣時間每小時 :05（UTC 每小時 :05；健保署整點更新，錯開幾分鐘抓最新）
+on:
+  schedule:
+    - cron: '5 * * * *'
+  workflow_dispatch: {}   # 也可手動觸發
+
+permissions:
+  contents: write
+
+concurrency:
+  group: congestion
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 抓壅塞資料
+        run: node scripts/fetch-congestion.mjs
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain data/congestion-latest.json data/congestion-history.json)" ]; then
+            git add data/congestion-latest.json data/congestion-history.json
+            git commit -m "chore(congestion): 每小時更新急診壅塞資料 [skip ci]"
+            git push
+          else
+            echo "無變化，略過 commit"
+          fi

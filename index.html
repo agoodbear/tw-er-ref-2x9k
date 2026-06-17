@@ -427,6 +427,18 @@
     .map-tooltip .tt-hospitals { color: #94a3b8; font-size: 0.75rem; margin-top: 4px; white-space: normal; }
     .map-legend { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.72rem; color: #64748b; justify-content: center; }
     .map-legend-bar { width: 120px; height: 10px; border-radius: 5px; background: linear-gradient(to right, #dcfce7, #15803d); }
+    .map-legend-bar.cong { background: linear-gradient(to right, #fee2e2, #991b1b); }
+    .tw-county.hl { stroke: #0f172a; stroke-width: 2.6; }
+    .map-wrap.dim .tw-county:not(.hl) { opacity: .4; }
+    .scatter-wrap { position: relative; height: 360px; }
+    #corrSummary .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
+    .crk-row { display: grid; grid-template-columns: 50px 1fr 56px 1.5fr; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: .82rem; }
+    .crk-row:last-child { border-bottom: none; }
+    .crk-no { font-weight: 800; color: #dc2626; }
+    .crk-name { font-weight: 600; }
+    .crk-name small { display: block; color: var(--text-muted); font-weight: 400; font-size: .72rem; }
+    .crk-score { font-weight: 800; text-align: right; }
+    .crk-detail { color: var(--text-muted); font-size: .74rem; text-align: right; }
 
     /* Region badge colors — grouped by 4 main areas (北/中/南/東) */
     .r-基隆, .r-台北, .r-新北, .r-桃園, .r-新竹, .r-苗栗, .r-宜蘭 { background: #2563eb; }
@@ -696,11 +708,12 @@
     <button class="filter-btn" onclick="filterRegion('東部', this)">東部</button>
   </div>
 
+  <div class="card" style="margin-bottom:20px">
+    <h2>📊 15班月薪比較（萬元）</h2>
+    <div class="chart-wrap"><canvas id="salaryChart"></canvas></div>
+  </div>
+
   <div class="main-grid">
-    <div class="card">
-      <h2>📊 15班月薪比較（萬元）</h2>
-      <div class="chart-wrap"><canvas id="salaryChart"></canvas></div>
-    </div>
     <div class="card">
       <h2>🗺️ 各地區薪資地圖</h2>
       <div class="map-wrap" id="mapWrap">
@@ -731,6 +744,29 @@
         <span>高薪</span>
       </div>
     </div>
+    <div class="card">
+      <h2>🚑 急診壅塞地圖</h2>
+      <div class="map-wrap" id="congMapWrap">
+        <div class="map-tooltip" id="congTooltip"></div>
+      </div>
+      <div class="map-legend">
+        <span>壅塞輕</span>
+        <div class="map-legend-bar cong"></div>
+        <span>壅塞重</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <h2>📈 薪資 × 擁塞 相關性（每一家醫院）</h2>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px">
+      <input id="scatterSearch" list="scatterHospList" placeholder="🔍 搜尋自己的醫院…" autocomplete="off" style="flex:0 1 300px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.88rem;outline:none">
+      <datalist id="scatterHospList"></datalist>
+      <span id="scatterSearchResult" style="font-size:.82rem;color:var(--text-muted)"></span>
+    </div>
+    <p id="corrSummary" style="font-size:.9rem;margin:0 0 12px">分析中…</p>
+    <div class="scatter-wrap"><canvas id="scatterChart"></canvas></div>
+    <p style="font-size:.72rem;color:var(--text-muted);margin-top:8px">每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院所屬縣市</b>的官方擁塞（故同縣市醫院縱軸等高）。擁塞以「急診滯留人數」衡量＝看診＋等待住院＋推床＋加護病房（不加權，≈ ED census；boarding 為文獻與健保署公認核心）。⚠️ 縣市擁塞為官方即時資料、未做占床率正規化。資料時間：<span id="congSysdate">—</span>（衛福部健保署，每小時更新）。相關不等於因果。</p>
   </div>
 
   <div class="card table-card">
@@ -772,6 +808,12 @@
       </thead>
       <tbody id="tableBody"></tbody>
     </table>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <h2>🚑 急診壅塞・全國排名</h2>
+    <input id="congSearch" placeholder="搜尋醫院名稱…" style="width:100%;max-width:280px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;background:var(--surface);color:var(--text)">
+    <div id="congRankTable" style="max-height:480px;overflow-y:auto;border:1px solid var(--border);border-radius:10px"></div>
   </div>
 
   <!-- Contribution Modal -->
@@ -2016,6 +2058,233 @@ function showRankResult(hosp) {
   neighborsEl.innerHTML = neighborsHtml;
 }
 
+</script>
+
+<script>
+// ── 急診壅塞地圖 × 薪資相關性（健保署資料）──
+(async function congestionFeature(){
+  // 等薪資地圖區資料就緒（renderTaiwanMap 會寫 window._mapRegionData）
+  for (let i=0; i<200 && !window._mapRegionData; i++) await new Promise(r=>setTimeout(r,50));
+
+  let cong;
+  try {
+    cong = await (await fetch('data/congestion-latest.json', {cache:'no-store'})).json();
+  } catch(e){ console.warn('壅塞資料載入失敗：', e); return; }
+
+  const sysEl = document.getElementById('congSysdate');
+  if (sysEl) sysEl.textContent = cong.sysdate || '—';
+
+  // 1) 克隆薪資地圖 → 壅塞地圖（path id: map-X → cmap-X，避免重複 id）
+  const src = document.getElementById('twMap');
+  const wrap = document.getElementById('congMapWrap');
+  if (src && wrap && !document.getElementById('congMap')) {
+    const clone = src.cloneNode(true);
+    clone.id = 'congMap';
+    clone.querySelectorAll('[id^="map-"]').forEach(p => { p.id = 'c' + p.id; p.style.fill=''; });
+    wrap.insertBefore(clone, wrap.firstChild);
+  }
+
+  // 2) 區級資料
+  const congByRegion = {};
+  cong.regions.forEach(r => congByRegion[r.region] = r);
+  const salRegion = window._mapRegionData || {};
+  const salAvg = r => {
+    const d = salRegion[r];
+    if (!d || !d.salaries || !d.salaries.length) return null;
+    return d.salaries.reduce((a,b)=>a+b,0) / d.salaries.length;
+  };
+
+  // 3) 壅塞地圖上色（紅階）
+  const lerp = (a,b,t) => Math.round(a + (b-a)*t);
+  const red  = t => `rgb(${lerp(254,153,t)},${lerp(226,27,t)},${lerp(226,27,t)})`;
+  const cVals = cong.regions.map(r=>r.avgScore);
+  const cMin = Math.min(...cVals), cMax = Math.max(...cVals);
+  document.querySelectorAll('#congMap [id^="cmap-"]').forEach(p => {
+    const r = p.id.slice(5);
+    const c = congByRegion[r];
+    p.style.fill = c ? red((c.avgScore - cMin)/((cMax - cMin)||1)) : '#e5e7eb';
+  });
+
+  // 4) 散點圖資料（每一家醫院一個點：x＝該院薪資、y＝該院所屬縣市的官方擁塞）
+  const pts = [];
+  Object.entries(salRegion).forEach(([r, d]) => {
+    const c = congByRegion[r];
+    if (!c || !d.hospitals) return;
+    d.hospitals.forEach(h => {
+      const s = h.s15 || h.s14 || h.s12 || h.s16 || h.s10;
+      if (s) pts.push({ hospital: h.hospital, region: r, x: +s, y: c.avgScore });
+    });
+  });
+  const pearson = a => {
+    const n=a.length, mx=a.reduce((s,p)=>s+p.x,0)/n, my=a.reduce((s,p)=>s+p.y,0)/n;
+    let num=0,dx=0,dy=0;
+    a.forEach(p=>{num+=(p.x-mx)*(p.y-my); dx+=(p.x-mx)**2; dy+=(p.y-my)**2;});
+    return num/Math.sqrt(dx*dy);
+  };
+  const linreg = a => {
+    const n=a.length, sx=a.reduce((s,p)=>s+p.x,0), sy=a.reduce((s,p)=>s+p.y,0);
+    const sxx=a.reduce((s,p)=>s+p.x*p.x,0), sxy=a.reduce((s,p)=>s+p.x*p.y,0);
+    const slope=(n*sxy-sx*sy)/(n*sxx-sx*sx);
+    return { slope, intercept:(sy-slope*sx)/n };
+  };
+  const r = pts.length>2 ? pearson(pts) : 0;
+  const { slope, intercept } = pts.length>2 ? linreg(pts) : {slope:0,intercept:0};
+  const xs = pts.map(p=>p.x);
+  const lo = Math.min(...xs), hi = Math.max(...xs);
+  const ar = Math.abs(r);
+  const strength = ar<0.1?'幾乎沒有關聯': ar<0.3?'非常弱': ar<0.5?'弱': ar<0.7?'中等':'強';
+  const dir = r>0.1?'正相關 ▸ 薪資越高、壅塞傾向越嚴重' : r<-0.1?'負相關 ▸ 薪資越高、壅塞反而越輕微' : '幾乎無相關 ▸ 薪資高低與壅塞看不出明顯關係';
+  const col = r>0.1?'#dc2626' : r<-0.1?'#16a34a' : '#64748b';
+  const sumEl = document.getElementById('corrSummary');
+  if (sumEl) sumEl.innerHTML = `<b style="color:${col};font-size:1.05rem">Pearson r = ${r.toFixed(2)}</b>　<span class="pill" style="background:${col}1a;color:${col}">${dir}</span>　（${pts.length} 家醫院、關聯強度：${strength}）`;
+
+  // 四象限：以各區「薪資中位數 × 壅塞中位數」為界，把圖切四塊並上淡色
+  const median = arr => { const a=[...arr].sort((p,q)=>p-q), n=a.length; return n? (n%2? a[(n-1)/2] : (a[n/2-1]+a[n/2])/2) : 0; };
+  const mx = median(pts.map(p=>p.x)), my = median(pts.map(p=>p.y));
+  const quadrantPlugin = {
+    id:'quadrants',
+    beforeDatasetsDraw(c){
+      const a=c.chartArea, sx=c.scales.x, sy=c.scales.y, ctx=c.ctx;
+      if (!a || !pts.length) return;
+      const px=sx.getPixelForValue(mx), py=sy.getPixelForValue(my);
+      ctx.save();
+      const box=(x0,y0,x1,y1,fill)=>{ ctx.fillStyle=fill; ctx.fillRect(x0,y0,x1-x0,y1-y0); };
+      box(px,a.top,a.right,py,'rgba(245,158,11,.09)');     // 右上 高薪高塞
+      box(px,py,a.right,a.bottom,'rgba(22,163,74,.10)');   // 右下 高薪低塞（甜蜜點）
+      box(a.left,a.top,px,py,'rgba(220,38,38,.10)');       // 左上 低薪高塞（血汗）
+      box(a.left,py,px,a.bottom,'rgba(100,116,139,.07)');  // 左下 低薪低塞
+      ctx.strokeStyle='rgba(120,120,120,.5)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(px,a.top); ctx.lineTo(px,a.bottom); ctx.moveTo(a.left,py); ctx.lineTo(a.right,py); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font='bold 12px sans-serif'; ctx.textBaseline='top';
+      const tag=(t,x0,y0,al,co)=>{ ctx.fillStyle=co; ctx.textAlign=al; ctx.fillText(t,x0,y0); };
+      tag('高薪・高塞', a.right-8, a.top+6, 'right', 'rgba(180,83,9,.95)');
+      tag('低薪・高塞 ⚠️血汗', a.left+8, a.top+6, 'left', 'rgba(185,28,28,.95)');
+      tag('高薪・低塞 👍甜蜜點', a.right-8, a.bottom-22, 'right', 'rgba(21,128,61,1)');
+      tag('低薪・低塞', a.left+8, a.bottom-22, 'left', 'rgba(71,85,105,.95)');
+      ctx.restore();
+    }
+  };
+  const labelPlugin = {
+    id:'congLabels',
+    afterDatasetsDraw(c){
+      const ctx=c.ctx, sx=c.scales.x, sy=c.scales.y;
+      ctx.save();
+      if (pts.length>2){   // 趨勢線右端白話註解（點太多不逐點標名，改用 hover）
+        const ex=sx.getPixelForValue(hi), ey=sy.getPixelForValue(slope*hi+intercept);
+        ctx.fillStyle=col; ctx.font='italic 11px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='bottom';
+        ctx.fillText('趨勢線：越平＝關係越弱', ex-6, ey-6);
+      }
+      const hd=c.data.datasets[2];   // 搜尋高亮的「我的醫院」標名
+      if (hd && hd.data.length){
+        const meta=c.getDatasetMeta(2);
+        ctx.fillStyle='#7c2d12'; ctx.font='bold 12px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+        meta.data.forEach((pt,i)=>{ const d=hd.data[i]; if(d) ctx.fillText(d.hospital, pt.x+12, pt.y); });
+      }
+      ctx.restore();
+    }
+  };
+  if (window.Chart && document.getElementById('scatterChart')) {
+    new Chart(document.getElementById('scatterChart'), {
+      type:'scatter',
+      data:{ datasets:[
+        { label:'各醫院', data:pts, parsing:false, pointRadius:5, pointHoverRadius:9, backgroundColor:'rgba(220,38,38,.5)', borderColor:'#dc2626', borderWidth:1 },
+        { type:'line', label:'趨勢線', data:[{x:lo,y:slope*lo+intercept},{x:hi,y:slope*hi+intercept}], parsing:false, borderColor:col, borderWidth:2, borderDash:[6,4], pointRadius:0, fill:false },
+        { label:'我的醫院', data:[], parsing:false, pointRadius:11, pointHoverRadius:13, backgroundColor:'#f59e0b', borderColor:'#7c2d12', borderWidth:2 }
+      ]},
+      options:{ maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>`${c.raw.hospital}（${c.raw.region}）：薪資 ${c.raw.x.toFixed(1)}萬、所在縣市擁塞 ${c.raw.y} 人` } } },
+        scales:{ x:{ title:{display:true,text:'各醫院 15班月薪（萬）'} }, y:{ title:{display:true,text:'所在縣市急診滯留人數（越高越塞）'} } }
+      },
+      plugins:[quadrantPlugin, labelPlugin]
+    });
+  }
+
+  // 搜尋自己的醫院 → 在散點圖高亮 + 顯示落在哪個象限
+  const dl = document.getElementById('scatterHospList');
+  if (dl) dl.innerHTML = [...new Set(pts.map(p=>p.hospital))].sort().map(n=>`<option value="${n}"></option>`).join('');
+  const sInput = document.getElementById('scatterSearch');
+  const sResult = document.getElementById('scatterSearchResult');
+  const quadName = p => {
+    const hiX=p.x>=mx, hiY=p.y>=my;
+    return hiX&&hiY?'高薪・高擁塞' : hiX&&!hiY?'高薪・低擁塞 👍 甜蜜點' : !hiX&&hiY?'低薪・高擁塞 ⚠️' : '低薪・低擁塞';
+  };
+  function searchHosp(q){
+    q=(q||'').trim();
+    const ch=Chart.getChart('scatterChart');
+    const m = q ? pts.filter(p=>p.hospital.includes(q)) : [];
+    if (ch){ ch.data.datasets[2].data = m; ch.update(); }
+    if (!sResult) return;
+    if (!q){ sResult.textContent=''; }
+    else if (!m.length){ sResult.textContent='查無此醫院（可能尚未有人上傳薪資）'; }
+    else if (m.length===1){ const p=m[0]; sResult.innerHTML=`<b>${p.hospital}</b>：薪資 ${p.x.toFixed(1)} 萬、${p.region} 擁塞 ${p.y} → <b>${quadName(p)}</b>`; }
+    else { sResult.textContent=`找到 ${m.length} 家，已在圖上標出`; }
+  }
+  if (sInput) sInput.addEventListener('input', e=>searchHosp(e.target.value));
+
+  // 5) 連動 highlight（兩張地圖 + 散點圖）
+  const congTip = document.getElementById('congTooltip');
+  function hl(region){
+    document.querySelectorAll('.tw-county').forEach(p=>{
+      const reg = p.id.replace(/^c?map-/,'');
+      p.classList.toggle('hl', !!region && reg===region);
+    });
+    document.querySelectorAll('.map-wrap').forEach(w=>w.classList.toggle('dim', !!region));
+    const ch = Chart.getChart('scatterChart');
+    if (ch){ const idx=pts.findIndex(p=>p.region===region); ch.setActiveElements(idx>=0?[{datasetIndex:0,index:idx}]:[]); ch.update(); }
+  }
+  const congWrap = document.getElementById('congMapWrap');
+  congWrap.addEventListener('mousemove', e=>{
+    const p = e.target.closest('[id^="cmap-"]');
+    if (!p){ congTip.style.display='none'; hl(null); return; }
+    const reg = p.id.slice(5), c = congByRegion[reg];
+    const d = salRegion[reg];
+    let listHtml;
+    if (d && d.hospitals && d.hospitals.length){
+      const hs = d.hospitals
+        .map(h=>({ name:h.hospital, sal:(h.s15||h.s14||h.s12||h.s16||h.s10)||null }))
+        .filter(x=>x.sal).sort((a,b)=>b.sal-a.sal);
+      const shown = hs.slice(0,8).map(x=>`　• ${x.name} ${x.sal}萬`).join('<br>');
+      const more = hs.length>8 ? `<br>　…還有 ${hs.length-8} 家` : '';
+      listHtml = `<br><span style="opacity:.8">有上傳薪資的醫院（${hs.length}）：</span><br>${shown}${more}`;
+    } else {
+      listHtml = `<br><span style="opacity:.7">此縣市尚無上傳薪資的醫院</span>`;
+    }
+    congTip.innerHTML = `<b>${reg}</b><br>官方擁塞：平均滯留 ${c? c.avgScore+' 人（'+c.n+' 家急救院）':'—'}${listHtml}`;
+    congTip.style.display='block';
+    congTip.style.maxWidth='240px'; congTip.style.whiteSpace='normal';
+    const rc = congWrap.getBoundingClientRect();
+    let x=e.clientX-rc.left+12, y=e.clientY-rc.top-10;
+    if (x+200>rc.width) x=e.clientX-rc.left-210; if(y<0) y=10;
+    congTip.style.left=x+'px'; congTip.style.top=y+'px';
+    hl(reg);
+  });
+  congWrap.addEventListener('mouseleave', ()=>{ congTip.style.display='none'; hl(null); });
+  const salWrap = document.getElementById('mapWrap');
+  if (salWrap){
+    salWrap.addEventListener('mousemove', e=>{ const p=e.target.closest('[id^="map-"]'); if(p) hl(p.id.slice(4)); });
+    salWrap.addEventListener('mouseleave', ()=> hl(null));
+  }
+
+  // 6) 急診壅塞全國排名
+  const ranked = cong.hospitals.filter(h=>h.score!=null).sort((a,b)=>b.score-a.score);
+  ranked.forEach((h,i)=> h._rank=i+1);
+  const tbl = document.getElementById('congRankTable');
+  const nz = v => v==null ? '-' : v;
+  function renderRank(q=''){
+    const rows = ranked.filter(h=> h.name.includes(q));
+    tbl.innerHTML = rows.map(h=>`
+      <div class="crk-row">
+        <span class="crk-no">#${h._rank}</span>
+        <span class="crk-name">${h.name}<small>${h.region||'—'} · ${h.level}</small></span>
+        <span class="crk-score">${h.score}</span>
+        <span class="crk-detail">住${nz(h.wait_admit)}・ICU${nz(h.wait_icu)}・推${nz(h.wait_push)}・看${nz(h.wait_see)}${h.full?' · 🔴滿床':''}</span>
+      </div>`).join('') || '<div class="crk-row">查無</div>';
+  }
+  renderRank();
+  const cs = document.getElementById('congSearch');
+  if (cs) cs.addEventListener('input', e=> renderRank(e.target.value.trim()));
+})();
 </script>
 </body>
 </html>
