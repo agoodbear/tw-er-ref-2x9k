@@ -1,0 +1,43 @@
+name: 48hr 暫留比率更新
+
+# 醫療品質資訊公開網 ind=1652「急診轉住院暫留>48小時比率」每季出一次、且有數月落差。
+# 每月 1 號檢查最新季度；只有「真的出新一季」時才 commit（對照表內容變了才推），不留垃圾 commit。
+on:
+  schedule:
+    - cron: '20 2 1 * *'   # 每月 1 號 UTC 02:20（台灣 10:20）
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boarding
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 抓最新季度 48hr 資料
+        run: node scripts/fetch-boarding.mjs
+      - name: 重建薪資↔48hr 對照表
+        run: python3 scripts/build_boarding_map.py
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # 以對照表（無時間戳，內容變才會 diff）判斷是否真的出新一季
+          if [ -n "$(git status --porcelain data/boarding-by-hospital.json)" ]; then
+            git add data/boarding-latest.json data/boarding-by-hospital.json
+            git commit -m "chore(boarding): 更新 48hr 暫留比率（新一季）[skip ci]"
+            git push
+          else
+            echo "無新季度，略過"
+          fi
