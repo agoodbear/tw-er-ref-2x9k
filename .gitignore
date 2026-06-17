@@ -3,5 +3,8 @@ scripts/node_modules/
 data/*
 !data/congestion-latest.json
 !data/congestion-history.json
+!data/boarding-latest.json
+!data/boarding-by-hospital.json
+!data/realtime-namemap.json
 .fb-cookies.json
 .DS_Store

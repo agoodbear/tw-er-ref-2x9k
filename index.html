@@ -431,6 +431,9 @@
     .tw-county.hl { stroke: #0f172a; stroke-width: 2.6; }
     .map-wrap.dim .tw-county:not(.hl) { opacity: .4; }
     .scatter-wrap { position: relative; height: 360px; }
+    .metric-btn { padding: 7px 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); border-radius: 8px; font-size: .82rem; cursor: pointer; transition: all .15s; }
+    .metric-btn:hover { border-color: #dc2626; }
+    .metric-btn.active { background: #dc2626; color: #fff; border-color: #dc2626; font-weight: 700; }
     #corrSummary .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
     .crk-row { display: grid; grid-template-columns: 50px 1fr 56px 1.5fr; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: .82rem; }
     .crk-row:last-child { border-bottom: none; }
@@ -758,7 +761,11 @@
   </div>
 
   <div class="card" style="margin-bottom:20px">
-    <h2>📈 薪資 × 擁塞 相關性（每一家醫院）</h2>
+    <h2>📈 薪資 × 急診壅塞 相關性（每家醫院）</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+      <button class="metric-btn" data-metric="boarding">🏥 結構性壅塞・48hr 暫留比率（每季）</button>
+      <button class="metric-btn" data-metric="realtime">⏱️ 即時壅塞・急診待床人數（每小時）</button>
+    </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px">
       <input id="scatterSearch" list="scatterHospList" placeholder="🔍 搜尋自己的醫院…" autocomplete="off" style="flex:0 1 300px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.88rem;outline:none">
       <datalist id="scatterHospList"></datalist>
@@ -766,8 +773,8 @@
     </div>
     <p id="corrSummary" style="font-size:.9rem;margin:0 0 12px">分析中…</p>
     <div class="scatter-wrap"><canvas id="scatterChart"></canvas></div>
-    <p style="font-size:.72rem;color:var(--text-muted);margin-top:8px">每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院所屬縣市</b>的官方擁塞（故同縣市醫院縱軸等高）。擁塞以「急診滯留人數」衡量＝看診＋等待住院＋推床＋加護病房（不加權，≈ ED census；boarding 為文獻與健保署公認核心）。⚠️ 縣市擁塞為官方即時資料、未做占床率正規化。資料時間：<span id="congSysdate">—</span>（衛福部健保署，每小時更新）。相關不等於因果。</p>
-    <p style="font-size:.74rem;color:var(--text-muted);margin-top:6px;padding-top:6px;border-top:1px dashed var(--border)">註：「擁塞程度」採用衛福部健保署公開的「<a href="https://info.nhi.gov.tw/INAE4000/INAE4001S01" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">重度級急救責任醫院急診即時訊息</a>」，僅涵蓋政府規定須即時通報的急救責任醫院；部分醫院（如多數地區醫院、診所）未納入。本圖即以各縣市「有通報的醫院」代表該縣市的急診擁塞概況。資料來源：<a href="https://info.nhi.gov.tw/INAE4000/INAE4001S01" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">info.nhi.gov.tw/INAE4000/INAE4001S01</a></p>
+    <p id="scatterNote" style="font-size:.72rem;color:var(--text-muted);margin-top:8px"></p>
+    <p id="scatterSrc" style="font-size:.74rem;color:var(--text-muted);margin-top:6px;padding-top:6px;border-top:1px dashed var(--border)"></p>
   </div>
 
   <div class="card table-card">
@@ -2106,54 +2113,55 @@ function showRankResult(hosp) {
     p.style.fill = c ? red((c.avgScore - cMin)/((cMax - cMin)||1)) : '#e5e7eb';
   });
 
-  // 4) 散點圖資料（每一家醫院一個點：x＝該院薪資、y＝該院所屬縣市的官方擁塞）
-  const pts = [];
-  Object.entries(salRegion).forEach(([r, d]) => {
-    const c = congByRegion[r];
-    if (!c || !d.hospitals) return;
-    d.hospitals.forEach(h => {
-      const s = h.s15 || h.s14 || h.s12 || h.s16 || h.s10;
-      if (s) pts.push({ hospital: h.hospital, region: r, x: +s, y: c.avgScore });
-    });
-  });
-  const pearson = a => {
-    const n=a.length, mx=a.reduce((s,p)=>s+p.x,0)/n, my=a.reduce((s,p)=>s+p.y,0)/n;
-    let num=0,dx=0,dy=0;
-    a.forEach(p=>{num+=(p.x-mx)*(p.y-my); dx+=(p.x-mx)**2; dy+=(p.y-my)**2;});
-    return num/Math.sqrt(dx*dy);
-  };
-  const linreg = a => {
-    const n=a.length, sx=a.reduce((s,p)=>s+p.x,0), sy=a.reduce((s,p)=>s+p.y,0);
-    const sxx=a.reduce((s,p)=>s+p.x*p.x,0), sxy=a.reduce((s,p)=>s+p.x*p.y,0);
-    const slope=(n*sxy-sx*sy)/(n*sxx-sx*sx);
-    return { slope, intercept:(sy-slope*sx)/n };
-  };
-  const r = pts.length>2 ? pearson(pts) : 0;
-  const { slope, intercept } = pts.length>2 ? linreg(pts) : {slope:0,intercept:0};
-  const xs = pts.map(p=>p.x);
-  const lo = Math.min(...xs), hi = Math.max(...xs);
-  const ar = Math.abs(r);
-  const strength = ar<0.1?'幾乎沒有關聯': ar<0.3?'非常弱': ar<0.5?'弱': ar<0.7?'中等':'強';
-  const dir = r>0.1?'正相關 ▸ 薪資越高、壅塞傾向越嚴重' : r<-0.1?'負相關 ▸ 薪資越高、壅塞反而越輕微' : '幾乎無相關 ▸ 薪資高低與壅塞看不出明顯關係';
-  const col = r>0.1?'#dc2626' : r<-0.1?'#16a34a' : '#64748b';
-  const sumEl = document.getElementById('corrSummary');
-  if (sumEl) sumEl.innerHTML = `<b style="color:${col};font-size:1.05rem">Pearson r = ${r.toFixed(2)}</b>　<span class="pill" style="background:${col}1a;color:${col}">${dir}</span>　（${pts.length} 家醫院、關聯強度：${strength}）`;
+  // 4) 散點圖（兩指標可切換：48hr 暫留比率 vs 即時待床；縱軸用平方根刻度拉開底部）
+  let boardingDoc = { meta:{}, hospitals:{} };
+  try { boardingDoc = await (await fetch('data/boarding-by-hospital.json', {cache:'no-store'})).json(); }
+  catch(e){ console.warn('48hr 暫留資料載入失敗：', e); }
+  const boardingMap = boardingDoc.hospitals || {}, bmeta = boardingDoc.meta || {};
+  let rtNameMap = {};
+  try { rtNameMap = await (await fetch('data/realtime-namemap.json', {cache:'no-store'})).json(); }
+  catch(e){ console.warn('即時對照表載入失敗：', e); }
+  const congByName = {}; (cong.hospitals||[]).forEach(h => congByName[h.name] = h);
 
-  // 四象限：以各區「薪資中位數 × 壅塞中位數」為界，把圖切四塊並上淡色
+  function buildPts(kind){
+    const out=[];
+    Object.entries(salRegion).forEach(([rg,d])=>{
+      if(!d.hospitals) return;
+      d.hospitals.forEach(h=>{
+        const s=h.s15||h.s14||h.s12||h.s16||h.s10; if(!s) return;
+        if(kind==='boarding'){ const b=boardingMap[h.hospital]; if(b) out.push({hospital:h.hospital,region:rg,x:+s,raw:b.ratio,level:b.level}); }
+        else { const rt=rtNameMap[h.hospital], ch=rt&&congByName[rt]; if(ch&&ch.wait_admit!=null) out.push({hospital:h.hospital,region:rg,x:+s,raw:ch.wait_admit,level:ch.level}); }
+      });
+    });
+    return out;
+  }
+  const METRICS = {
+    boarding: { unit:'%', tip:'48hr暫留', axis:'急診48hr暫留比率（√刻度，越高＝結構性越塞）',
+      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院 48hr 暫留比率</b>（boarding，標準化 % 可跨院比較）。資料期間：${bmeta.quarterName||'—'}、全國平均 ${bmeta.nationalAvg??'—'}%。⚠️ 每季更新的<b>結構性</b>資料（非即時）；縱軸為平方根刻度、把低值區拉開。相關不等於因果。`,
+      src: `註：縱軸採衛福部醫療品質資訊公開網「<a href="https://med.nhi.gov.tw/ihqe0000/pepC_Search001.html?ind=1652&type=2" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">急診轉住院暫留急診超過48小時案件比率</a>」（255 家、每季），目前 ${bmeta.matched||'—'} 家有上傳薪資可對應。` },
+    realtime: { unit:'人', tip:'待床', axis:'即時急診待床人數（√刻度，等待住院、越高越塞）',
+      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院此刻急診待床（等待住院）人數</b>。資料時間：${cong.sysdate||'—'}、每小時更新。⚠️ <b>即時快照</b>、數字會隨時跳動；縱軸為平方根刻度。相關不等於因果。`,
+      src: `註：縱軸採衛福部健保署「<a href="https://info.nhi.gov.tw/INAE4000/INAE4001S01" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">重度級急救責任醫院急診即時訊息</a>」即時待床數（僅 59 家急救責任醫院、目前約 20 家有薪資可對應，故點較少）。` }
+  };
+  const SQ = v => Math.sqrt(Math.max(0, v));
   const median = arr => { const a=[...arr].sort((p,q)=>p-q), n=a.length; return n? (n%2? a[(n-1)/2] : (a[n/2-1]+a[n/2])/2) : 0; };
-  const mx = median(pts.map(p=>p.x)), my = median(pts.map(p=>p.y));
+  const pearson = a => { const n=a.length, mx=a.reduce((s,p)=>s+p.x,0)/n, my=a.reduce((s,p)=>s+p.raw,0)/n; let num=0,dx=0,dy=0; a.forEach(p=>{num+=(p.x-mx)*(p.raw-my); dx+=(p.x-mx)**2; dy+=(p.raw-my)**2;}); return (dx&&dy)? num/Math.sqrt(dx*dy):0; };
+  const linreg = a => { const n=a.length, sx=a.reduce((s,p)=>s+p.x,0), sy=a.reduce((s,p)=>s+p.raw,0), sxx=a.reduce((s,p)=>s+p.x*p.x,0), sxy=a.reduce((s,p)=>s+p.x*p.raw,0); const den=n*sxx-sx*sx, slope=den? (n*sxy-sx*sy)/den:0; return {slope, intercept:(sy-slope*sx)/n}; };
+  const S = { pts:[], mx:0, myRaw:0, slope:0, intercept:0, col:'#64748b', unit:'%' };
+
+  // 四象限（界線＝薪資中位數 × 該指標中位數；縱軸 sqrt 空間，故畫在 SQ(中位數)）
   const quadrantPlugin = {
     id:'quadrants',
     beforeDatasetsDraw(c){
       const a=c.chartArea, sx=c.scales.x, sy=c.scales.y, ctx=c.ctx;
-      if (!a || !pts.length) return;
-      const px=sx.getPixelForValue(mx), py=sy.getPixelForValue(my);
+      if (!a || !S.pts.length) return;
+      const px=sx.getPixelForValue(S.mx), py=sy.getPixelForValue(SQ(S.myRaw));
       ctx.save();
       const box=(x0,y0,x1,y1,fill)=>{ ctx.fillStyle=fill; ctx.fillRect(x0,y0,x1-x0,y1-y0); };
-      box(px,a.top,a.right,py,'rgba(245,158,11,.09)');     // 右上 高薪高塞
-      box(px,py,a.right,a.bottom,'rgba(22,163,74,.10)');   // 右下 高薪低塞（甜蜜點）
-      box(a.left,a.top,px,py,'rgba(220,38,38,.10)');       // 左上 低薪高塞（血汗）
-      box(a.left,py,px,a.bottom,'rgba(100,116,139,.07)');  // 左下 低薪低塞
+      box(px,a.top,a.right,py,'rgba(245,158,11,.09)');
+      box(px,py,a.right,a.bottom,'rgba(22,163,74,.10)');
+      box(a.left,a.top,px,py,'rgba(220,38,38,.10)');
+      box(a.left,py,px,a.bottom,'rgba(100,116,139,.07)');
       ctx.strokeStyle='rgba(120,120,120,.5)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
       ctx.beginPath(); ctx.moveTo(px,a.top); ctx.lineTo(px,a.bottom); ctx.moveTo(a.left,py); ctx.lineTo(a.right,py); ctx.stroke();
       ctx.setLineDash([]);
@@ -2169,14 +2177,14 @@ function showRankResult(hosp) {
   const labelPlugin = {
     id:'congLabels',
     afterDatasetsDraw(c){
-      const ctx=c.ctx, sx=c.scales.x, sy=c.scales.y;
-      ctx.save();
-      if (pts.length>2){   // 趨勢線右端白話註解（點太多不逐點標名，改用 hover）
-        const ex=sx.getPixelForValue(hi), ey=sy.getPixelForValue(slope*hi+intercept);
-        ctx.fillStyle=col; ctx.font='italic 11px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='bottom';
+      const ctx=c.ctx, sx=c.scales.x, sy=c.scales.y; ctx.save();
+      if (S.pts.length>2){
+        const hi=Math.max(...S.pts.map(p=>p.x));
+        const ex=sx.getPixelForValue(hi), ey=sy.getPixelForValue(SQ(S.slope*hi+S.intercept));
+        ctx.fillStyle=S.col; ctx.font='italic 11px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='bottom';
         ctx.fillText('趨勢線：越平＝關係越弱', ex-6, ey-6);
       }
-      const hd=c.data.datasets[2];   // 搜尋高亮的「我的醫院」標名
+      const hd=c.data.datasets[2];
       if (hd && hd.data.length){
         const meta=c.getDatasetMeta(2);
         ctx.fillStyle='#7c2d12'; ctx.font='bold 12px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
@@ -2185,43 +2193,62 @@ function showRankResult(hosp) {
       ctx.restore();
     }
   };
-  if (window.Chart && document.getElementById('scatterChart')) {
-    new Chart(document.getElementById('scatterChart'), {
+  let scatterCh=null;
+  function renderScatter(kind){
+    const m=METRICS[kind]; const pts=buildPts(kind);
+    S.pts=pts; S.unit=m.unit;
+    const r=pts.length>2?pearson(pts):0; const {slope,intercept}=pts.length>2?linreg(pts):{slope:0,intercept:0};
+    S.slope=slope; S.intercept=intercept; S.mx=median(pts.map(p=>p.x)); S.myRaw=median(pts.map(p=>p.raw));
+    const ar=Math.abs(r);
+    const strength=ar<0.1?'幾乎沒有關聯':ar<0.3?'非常弱':ar<0.5?'弱':ar<0.7?'中等':'強';
+    const dir=r>0.1?'正相關 ▸ 薪資越高、壅塞傾向越嚴重':r<-0.1?'負相關 ▸ 薪資越高、壅塞反而越輕微':'幾乎無相關 ▸ 薪資高低與壅塞看不出明顯關係';
+    const col=r>0.1?'#dc2626':r<-0.1?'#16a34a':'#64748b'; S.col=col;
+    const sumEl=document.getElementById('corrSummary');
+    if(sumEl) sumEl.innerHTML=`<b style="color:${col};font-size:1.05rem">Pearson r = ${r.toFixed(2)}</b>　<span class="pill" style="background:${col}1a;color:${col}">${dir}</span>　（${pts.length} 家醫院、關聯強度：${strength}）`;
+    const noteEl=document.getElementById('scatterNote'); if(noteEl) noteEl.innerHTML=m.note();
+    const srcEl=document.getElementById('scatterSrc'); if(srcEl) srcEl.innerHTML=m.src;
+    const xs=pts.map(p=>p.x), lo=Math.min(...xs), hi=Math.max(...xs), line=[];
+    for(let i=0;i<=24;i++){ const x=lo+(hi-lo)*i/24; line.push({x, y:SQ(slope*x+intercept)}); }
+    const pointData=pts.map(p=>({x:p.x, y:SQ(p.raw), raw:p.raw, hospital:p.hospital, region:p.region}));
+    if(scatterCh) scatterCh.destroy();
+    scatterCh=new Chart(document.getElementById('scatterChart'), {
       type:'scatter',
       data:{ datasets:[
-        { label:'各醫院', data:pts, parsing:false, pointRadius:5, pointHoverRadius:9, backgroundColor:'rgba(220,38,38,.5)', borderColor:'#dc2626', borderWidth:1 },
-        { type:'line', label:'趨勢線', data:[{x:lo,y:slope*lo+intercept},{x:hi,y:slope*hi+intercept}], parsing:false, borderColor:col, borderWidth:2, borderDash:[6,4], pointRadius:0, fill:false },
+        { label:'各醫院', data:pointData, parsing:false, pointRadius:5, pointHoverRadius:9, backgroundColor:'rgba(220,38,38,.5)', borderColor:'#dc2626', borderWidth:1 },
+        { type:'line', label:'趨勢線', data:line, parsing:false, borderColor:col, borderWidth:2, borderDash:[6,4], pointRadius:0, fill:false },
         { label:'我的醫院', data:[], parsing:false, pointRadius:11, pointHoverRadius:13, backgroundColor:'#f59e0b', borderColor:'#7c2d12', borderWidth:2 }
       ]},
       options:{ maintainAspectRatio:false,
-        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>`${c.raw.hospital}（${c.raw.region}）：薪資 ${c.raw.x.toFixed(1)}萬、所在縣市擁塞 ${c.raw.y} 人` } } },
-        scales:{ x:{ title:{display:true,text:'各醫院 15班月薪（萬）'} }, y:{ title:{display:true,text:'所在縣市急診滯留人數（越高越塞）'} } }
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>`${c.raw.hospital}（${c.raw.region}）：薪資 ${c.raw.x.toFixed(1)}萬、${m.tip} ${c.raw.raw}${m.unit}` } } },
+        scales:{ x:{ title:{display:true,text:'各醫院 15班月薪（萬）'} }, y:{ min:0, title:{display:true,text:m.axis}, ticks:{ callback:v=>{ const o=v*v; return (o<10?o.toFixed(1):Math.round(o))+m.unit; } } } }
       },
       plugins:[quadrantPlugin, labelPlugin]
     });
+    const dl=document.getElementById('scatterHospList'); if(dl) dl.innerHTML=[...new Set(pts.map(p=>p.hospital))].sort().map(n=>`<option value="${n}"></option>`).join('');
+    document.querySelectorAll('.metric-btn').forEach(b=>b.classList.toggle('active', b.dataset.metric===kind));
+    const si=document.getElementById('scatterSearch'); if(si&&si.value.trim()) searchHosp(si.value);
   }
 
-  // 搜尋自己的醫院 → 在散點圖高亮 + 顯示落在哪個象限
-  const dl = document.getElementById('scatterHospList');
-  if (dl) dl.innerHTML = [...new Set(pts.map(p=>p.hospital))].sort().map(n=>`<option value="${n}"></option>`).join('');
-  const sInput = document.getElementById('scatterSearch');
-  const sResult = document.getElementById('scatterSearchResult');
+  // 搜尋自己的醫院 → 在散點圖高亮 + 顯示落在哪個象限（依目前指標）
   const quadName = p => {
-    const hiX=p.x>=mx, hiY=p.y>=my;
+    const hiX=p.x>=S.mx, hiY=p.raw>=S.myRaw;
     return hiX&&hiY?'高薪・高擁塞' : hiX&&!hiY?'高薪・低擁塞 👍 甜蜜點' : !hiX&&hiY?'低薪・高擁塞 ⚠️' : '低薪・低擁塞';
   };
   function searchHosp(q){
     q=(q||'').trim();
-    const ch=Chart.getChart('scatterChart');
-    const m = q ? pts.filter(p=>p.hospital.includes(q)) : [];
-    if (ch){ ch.data.datasets[2].data = m; ch.update(); }
+    const sResult=document.getElementById('scatterSearchResult');
+    const m = q ? S.pts.filter(p=>p.hospital.includes(q)) : [];
+    if (scatterCh){ scatterCh.data.datasets[2].data = m.map(p=>({x:p.x,y:SQ(p.raw),raw:p.raw,hospital:p.hospital,region:p.region})); scatterCh.update(); }
     if (!sResult) return;
     if (!q){ sResult.textContent=''; }
-    else if (!m.length){ sResult.textContent='查無此醫院（可能尚未有人上傳薪資）'; }
-    else if (m.length===1){ const p=m[0]; sResult.innerHTML=`<b>${p.hospital}</b>：薪資 ${p.x.toFixed(1)} 萬、${p.region} 擁塞 ${p.y} → <b>${quadName(p)}</b>`; }
+    else if (!m.length){ sResult.textContent='查無此醫院（此指標無此院資料，或尚未有人上傳薪資）'; }
+    else if (m.length===1){ const p=m[0]; sResult.innerHTML=`<b>${p.hospital}</b>：薪資 ${p.x.toFixed(1)} 萬、${S.unit==='%'?'48hr暫留 '+p.raw+'%':'待床 '+p.raw+' 人'} → <b>${quadName(p)}</b>`; }
     else { sResult.textContent=`找到 ${m.length} 家，已在圖上標出`; }
   }
+  const sInput = document.getElementById('scatterSearch');
   if (sInput) sInput.addEventListener('input', e=>searchHosp(e.target.value));
+  document.querySelectorAll('.metric-btn').forEach(b=> b.addEventListener('click', ()=>renderScatter(b.dataset.metric)));
+  renderScatter('boarding');
 
   // 5) 連動 highlight（兩張地圖 + 散點圖）
   const congTip = document.getElementById('congTooltip');
