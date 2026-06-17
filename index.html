@@ -2118,22 +2118,47 @@ function showRankResult(hosp) {
   try { boardingDoc = await (await fetch('data/boarding-by-hospital.json', {cache:'no-store'})).json(); }
   catch(e){ console.warn('48hr 暫留資料載入失敗：', e); }
   const boardingMap = boardingDoc.hospitals || {}, bmeta = boardingDoc.meta || {};
+  // 全 255 家 48hr 原表，給「新上傳、還沒進對照表」的醫院即時自動配對
+  let boardingAll = [];
+  try { boardingAll = (await (await fetch('data/boarding-latest.json', {cache:'no-store'})).json()).hospitals || []; }
+  catch(e){ console.warn('48hr 全表載入失敗：', e); }
+  const TW = s => (s||'').replace(/臺/g,'台');
+  const STRIP = ['醫療財團法人','醫療社團法人','財團法人','社團法人','學校法人','股份有限公司','台灣基督長老教會','天主教','佛教','基金會','私立','國立','市立','縣立','衛生福利部','部立','附設醫院','附設','醫學院','醫學大學','大學','紀念醫院','紀念','綜合醫院','醫院','分院','總院','診所'];
+  const normName = s => { s=TW(s).replace(/[（(〈【].*?[）)〉】]/g,''); for(const w of STRIP) s=s.split(w).join(''); return s.trim(); };
+  const bdNorm = boardingAll.map(h=>({ ratio:h.ratio, n:normName(h.name), area:TW(h.area||'') }));
+  let autoMatched = 0;
+  // 安全自動配對：完全同名 / 正規化唯一命中 + 同縣市 才接受；多命中或對不準一律放棄（不亂猜）
+  function autoRatio(salName, salRegion){
+    let c = boardingAll.filter(h=>h.name===salName);
+    if(c.length===1) return c[0].ratio;                                  // 1 完全同名
+    const sn = normName(salName); if(!sn) return null;
+    const reg = TW(salRegion||''), inReg = h => !reg || h.area.includes(reg);
+    c = bdNorm.filter(h=>h.n===sn && inReg(h));
+    if(c.length===1) return c[0].ratio;                                  // 2 正規化同名 + 同縣市
+    c = bdNorm.filter(h=>h.n && inReg(h) && (h.n.includes(sn)||sn.includes(h.n)));
+    if(c.length===1) return c[0].ratio;                                  // 3 唯一子字串 + 同縣市
+    return null;
+  }
 
   function buildPts(kind){
     const out=[];
+    if(kind==='boarding') autoMatched=0;
     Object.entries(salRegion).forEach(([rg,d])=>{
       if(!d.hospitals) return;
       d.hospitals.forEach(h=>{
         const s=h.s15||h.s14||h.s12||h.s16||h.s10; if(!s) return;
-        if(kind==='boarding'){ const b=boardingMap[h.hospital]; if(b) out.push({hospital:h.hospital,region:rg,x:+s,raw:b.ratio}); }
-        else { const c=congByRegion[rg]; if(c) out.push({hospital:h.hospital,region:rg,x:+s,raw:c.avgScore}); }
+        if(kind==='boarding'){
+          let ratio = boardingMap[h.hospital]?.ratio;
+          if(ratio==null){ ratio = autoRatio(h.hospital, rg); if(ratio!=null) autoMatched++; }
+          if(ratio!=null) out.push({hospital:h.hospital,region:rg,x:+s,raw:ratio});
+        } else { const c=congByRegion[rg]; if(c) out.push({hospital:h.hospital,region:rg,x:+s,raw:c.avgScore}); }
       });
     });
     return out;
   }
   const METRICS = {
     boarding: { unit:'%', tip:'48hr暫留', sqrt:true, axis:'急診48hr暫留比率（√刻度，越高＝結構性越塞）',
-      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院自己的 48hr 暫留比率</b>（boarding，標準化 % 可跨院比較）。資料期間：${bmeta.quarterName||'—'}、全國平均 ${bmeta.nationalAvg??'—'}%。⚠️ 每季更新的<b>結構性</b>資料（非即時）；縱軸為平方根刻度、把低值區拉開。相關不等於因果。`,
+      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院自己的 48hr 暫留比率</b>（boarding，標準化 % 可跨院比較）。資料期間：${bmeta.quarterName||'—'}、全國平均 ${bmeta.nationalAvg??'—'}%。新上傳且能明確對應的醫院會<b>即時自動補進圖</b>（本次自動配對 ${autoMatched} 家）。⚠️ 48hr 為每季更新的<b>結構性</b>資料（非即時）；縱軸為平方根刻度。相關不等於因果。`,
       src: `註：縱軸採衛福部醫療品質資訊公開網「<a href="https://med.nhi.gov.tw/ihqe0000/pepC_Search001.html?ind=1652&type=2" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">急診轉住院暫留急診超過48小時案件比率</a>」（255 家、每季），目前 ${bmeta.matched||'—'} 家有上傳薪資可對應。` },
     realtime: { unit:'人', tip:'縣市滯留', sqrt:false, axis:'所在縣市急診滯留人數（越高越塞）',
       note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院所屬縣市</b>的官方即時壅塞（滯留人數＝看診+等待住院+推床+ICU；故同縣市醫院縱軸等高）。資料時間：${cong.sysdate||'—'}、每小時更新。⚠️ 縣市即時資料、未做占床率正規化。相關不等於因果。`,
