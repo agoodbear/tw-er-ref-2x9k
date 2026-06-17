@@ -764,7 +764,7 @@
     <h2>📈 薪資 × 急診壅塞 相關性（每家醫院）</h2>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px">
       <button class="metric-btn" data-metric="boarding">🏥 結構性壅塞・48hr 暫留比率（每季）</button>
-      <button class="metric-btn" data-metric="realtime">⏱️ 即時壅塞・急診待床人數（每小時）</button>
+      <button class="metric-btn" data-metric="realtime">⏱️ 即時壅塞・各縣市急診滯留（每小時）</button>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px">
       <input id="scatterSearch" list="scatterHospList" placeholder="🔍 搜尋自己的醫院…" autocomplete="off" style="flex:0 1 300px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.88rem;outline:none">
@@ -2113,15 +2113,11 @@ function showRankResult(hosp) {
     p.style.fill = c ? red((c.avgScore - cMin)/((cMax - cMin)||1)) : '#e5e7eb';
   });
 
-  // 4) 散點圖（兩指標可切換：48hr 暫留比率 vs 即時待床；縱軸用平方根刻度拉開底部）
+  // 4) 散點圖（兩指標切換：48hr 暫留比率＝每院自己的結構性壅塞 / 即時＝所在縣市即時壅塞）
   let boardingDoc = { meta:{}, hospitals:{} };
   try { boardingDoc = await (await fetch('data/boarding-by-hospital.json', {cache:'no-store'})).json(); }
   catch(e){ console.warn('48hr 暫留資料載入失敗：', e); }
   const boardingMap = boardingDoc.hospitals || {}, bmeta = boardingDoc.meta || {};
-  let rtNameMap = {};
-  try { rtNameMap = await (await fetch('data/realtime-namemap.json', {cache:'no-store'})).json(); }
-  catch(e){ console.warn('即時對照表載入失敗：', e); }
-  const congByName = {}; (cong.hospitals||[]).forEach(h => congByName[h.name] = h);
 
   function buildPts(kind){
     const out=[];
@@ -2129,25 +2125,25 @@ function showRankResult(hosp) {
       if(!d.hospitals) return;
       d.hospitals.forEach(h=>{
         const s=h.s15||h.s14||h.s12||h.s16||h.s10; if(!s) return;
-        if(kind==='boarding'){ const b=boardingMap[h.hospital]; if(b) out.push({hospital:h.hospital,region:rg,x:+s,raw:b.ratio,level:b.level}); }
-        else { const rt=rtNameMap[h.hospital], ch=rt&&congByName[rt]; if(ch&&ch.wait_admit!=null) out.push({hospital:h.hospital,region:rg,x:+s,raw:ch.wait_admit,level:ch.level}); }
+        if(kind==='boarding'){ const b=boardingMap[h.hospital]; if(b) out.push({hospital:h.hospital,region:rg,x:+s,raw:b.ratio}); }
+        else { const c=congByRegion[rg]; if(c) out.push({hospital:h.hospital,region:rg,x:+s,raw:c.avgScore}); }
       });
     });
     return out;
   }
   const METRICS = {
-    boarding: { unit:'%', tip:'48hr暫留', axis:'急診48hr暫留比率（√刻度，越高＝結構性越塞）',
-      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院 48hr 暫留比率</b>（boarding，標準化 % 可跨院比較）。資料期間：${bmeta.quarterName||'—'}、全國平均 ${bmeta.nationalAvg??'—'}%。⚠️ 每季更新的<b>結構性</b>資料（非即時）；縱軸為平方根刻度、把低值區拉開。相關不等於因果。`,
+    boarding: { unit:'%', tip:'48hr暫留', sqrt:true, axis:'急診48hr暫留比率（√刻度，越高＝結構性越塞）',
+      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院自己的 48hr 暫留比率</b>（boarding，標準化 % 可跨院比較）。資料期間：${bmeta.quarterName||'—'}、全國平均 ${bmeta.nationalAvg??'—'}%。⚠️ 每季更新的<b>結構性</b>資料（非即時）；縱軸為平方根刻度、把低值區拉開。相關不等於因果。`,
       src: `註：縱軸採衛福部醫療品質資訊公開網「<a href="https://med.nhi.gov.tw/ihqe0000/pepC_Search001.html?ind=1652&type=2" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">急診轉住院暫留急診超過48小時案件比率</a>」（255 家、每季），目前 ${bmeta.matched||'—'} 家有上傳薪資可對應。` },
-    realtime: { unit:'人', tip:'待床', axis:'即時急診待床人數（√刻度，等待住院、越高越塞）',
-      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院此刻急診待床（等待住院）人數</b>。資料時間：${cong.sysdate||'—'}、每小時更新。⚠️ <b>即時快照</b>、數字會隨時跳動；縱軸為平方根刻度。相關不等於因果。`,
-      src: `註：縱軸採衛福部健保署「<a href="https://info.nhi.gov.tw/INAE4000/INAE4001S01" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">重度級急救責任醫院急診即時訊息</a>」即時待床數（僅 59 家急救責任醫院、目前約 20 家有薪資可對應，故點較少）。` }
+    realtime: { unit:'人', tip:'縣市滯留', sqrt:false, axis:'所在縣市急診滯留人數（越高越塞）',
+      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院所屬縣市</b>的官方即時壅塞（滯留人數＝看診+等待住院+推床+ICU；故同縣市醫院縱軸等高）。資料時間：${cong.sysdate||'—'}、每小時更新。⚠️ 縣市即時資料、未做占床率正規化。相關不等於因果。`,
+      src: `註：縱軸採衛福部健保署「<a href="https://info.nhi.gov.tw/INAE4000/INAE4001S01" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">重度級急救責任醫院急診即時訊息</a>」即時資料，以各縣市有通報的醫院代表該縣市即時壅塞概況（每小時更新）。` }
   };
   const SQ = v => Math.sqrt(Math.max(0, v));
   const median = arr => { const a=[...arr].sort((p,q)=>p-q), n=a.length; return n? (n%2? a[(n-1)/2] : (a[n/2-1]+a[n/2])/2) : 0; };
   const pearson = a => { const n=a.length, mx=a.reduce((s,p)=>s+p.x,0)/n, my=a.reduce((s,p)=>s+p.raw,0)/n; let num=0,dx=0,dy=0; a.forEach(p=>{num+=(p.x-mx)*(p.raw-my); dx+=(p.x-mx)**2; dy+=(p.raw-my)**2;}); return (dx&&dy)? num/Math.sqrt(dx*dy):0; };
   const linreg = a => { const n=a.length, sx=a.reduce((s,p)=>s+p.x,0), sy=a.reduce((s,p)=>s+p.raw,0), sxx=a.reduce((s,p)=>s+p.x*p.x,0), sxy=a.reduce((s,p)=>s+p.x*p.raw,0); const den=n*sxx-sx*sx, slope=den? (n*sxy-sx*sy)/den:0; return {slope, intercept:(sy-slope*sx)/n}; };
-  const S = { pts:[], mx:0, myRaw:0, slope:0, intercept:0, col:'#64748b', unit:'%' };
+  const S = { pts:[], mx:0, myRaw:0, slope:0, intercept:0, col:'#64748b', unit:'%', tf:(v=>v) };
 
   // 四象限（界線＝薪資中位數 × 該指標中位數；縱軸 sqrt 空間，故畫在 SQ(中位數)）
   const quadrantPlugin = {
@@ -2155,7 +2151,7 @@ function showRankResult(hosp) {
     beforeDatasetsDraw(c){
       const a=c.chartArea, sx=c.scales.x, sy=c.scales.y, ctx=c.ctx;
       if (!a || !S.pts.length) return;
-      const px=sx.getPixelForValue(S.mx), py=sy.getPixelForValue(SQ(S.myRaw));
+      const px=sx.getPixelForValue(S.mx), py=sy.getPixelForValue(S.tf(S.myRaw));
       ctx.save();
       const box=(x0,y0,x1,y1,fill)=>{ ctx.fillStyle=fill; ctx.fillRect(x0,y0,x1-x0,y1-y0); };
       box(px,a.top,a.right,py,'rgba(245,158,11,.09)');
@@ -2180,7 +2176,7 @@ function showRankResult(hosp) {
       const ctx=c.ctx, sx=c.scales.x, sy=c.scales.y; ctx.save();
       if (S.pts.length>2){
         const hi=Math.max(...S.pts.map(p=>p.x));
-        const ex=sx.getPixelForValue(hi), ey=sy.getPixelForValue(SQ(S.slope*hi+S.intercept));
+        const ex=sx.getPixelForValue(hi), ey=sy.getPixelForValue(S.tf(S.slope*hi+S.intercept));
         ctx.fillStyle=S.col; ctx.font='italic 11px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='bottom';
         ctx.fillText('趨勢線：越平＝關係越弱', ex-6, ey-6);
       }
@@ -2196,7 +2192,7 @@ function showRankResult(hosp) {
   let scatterCh=null;
   function renderScatter(kind){
     const m=METRICS[kind]; const pts=buildPts(kind);
-    S.pts=pts; S.unit=m.unit;
+    S.pts=pts; S.unit=m.unit; S.tip=m.tip; const tf = m.sqrt ? SQ : (v=>v); S.tf=tf;
     const r=pts.length>2?pearson(pts):0; const {slope,intercept}=pts.length>2?linreg(pts):{slope:0,intercept:0};
     S.slope=slope; S.intercept=intercept; S.mx=median(pts.map(p=>p.x)); S.myRaw=median(pts.map(p=>p.raw));
     const ar=Math.abs(r);
@@ -2208,8 +2204,8 @@ function showRankResult(hosp) {
     const noteEl=document.getElementById('scatterNote'); if(noteEl) noteEl.innerHTML=m.note();
     const srcEl=document.getElementById('scatterSrc'); if(srcEl) srcEl.innerHTML=m.src;
     const xs=pts.map(p=>p.x), lo=Math.min(...xs), hi=Math.max(...xs), line=[];
-    for(let i=0;i<=24;i++){ const x=lo+(hi-lo)*i/24; line.push({x, y:SQ(slope*x+intercept)}); }
-    const pointData=pts.map(p=>({x:p.x, y:SQ(p.raw), raw:p.raw, hospital:p.hospital, region:p.region}));
+    for(let i=0;i<=24;i++){ const x=lo+(hi-lo)*i/24; line.push({x, y:tf(slope*x+intercept)}); }
+    const pointData=pts.map(p=>({x:p.x, y:tf(p.raw), raw:p.raw, hospital:p.hospital, region:p.region}));
     if(scatterCh) scatterCh.destroy();
     scatterCh=new Chart(document.getElementById('scatterChart'), {
       type:'scatter',
@@ -2220,7 +2216,7 @@ function showRankResult(hosp) {
       ]},
       options:{ maintainAspectRatio:false,
         plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>`${c.raw.hospital}（${c.raw.region}）：薪資 ${c.raw.x.toFixed(1)}萬、${m.tip} ${c.raw.raw}${m.unit}` } } },
-        scales:{ x:{ title:{display:true,text:'各醫院 15班月薪（萬）'} }, y:{ min:0, title:{display:true,text:m.axis}, ticks:{ callback:v=>{ const o=v*v; return (o<10?o.toFixed(1):Math.round(o))+m.unit; } } } }
+        scales:{ x:{ title:{display:true,text:'各醫院 15班月薪（萬）'} }, y:{ min:0, title:{display:true,text:m.axis}, ticks:{ callback:v=>{ const o=m.sqrt?v*v:v; return (o<10?Math.round(o*10)/10:Math.round(o))+m.unit; } } } }
       },
       plugins:[quadrantPlugin, labelPlugin]
     });
@@ -2238,11 +2234,11 @@ function showRankResult(hosp) {
     q=(q||'').trim();
     const sResult=document.getElementById('scatterSearchResult');
     const m = q ? S.pts.filter(p=>p.hospital.includes(q)) : [];
-    if (scatterCh){ scatterCh.data.datasets[2].data = m.map(p=>({x:p.x,y:SQ(p.raw),raw:p.raw,hospital:p.hospital,region:p.region})); scatterCh.update(); }
+    if (scatterCh){ scatterCh.data.datasets[2].data = m.map(p=>({x:p.x,y:S.tf(p.raw),raw:p.raw,hospital:p.hospital,region:p.region})); scatterCh.update(); }
     if (!sResult) return;
     if (!q){ sResult.textContent=''; }
     else if (!m.length){ sResult.textContent='查無此醫院（此指標無此院資料，或尚未有人上傳薪資）'; }
-    else if (m.length===1){ const p=m[0]; sResult.innerHTML=`<b>${p.hospital}</b>：薪資 ${p.x.toFixed(1)} 萬、${S.unit==='%'?'48hr暫留 '+p.raw+'%':'待床 '+p.raw+' 人'} → <b>${quadName(p)}</b>`; }
+    else if (m.length===1){ const p=m[0]; sResult.innerHTML=`<b>${p.hospital}</b>：薪資 ${p.x.toFixed(1)} 萬、${S.tip} ${p.raw}${S.unit} → <b>${quadName(p)}</b>`; }
     else { sResult.textContent=`找到 ${m.length} 家，已在圖上標出`; }
   }
   const sInput = document.getElementById('scatterSearch');
