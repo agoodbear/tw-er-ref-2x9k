@@ -2140,9 +2140,31 @@ function showRankResult(hosp) {
     return null;
   }
 
+  // 即時壅塞「醫院級優先」：薪資院本身若是即時通報院（同縣市、正規化唯一命中）→ 用該院自己 score(level:hospital)；對不上才退回縣市平均(level:region)
+  // 縣市名 stoplist：擋掉被縣市名當子字串拖出來的假配對（如「部立台中醫院→台中慈濟」「桃園聖保祿→部立桃園」）
+  const RT_CITY = new Set(['台北','新北','桃園','台中','台南','高雄','基隆','新竹','苗栗','彰化','南投','雲林','嘉義','屏東','宜蘭','花蓮','台東','澎湖','金門','連江','台灣','北市']);
+  const rtNorm = s => normName(s).replace(/^衛福部/,'');                  // 衛生福利部已在 normName 處理，這裡補口語「衛福部」
+  const congReporting = (cong.hospitals||[]).filter(h=>h.score!=null).map(h=>({ score:h.score, area:TW(h.region||''), n:rtNorm(h.name) }));
+  let rtMatched = 0;
+  function realtimeRaw(salName, salRegion){
+    const reg = TW(salRegion||''), sn = rtNorm(salName);
+    if(sn){
+      const pool = congReporting.filter(h=>h.area===reg);
+      let c = pool.filter(h=>h.n===sn);                                   // 1 完全同名 + 同縣市
+      if(c.length!==1) c = pool.filter(h=>{                               // 2 唯一子字串 + 同縣市（排除縣市名造成的假命中）
+        if(!h.n || !(h.n.includes(sn)||sn.includes(h.n))) return false;
+        const core = h.n.length<=sn.length ? h.n : sn;                    // 共同核心＝較短者；若只是縣市名則不算
+        return !RT_CITY.has(core);
+      });
+      if(c.length===1) return { raw:c[0].score, level:'hospital' };
+    }
+    const avg = congByRegion[salRegion]?.avgScore;
+    return avg!=null ? { raw:avg, level:'region' } : null;               // 退回縣市平均（多命中／無通報院／縣市名假命中都走這）
+  }
+
   function buildPts(kind){
     const out=[];
-    if(kind==='boarding') autoMatched=0;
+    if(kind==='boarding') autoMatched=0; else rtMatched=0;
     Object.entries(salRegion).forEach(([rg,d])=>{
       if(!d.hospitals) return;
       d.hospitals.forEach(h=>{
@@ -2150,8 +2172,11 @@ function showRankResult(hosp) {
         if(kind==='boarding'){
           let ratio = boardingMap[h.hospital]?.ratio;
           if(ratio==null){ ratio = autoRatio(h.hospital, rg); if(ratio!=null) autoMatched++; }
-          if(ratio!=null) out.push({hospital:h.hospital,region:rg,x:+s,raw:ratio});
-        } else { const c=congByRegion[rg]; if(c) out.push({hospital:h.hospital,region:rg,x:+s,raw:c.avgScore}); }
+          if(ratio!=null) out.push({hospital:h.hospital,region:rg,x:+s,raw:ratio,level:'hospital'});
+        } else {
+          const m=realtimeRaw(h.hospital, rg);
+          if(m){ if(m.level==='hospital') rtMatched++; out.push({hospital:h.hospital,region:rg,x:+s,raw:m.raw,level:m.level}); }
+        }
       });
     });
     return out;
@@ -2163,7 +2188,7 @@ function showRankResult(hosp) {
       src: `註：縱軸採衛福部醫療品質資訊公開網「<a href="https://med.nhi.gov.tw/ihqe0000/pepC_Search001.html?ind=1652&type=2" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">急診轉住院暫留急診超過48小時案件比率</a>」（255 家、每季），目前 ${bmeta.matched||'—'} 家有上傳薪資可對應。` },
     realtime: { unit:'人', tip:'縣市滯留', sqrt:false, axis:'所在縣市急診滯留人數（越高越塞）',
       ydiv:()=>null, ydivLabel:()=>'滯留人數中位數',
-      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院所屬縣市</b>的官方即時壅塞（滯留人數＝看診+等待住院+推床+ICU；故同縣市醫院縱軸等高）。資料時間：${cong.sysdate||'—'}、每小時更新。<b>象限分界</b>：橫向虛線＝滯留人數中位數、縱向虛線＝薪資中位數（即時壅塞無官方門檻，採中位數相對切分）。⚠️ 縣市即時資料、未做占床率正規化。相關不等於因果。`,
+      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝即時壅塞（滯留人數＝看診+等待住院+推床+ICU）。<b>●實心＝該院本身有即時通報、用自己的數字</b>（本次 ${rtMatched} 家）；<b>○空心＝該院無即時通報、退回所在縣市平均</b>（同縣市等高，僅代表縣市環境、不代表這家醫院）。資料時間：${cong.sysdate||'—'}、每小時更新。<b>象限分界</b>：橫向虛線＝滯留人數中位數、縱向虛線＝薪資中位數（即時壅塞無官方門檻，採中位數相對切分）。⚠️ 空心點為縣市層級、未做占床率正規化；相關不等於因果。`,
       src: `註：縱軸採衛福部健保署「<a href="https://info.nhi.gov.tw/INAE4000/INAE4001S01" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">重度級急救責任醫院急診即時訊息</a>」即時資料，以各縣市有通報的醫院代表該縣市即時壅塞概況（每小時更新）。` }
   };
   const SQ = v => Math.sqrt(Math.max(0, v));
@@ -2241,17 +2266,21 @@ function showRankResult(hosp) {
     const srcEl=document.getElementById('scatterSrc'); if(srcEl) srcEl.innerHTML=m.src;
     const xs=pts.map(p=>p.x), lo=Math.min(...xs), hi=Math.max(...xs), line=[];
     for(let i=0;i<=24;i++){ const x=lo+(hi-lo)*i/24; line.push({x, y:tf(slope*x+intercept)}); }
-    const pointData=pts.map(p=>({x:p.x, y:tf(p.raw), raw:p.raw, hospital:p.hospital, region:p.region}));
+    const pointData=pts.map(p=>({x:p.x, y:tf(p.raw), raw:p.raw, hospital:p.hospital, region:p.region, level:p.level,
+      levelTip: kind==='realtime' ? (p.level==='hospital'?' · 本院即時':' · 縣市平均(非本院)') : '' }));
+    // 即時指標：實心＝醫院級(本院自己 score)、空心＝縣市級(退回縣市平均)；boarding 全為醫院級
+    const ptBg=pointData.map(p=> p.level==='region' ? 'rgba(220,38,38,0)' : 'rgba(220,38,38,.55)');
+    const ptBw=pointData.map(p=> p.level==='region' ? 2 : 1);
     if(scatterCh) scatterCh.destroy();
     scatterCh=new Chart(document.getElementById('scatterChart'), {
       type:'scatter',
       data:{ datasets:[
-        { label:'各醫院', data:pointData, parsing:false, pointRadius:5, pointHoverRadius:9, backgroundColor:'rgba(220,38,38,.5)', borderColor:'#dc2626', borderWidth:1 },
+        { label:'各醫院', data:pointData, parsing:false, pointRadius:5, pointHoverRadius:9, backgroundColor:ptBg, borderColor:'#dc2626', borderWidth:ptBw },
         { type:'line', label:'趨勢線', data:line, parsing:false, borderColor:col, borderWidth:2, borderDash:[6,4], pointRadius:0, fill:false },
         { label:'我的醫院', data:[], parsing:false, pointRadius:11, pointHoverRadius:13, backgroundColor:'#f59e0b', borderColor:'#7c2d12', borderWidth:2 }
       ]},
       options:{ maintainAspectRatio:false,
-        plugins:{ legend:{display:false}, tooltip:{ filter:it=>it.datasetIndex===0, callbacks:{ label:c=>`${c.raw.hospital}（${c.raw.region}）：薪資 ${c.raw.x.toFixed(1)}萬、${m.tip} ${c.raw.raw}${m.unit}` } } },
+        plugins:{ legend:{display:false}, tooltip:{ filter:it=>it.datasetIndex===0, callbacks:{ label:c=>`${c.raw.hospital}（${c.raw.region}）：薪資 ${c.raw.x.toFixed(1)}萬、${m.tip} ${c.raw.raw}${m.unit}${c.raw.levelTip||''}` } } },
         scales:{ x:{ title:{display:true,text:'各醫院 15班月薪（萬）'} }, y:{ min:0, title:{display:true,text:m.axis}, ticks:{ callback:v=>{ const o=m.sqrt?v*v:v; return (o<10?Math.round(o*10)/10:Math.round(o))+m.unit; } } } }
       },
       plugins:[quadrantPlugin, labelPlugin]
