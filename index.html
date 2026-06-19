@@ -2144,10 +2144,12 @@ function showRankResult(hosp) {
   // 縣市名 stoplist：擋掉被縣市名當子字串拖出來的假配對（如「部立台中醫院→台中慈濟」「桃園聖保祿→部立桃園」）
   const RT_CITY = new Set(['台北','新北','桃園','台中','台南','高雄','基隆','新竹','苗栗','彰化','南投','雲林','嘉義','屏東','宜蘭','花蓮','台東','澎湖','金門','連江','台灣','北市']);
   const rtNorm = s => normName(s).replace(/^衛福部/,'');                  // 衛生福利部已在 normName 處理，這裡補口語「衛福部」
+  // 排除名單：分院/未指明院區易誤掛「總院或唯一通報院」的值，強制走縣市平均（高醫岡山→高醫總院21、澄清→澄清中港2）
+  const RT_EXCLUDE = new Set(['高醫岡山醫院','澄清醫院']);
   const congReporting = (cong.hospitals||[]).filter(h=>h.score!=null).map(h=>({ score:h.score, area:TW(h.region||''), n:rtNorm(h.name) }));
   let rtMatched = 0;
   function realtimeRaw(salName, salRegion){
-    const reg = TW(salRegion||''), sn = rtNorm(salName);
+    const reg = TW(salRegion||''), sn = RT_EXCLUDE.has(salName) ? '' : rtNorm(salName);
     if(sn){
       const pool = congReporting.filter(h=>h.area===reg);
       let c = pool.filter(h=>h.n===sn);                                   // 1 完全同名 + 同縣市
