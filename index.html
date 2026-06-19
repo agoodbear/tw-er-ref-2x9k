@@ -2158,17 +2158,19 @@ function showRankResult(hosp) {
   }
   const METRICS = {
     boarding: { unit:'%', tip:'48hr暫留', sqrt:true, axis:'急診48hr暫留比率（√刻度，越高＝結構性越塞）',
-      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院自己的 48hr 暫留比率</b>（boarding，標準化 % 可跨院比較）。資料期間：${bmeta.quarterName||'—'}、全國平均 ${bmeta.nationalAvg??'—'}%。新上傳且能明確對應的醫院會<b>即時自動補進圖</b>（本次自動配對 ${autoMatched} 家）。⚠️ 48hr 為每季更新的<b>結構性</b>資料（非即時）；縱軸為平方根刻度。相關不等於因果。`,
+      ydiv:()=>(bmeta.nationalAvg!=null?+bmeta.nationalAvg:null), ydivLabel:()=>(bmeta.nationalAvg!=null?`全國平均 ${bmeta.nationalAvg}%`:'暫留率中位數'),
+      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院自己的 48hr 暫留比率</b>（boarding，標準化 % 可跨院比較）。資料期間：${bmeta.quarterName||'—'}、全國平均 ${bmeta.nationalAvg??'—'}%。新上傳且能明確對應的醫院會<b>即時自動補進圖</b>（本次自動配對 ${autoMatched} 家）。<b>象限分界</b>：橫向虛線＝全國平均 ${bmeta.nationalAvg??'—'}%（高於線＝比全國更塞）、縱向虛線＝薪資中位數。⚠️ 48hr 為每季更新的<b>結構性</b>資料（非即時）；縱軸為平方根刻度。相關不等於因果。`,
       src: `註：縱軸採衛福部醫療品質資訊公開網「<a href="https://med.nhi.gov.tw/ihqe0000/pepC_Search001.html?ind=1652&type=2" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">急診轉住院暫留急診超過48小時案件比率</a>」（255 家、每季），目前 ${bmeta.matched||'—'} 家有上傳薪資可對應。` },
     realtime: { unit:'人', tip:'縣市滯留', sqrt:false, axis:'所在縣市急診滯留人數（越高越塞）',
-      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院所屬縣市</b>的官方即時壅塞（滯留人數＝看診+等待住院+推床+ICU；故同縣市醫院縱軸等高）。資料時間：${cong.sysdate||'—'}、每小時更新。⚠️ 縣市即時資料、未做占床率正規化。相關不等於因果。`,
+      ydiv:()=>null, ydivLabel:()=>'滯留人數中位數',
+      note: ()=>`每個點＝一家有上傳薪資的醫院：橫軸＝<b>該院薪資</b>、縱軸＝<b>該院所屬縣市</b>的官方即時壅塞（滯留人數＝看診+等待住院+推床+ICU；故同縣市醫院縱軸等高）。資料時間：${cong.sysdate||'—'}、每小時更新。<b>象限分界</b>：橫向虛線＝滯留人數中位數、縱向虛線＝薪資中位數（即時壅塞無官方門檻，採中位數相對切分）。⚠️ 縣市即時資料、未做占床率正規化。相關不等於因果。`,
       src: `註：縱軸採衛福部健保署「<a href="https://info.nhi.gov.tw/INAE4000/INAE4001S01" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">重度級急救責任醫院急診即時訊息</a>」即時資料，以各縣市有通報的醫院代表該縣市即時壅塞概況（每小時更新）。` }
   };
   const SQ = v => Math.sqrt(Math.max(0, v));
   const median = arr => { const a=[...arr].sort((p,q)=>p-q), n=a.length; return n? (n%2? a[(n-1)/2] : (a[n/2-1]+a[n/2])/2) : 0; };
   const pearson = a => { const n=a.length, mx=a.reduce((s,p)=>s+p.x,0)/n, my=a.reduce((s,p)=>s+p.raw,0)/n; let num=0,dx=0,dy=0; a.forEach(p=>{num+=(p.x-mx)*(p.raw-my); dx+=(p.x-mx)**2; dy+=(p.raw-my)**2;}); return (dx&&dy)? num/Math.sqrt(dx*dy):0; };
   const linreg = a => { const n=a.length, sx=a.reduce((s,p)=>s+p.x,0), sy=a.reduce((s,p)=>s+p.raw,0), sxx=a.reduce((s,p)=>s+p.x*p.x,0), sxy=a.reduce((s,p)=>s+p.x*p.raw,0); const den=n*sxx-sx*sx, slope=den? (n*sxy-sx*sy)/den:0; return {slope, intercept:(sy-slope*sx)/n}; };
-  const S = { pts:[], mx:0, myRaw:0, slope:0, intercept:0, col:'#64748b', unit:'%', tf:(v=>v) };
+  const S = { pts:[], mx:0, myRaw:0, slope:0, intercept:0, col:'#64748b', unit:'%', tf:(v=>v), ydivLabel:'中位數' };
 
   // 四象限（界線＝薪資中位數 × 該指標中位數；縱軸 sqrt 空間，故畫在 SQ(中位數)）
   const quadrantPlugin = {
@@ -2186,6 +2188,12 @@ function showRankResult(hosp) {
       ctx.strokeStyle='rgba(120,120,120,.5)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
       ctx.beginPath(); ctx.moveTo(px,a.top); ctx.lineTo(px,a.bottom); ctx.moveTo(a.left,py); ctx.lineTo(a.right,py); ctx.stroke();
       ctx.setLineDash([]);
+      // 分界線文字說明：縱線＝薪資中位數、橫線＝該指標分界（全國平均或中位數）
+      ctx.font='10px sans-serif'; ctx.fillStyle='rgba(71,85,105,.92)';
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText('薪資中位數', px, a.top+2);
+      ctx.textAlign='left'; ctx.textBaseline='bottom';
+      ctx.fillText(S.ydivLabel||'中位數', a.left+4, py-3);
       ctx.font='bold 12px sans-serif'; ctx.textBaseline='top';
       const tag=(t,x0,y0,al,co)=>{ ctx.fillStyle=co; ctx.textAlign=al; ctx.fillText(t,x0,y0); };
       tag('高薪・高塞', a.right-8, a.top+6, 'right', 'rgba(180,83,9,.95)');
@@ -2219,7 +2227,10 @@ function showRankResult(hosp) {
     const m=METRICS[kind]; const pts=buildPts(kind);
     S.pts=pts; S.unit=m.unit; S.tip=m.tip; const tf = m.sqrt ? SQ : (v=>v); S.tf=tf;
     const r=pts.length>2?pearson(pts):0; const {slope,intercept}=pts.length>2?linreg(pts):{slope:0,intercept:0};
-    S.slope=slope; S.intercept=intercept; S.mx=median(pts.map(p=>p.x)); S.myRaw=median(pts.map(p=>p.raw));
+    S.slope=slope; S.intercept=intercept; S.mx=median(pts.map(p=>p.x));
+    const yd = m.ydiv ? m.ydiv() : null;
+    S.myRaw = (yd!=null) ? yd : median(pts.map(p=>p.raw));
+    S.ydivLabel = m.ydivLabel ? m.ydivLabel() : '中位數';
     const ar=Math.abs(r);
     const strength=ar<0.1?'幾乎沒有關聯':ar<0.3?'非常弱':ar<0.5?'弱':ar<0.7?'中等':'強';
     const dir=r>0.1?'正相關 ▸ 薪資越高、壅塞傾向越嚴重':r<-0.1?'負相關 ▸ 薪資越高、壅塞反而越輕微':'幾乎無相關 ▸ 薪資高低與壅塞看不出明顯關係';
