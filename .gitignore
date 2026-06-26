@@ -8,3 +8,12 @@ data/*
 !data/realtime-namemap.json
 .fb-cookies.json
 .DS_Store
+
+# 壅塞分頁正式版已併進 index.html，以下為一次性 preview / 開發 scaffolding，不進版控
+salary-vs-congestion.html
+salary-vs-congestion.template.html
+scripts/build-preview.py
+scripts/_match-dryrun.mjs
+scripts/_verify-scatter.mjs
+scripts/fb-expand-test.mjs
+scripts/fetch-taitung.mjs

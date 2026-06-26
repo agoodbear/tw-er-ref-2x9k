@@ -161,8 +161,9 @@ async function fetchPostTexts() {
               let parent = el.parentElement;
               for (let depth = 0; depth < 10 && parent; depth++) {
                 const containerText = parent.textContent || '';
-                // FB m 版時間格式：「X分鐘」「X小時」「X天」「4月11日」「昨天」等
-                const timeMatch = containerText.match(/(\d+\s*分鐘|\d+\s*小時|\d+\s*天|昨天|\d{1,2}月\d{1,2}日|\d{4}年\d{1,2}月\d{1,2}日)/);
+                // FB m 版時間格式：「X分鐘」(1-59) /「X小時」(1-23) /「X天」(1-30) /「昨天」/「4月11日」等
+                // 上限避免抓到貼文內文的數字（如「薪水 144 小時 50 萬」）誤判為 timestamp
+                const timeMatch = containerText.match(/((?:[1-9]|[1-5][0-9])\s*分鐘|(?:[1-9]|1[0-9]|2[0-3])\s*小時|(?:[1-9]|[12][0-9]|30)\s*天|昨天|\d{1,2}月\d{1,2}日|\d{4}年\d{1,2}月\d{1,2}日)/);
                 if (timeMatch) {
                   timeText = timeMatch[1];
                   break;
@@ -257,6 +258,7 @@ async function parsePostsWithAI(posts) {
 9. 非徵才文（如純討論、新聞轉貼、求助文）即使提到「薪」「萬」等字也不要提取
 10. note 欄位記錄班制（如「固定班薪制，平日白/中/夜班 2.4/2.5/2.8萬」）、特殊福利等
 11. visits 欄位填「月診量」（每月總人次）；如果貼文寫的是「日均 X 人次」「每日服務 X 人」，必須 × 30 換算成月診量再填（例：日均 33~36 → 取中位數 35 × 30 = 1050）
+12. 多院區共用薪資結構 → 合併成一筆：如果同一篇貼文涵蓋多個分院 / 院區（例如「馬偕台北 + 淡水」「奇美永康 + 柳營」），但寫的是**同一份薪資結構**（同一個範圍、同一份計算邏輯），請**合併成一筆 salary_report**、hospital 用主體名（如「馬偕醫院」），班數範圍用 s14/s15 兩個欄位表達（例：「14-15 班、42-50 多萬」→ s14=42, s15=50，不要取中位數塞 s15=46）。不要為每個分院各拆一筆——那會變成同 source 重複寫入。只有當「分院有獨立薪資數字」（例：台北 14 班 45 萬、淡水 14 班 40 萬）才拆成兩筆。
 
 只回覆 JSON array，不加任何說明文字：
 [{"hospital":"醫院","region":"地區","level":"層級","s10":null,"s12":null,"s14":null,"s15":45,"s16":null,"visits":null,"note":"備註","source_date":"2026-04-11"}]
@@ -320,7 +322,7 @@ async function writeToSupabase(entries) {
 
   if (entries.length === 0) {
     log('   ⚠️ 沒有新資料');
-    return { added: 0, skipped: 0, newHospitals: 0 };
+    return { added: 0, skipped: 0, newHospitals: 0, refreshed: 0 };
   }
 
   const headers = {
@@ -328,14 +330,23 @@ async function writeToSupabase(entries) {
     'Content-Type': 'application/json', 'Prefer': 'return=representation'
   };
 
-  const [hospResp, dashResp] = await Promise.all([
+  const [hospResp, dashResp, reportsResp] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/hospitals?select=id,name,aliases`, { headers }),
-    fetch(`${SB_URL}/rest/v1/dashboard_data?select=hospital,s10,s12,s14,s15,s16`, { headers })
+    fetch(`${SB_URL}/rest/v1/dashboard_data?select=hospital,s10,s12,s14,s15,s16`, { headers }),
+    fetch(`${SB_URL}/rest/v1/salary_reports?select=id,hospital_id,source_date`, { headers })
   ]);
 
   const hospitals = await hospResp.json();
   const currentData = await dashResp.json();
-  let added = 0, skipped = 0, newHospitals = 0;
+  const existingReports = await reportsResp.json();
+  const existingKey = new Set(existingReports.map(r => `${r.hospital_id}__${r.source_date}`));
+  // 每家醫院「最新一筆 report」(id + source_date)，供「薪資沒變但貼文更新」時 refresh 新鮮度用
+  const latestReportByHosp = {};
+  for (const r of existingReports) {
+    const cur = latestReportByHosp[r.hospital_id];
+    if (!cur || r.source_date > cur.source_date) latestReportByHosp[r.hospital_id] = r;
+  }
+  let added = 0, skipped = 0, newHospitals = 0, refreshed = 0;
 
   // 比對邏輯全部依賴 Supabase hospitals.aliases 欄位（不再硬編碼）
   for (const entry of entries) {
@@ -365,6 +376,29 @@ async function writeToSupabase(entries) {
             ((!entry.s10 && !current.s10) || entry.s10 == current.s10)
           );
           if (same) {
+            // 薪資數字沒變，但若這篇貼文較新 → 只 refresh source_date（新鮮度），note 保留原版（規則 C）
+            const latest = latestReportByHosp[hospital.id];
+            const newDate = entry.source_date;
+            if (latest && newDate && newDate > latest.source_date) {
+              if (DRY_RUN) {
+                log(`   🔄 [DRY RUN] ${entry.hospital}: 薪資未變動，refresh 新鮮度 ${latest.source_date} → ${newDate}`);
+                refreshed++;
+                continue;
+              }
+              const patchResp = await fetch(
+                `${SB_URL}/rest/v1/salary_reports?id=eq.${latest.id}`,
+                { method: 'PATCH', headers, body: JSON.stringify({ source_date: newDate }) }
+              );
+              if (patchResp.ok) {
+                log(`   🔄 ${entry.hospital}: 薪資未變動，新鮮度 ${latest.source_date} → ${newDate}（note 保留）`);
+                latest.source_date = newDate; // 同步本地，避免同次重複 patch
+                refreshed++;
+              } else {
+                log(`   ❌ ${entry.hospital} refresh 失敗: ${await patchResp.text()}`);
+                skipped++;
+              }
+              continue;
+            }
             log(`   ⏭️ ${entry.hospital}: 薪資未變動，跳過`);
             skipped++;
             continue;
@@ -406,6 +440,13 @@ async function writeToSupabase(entries) {
         submitter_token: 'auto_pipeline'
       };
 
+      const dedupKey = `${hospital.id}__${report.source_date}`;
+      if (existingKey.has(dedupKey)) {
+        log(`   ⏭️ ${entry.hospital}: 同 source_date (${report.source_date}) 已存在報告，跳過`);
+        skipped++;
+        continue;
+      }
+
       const summary = ['s10','s12','s14','s15','s16']
         .map(k => report[k] ? `${k.slice(1)}班 ${report[k]}` : null)
         .filter(Boolean).join(' / ') || '—';
@@ -421,6 +462,7 @@ async function writeToSupabase(entries) {
       });
       if (insertResp.ok) {
         log(`   ✅ ${entry.hospital}: ${summary}萬 已寫入`);
+        existingKey.add(dedupKey);
         added++;
       } else {
         log(`   ❌ ${entry.hospital} 寫入失敗: ${await insertResp.text()}`);
@@ -429,7 +471,7 @@ async function writeToSupabase(entries) {
       console.error(`   ❌ ${entry.hospital}:`, err.message);
     }
   }
-  return { added, skipped, newHospitals };
+  return { added, skipped, newHospitals, refreshed };
 }
 
 // ── Main ──────────────────────────────────────
@@ -461,6 +503,7 @@ async function run() {
   console.log(`   解析薪資：${entries.length} 筆`);
   console.log(`   新增寫入：${result.added} 筆`);
   console.log(`   薪資未變：${result.skipped} 筆`);
+  console.log(`   新鮮度更新：${result.refreshed} 筆`);
   console.log(`   新增醫院：${result.newHospitals} 間`);
   console.log(`${'═'.repeat(50)}\n`);
 }
