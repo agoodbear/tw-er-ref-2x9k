@@ -39,12 +39,31 @@ function score(h) {
   return (bed || 0) + (icu || 0) + (push || 0) + (see || 0);
 }
 
-const res = await fetch(API, {
+// 健保署 API 偶發連線重置（ECONNRESET）/ 逾時 → 重試 + 退避，避免單次瞬斷就讓整個排程失敗寄錯誤信
+async function fetchWithRetry(url, opts, tries = 4) {
+  let lastErr;
+  for (let i = 1; i <= tries; i++) {
+    try {
+      const res = await fetch(url, { ...opts, signal: AbortSignal.timeout(20000) });
+      if (!res.ok) throw new Error('健保署 API 回傳 ' + res.status);
+      return res;
+    } catch (e) {
+      lastErr = e;
+      if (i < tries) {
+        const wait = 2000 * i;  // 2s → 4s → 6s 退避
+        console.warn(`第 ${i}/${tries} 次抓取失敗（${e.cause?.code || e.message}），${wait}ms 後重試…`);
+        await new Promise(r => setTimeout(r, wait));
+      }
+    }
+  }
+  throw lastErr;
+}
+
+const res = await fetchWithRetry(API, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
   body: JSON.stringify({ AREA_NO: '', CONT_TYPE: '' })
 });
-if (!res.ok) throw new Error('健保署 API 回傳 ' + res.status);
 const json = await res.json();
 const sysdate = json.sysdate;
 const rows = json.data || [];
