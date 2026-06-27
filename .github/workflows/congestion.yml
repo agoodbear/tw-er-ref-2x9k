@@ -1,11 +1,15 @@
 name: 急診壅塞每小時更新
 
 # 每小時抓健保署急診即時訊息 → 更新 data/congestion-latest.json + history
-# 台灣時間每小時 :05（UTC 每小時 :05；健保署整點更新，錯開幾分鐘抓最新）
+#
+# ⚠️ 2026-06-27：每小時排程已移到 Bear 的 Mac（launchd com.ersalary.congestion-hourly，scripts/cron-congestion.sh）。
+#   原因：GitHub runner 在境外（Azure 美國），健保署 API(info.nhi.gov.tw) 會偶發 ECONNRESET 重置境外/資料中心 IP 連線，
+#   壞時段持續數十分鐘、重試補不到（最近 40 次有 6 次失敗、寄失敗信）。台灣 IP（Bear Mac）打就 100% OK。
+#   這裡只保留 workflow_dispatch 當「Mac 沒開機時」的手動備援（境外仍可能失敗，但能臨時補資料）。
 on:
-  schedule:
-    - cron: '5 * * * *'
-  workflow_dispatch: {}   # 也可手動觸發
+  # schedule:
+  #   - cron: '5 * * * *'   # 已停用，改由 Mac launchd 跑（見上）
+  workflow_dispatch: {}   # 手動備援
 
 permissions:
   contents: write
