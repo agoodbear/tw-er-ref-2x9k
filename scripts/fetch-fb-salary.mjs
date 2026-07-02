@@ -25,14 +25,15 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
-import { randomInt } from 'crypto';
+import { randomInt, createHash } from 'crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Config ──────────────────────────────────────
 const SB_URL = 'https://gjpvzqlsfimuqwditeqf.supabase.co';
 const SB_KEY = 'sb_publishable_P0gPzbp1mg8pgYJumikvTg_RJj8PHYS';
-const CHROMIUM_PATH = '/Users/tsaojian-hsiung/Library/Caches/ms-playwright/chromium-1217/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing';
+// 不再硬編瀏覽器路徑：playwright 自帶 chromium bundle，launch() 不給 executablePath
+// 即用其管理的版本目錄，升級 playwright 也不會斷（原本寫死 chromium-1217 會失效）
 const COOKIE_FILE = join(process.env.HOME, '.fb-cookies.json');
 const RESULTS_DIR = join(__dirname, '..', 'data');
 const LOG_FILE = join(RESULTS_DIR, 'fetch-log.json');
@@ -62,7 +63,7 @@ function log(msg) {
 async function exportCookiesInteractive() {
   log('🍪 互動式 Cookie 擷取...');
   const browser = await chromium.launch({
-    executablePath: CHROMIUM_PATH, headless: false,
+    headless: false,
     args: ['--disable-blink-features=AutomationControlled']
   });
   const context = await browser.newContext({
@@ -105,7 +106,7 @@ async function fetchPostTexts() {
   const cookies = loadCookies();
 
   const browser = await chromium.launch({
-    executablePath: CHROMIUM_PATH, headless: false,
+    headless: false,
     args: ['--disable-blink-features=AutomationControlled']
   });
 
@@ -128,7 +129,10 @@ async function fetchPostTexts() {
     log('   ✅ 已進入社團頁面');
 
     const scrollRounds = Math.min(Math.ceil(DAYS * 3), 40);
-    const allTexts = new Set(); // 用 Set 去重
+    // 去重 key = 全文 hash。virtual scroll 重複讀到同一篇（全文相同）→ 同 hash 去掉；
+    // 不同醫院但同模板開頭（前 100 字相同、內文薪資不同）→ 全文不同 → 不同 hash → 兩篇都留。
+    // （舊版用 text.slice(0,100) 當 key，會把同模板徵才文誤判成同一篇而漏掉第二筆薪資）
+    const seenHashes = new Set();
     const posts = [];
 
     for (let i = 0; i < scrollRounds; i++) {
@@ -178,8 +182,9 @@ async function fetchPostTexts() {
       });
 
       for (const post of visiblePosts) {
-        if (!allTexts.has(post.text.slice(0, 100))) {
-          allTexts.add(post.text.slice(0, 100));
+        const key = createHash('sha1').update(post.text).digest('hex');
+        if (!seenHashes.has(key)) {
+          seenHashes.add(key);
           // 在文字前面加上時間標記，讓 AI 可以參考
           const withTime = post.timeText
             ? `[貼文時間：${post.timeText}]\n${post.text}`
@@ -336,9 +341,23 @@ async function writeToSupabase(entries) {
     fetch(`${SB_URL}/rest/v1/salary_reports?select=id,hospital_id,source_date`, { headers })
   ]);
 
-  const hospitals = await hospResp.json();
-  const currentData = await dashResp.json();
-  const existingReports = await reportsResp.json();
+  // 初始 GET 必須驗證：Supabase 若回 401/5xx 或 PostgREST 錯誤物件 { message,... }，
+  // 直接對回傳做 .map/.find 會在此炸掉 → 被 main() 攔到後 blocking sleep 一小時再重試。
+  // 這裡 fail-fast 拋明確訊息，方便判斷是瞬斷還是設定錯。
+  async function readArray(resp, label) {
+    if (!resp.ok) {
+      throw new Error(`Supabase ${label} 回應 HTTP ${resp.status}：${await resp.text()}`);
+    }
+    const data = await resp.json();
+    if (!Array.isArray(data)) {
+      throw new Error(`Supabase ${label} 回傳非陣列：${JSON.stringify(data).slice(0, 300)}`);
+    }
+    return data;
+  }
+
+  const hospitals = await readArray(hospResp, 'hospitals');
+  const currentData = await readArray(dashResp, 'dashboard_data');
+  const existingReports = await readArray(reportsResp, 'salary_reports');
   const existingKey = new Set(existingReports.map(r => `${r.hospital_id}__${r.source_date}`));
   // 每家醫院「最新一筆 report」(id + source_date)，供「薪資沒變但貼文更新」時 refresh 新鮮度用
   const latestReportByHosp = {};
