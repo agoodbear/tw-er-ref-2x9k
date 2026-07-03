@@ -1,0 +1,61 @@
+name: 部署 GitHub Pages（靜態＋自動重試）
+
+# 為什麼有這支 workflow：
+#   本站是純靜態（index.html + data/*.json），原本用 legacy「從分支部署」模式，
+#   每次 push 由 GitHub 全託管管線重建。build（Jekyll）其實都成功，
+#   問題出在最後 deploy 那一步偶發後端錯誤 "Deployment failed, try again later."
+#   （2026-07 觀察失敗率約 4-5 成）。legacy 管線無法加重試 → 改用 Actions 自己控。
+#
+# 觸發策略（三重、互補）：
+#   - push          ：手動改動（如 index.html，commit 不帶 [skip ci]）→ 立即部署
+#   - schedule :15  ：涵蓋 Mac cron :05 帶 [skip ci] 的每小時資料 commit
+#                     （[skip ci] 只會跳過 push 觸發，schedule 不受影響）
+#   - workflow_dispatch：需要時手動補跑
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '15 * * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時只跑一個 Pages 部署；不中斷進行中的部署（避免 publish 到一半被砍）
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy1.outputs.page_url || steps.deploy2.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      # 純靜態，整包上傳（fresh checkout 只有 tracked 檔，不含 node_modules）
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      # 第 1 次部署；失敗不中斷 job，交給下面重試
+      - name: 部署（第 1 次）
+        id: deploy1
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: 第 1 次失敗，等 30 秒
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 30
+
+      # 第 2 次部署（僅在第 1 次失敗時）；這次若再失敗才讓 job 真正失敗、寄信
+      - name: 部署（第 2 次／重試）
+        id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        uses: actions/deploy-pages@v4
