@@ -967,6 +967,16 @@ const SB_URL = 'https://gjpvzqlsfimuqwditeqf.supabase.co';
 const SB_KEY = 'sb_publishable_P0gPzbp1mg8pgYJumikvTg_RJj8PHYS';
 const sb = window.supabase.createClient(SB_URL, SB_KEY);
 
+// 使用者可控字串（醫院名、備註等）插進 innerHTML 前一律先跳脫，避免 stored XSS
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ─────────────────────────────────────────────
 // hospitals data
 // history: array of { date, s15, note } newest-first
@@ -1097,7 +1107,7 @@ function renderHistoryBtn(row) {
               : h.s14 ? `${h.s14}萬（14班）`
               : h.s12 ? `${h.s12}萬（12班）`
               : h.s10 ? `${h.s10}萬（10班）` : '—';
-    return `<div class="hist-row"><div class="hist-dot"></div><span class="hist-date">${h.date}</span><span class="hist-sal">${sal}</span><span class="hist-note">${h.note || ''}</span></div>`;
+    return `<div class="hist-row"><div class="hist-dot"></div><span class="hist-date">${h.date}</span><span class="hist-sal">${sal}</span><span class="hist-note">${escapeHtml(h.note || '')}</span></div>`;
   }).join('');
   return `<button class="history-toggle" onclick="toggleHist('${id}')">歷史 (${row.history.length})</button><div class="history-panel" id="${id}">${rows}</div>`;
 }
@@ -1129,7 +1139,8 @@ function calcMonthlySeries(d, months = 12) {
   const now = new Date();
   for (let i = months - 1; i >= 0; i--) {
     const dt = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    buckets.push({ ym: dt.toISOString().slice(0,7), s15s: [], s16s: [], firstHospitals: 0 });
+    const ym = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+    buckets.push({ ym, s15s: [], s16s: [], firstHospitals: 0 });
   }
   const bucketByYM = Object.fromEntries(buckets.map(b => [b.ym, b]));
   d.forEach(row => {
@@ -1324,7 +1335,7 @@ function renderTable(d) {
   document.getElementById('tableBody').innerHTML = sorted.map(row => {
     const trend = calcTrend(row);
     return `<tr>
-      <td><strong>${row.hospital}</strong>${renderHistoryBtn(row)}</td>
+      <td><strong>${escapeHtml(row.hospital)}</strong>${renderHistoryBtn(row)}</td>
       <td data-label="地區"><span class="region-badge r-${row.region}">${row.region}</span></td>
       <td data-label="層級" style="font-size:0.78rem;color:#64748b">${row.level}</td>
       <td data-label="趨勢" title="${trend.tip}"><span class="${trend.cls}">${trend.icon}</span></td>
@@ -1341,7 +1352,7 @@ function renderTable(d) {
         ${row.shift === 8 ? '<span class="tag tag-8h">8h制</span>' : ''}
         ${row.shift === 12 ? '<span class="tag tag-12h">12h制</span>' : ''}
       </td>
-      <td data-label="備註" class="note-text">${row.note}</td>
+      <td data-label="備註" class="note-text">${escapeHtml(row.note)}</td>
       <td data-label="更新" style="color:#64748b;font-size:0.78rem;font-variant-numeric:tabular-nums">${row.lastUpdated || '—'}</td>
     </tr>`;
   }).join('');
@@ -1497,7 +1508,7 @@ function renderTaiwanMap(d) {
       const rd = window._mapRegionData[region];
       const count = rd ? rd.hospitals.length : 0;
       const avg = rd && rd.salaries.length ? (rd.salaries.reduce((a,b) => a+b, 0) / rd.salaries.length).toFixed(1) : null;
-      const hospList = rd ? rd.hospitals.map(h => h.hospital).join('、') : '無資料';
+      const hospList = rd ? rd.hospitals.map(h => escapeHtml(h.hospital)).join('、') : '無資料';
       tooltip.innerHTML = `<div class="tt-title">${region}</div><div>醫院數：${count} 家</div><div>平均薪資（15班）：<span class="tt-salary">${avg ? avg + '萬' : '—'}</span></div><div class="tt-hospitals">${hospList}</div>`;
       tooltip.style.display = 'block';
     });
@@ -1777,7 +1788,7 @@ async function searchHospitals(q) {
     var html = '';
     for (var i = 0; i < data.length; i++) {
       var x = data[i];
-      html += '<div class="sr-item" data-id="' + x.id + '" data-name="' + x.name.replace(/"/g, '&quot;') + '">' + x.name + ' <span class="sr-region">' + x.region + '</span></div>';
+      html += '<div class="sr-item" data-id="' + x.id + '" data-name="' + escapeHtml(x.name) + '">' + escapeHtml(x.name) + ' <span class="sr-region">' + x.region + '</span></div>';
     }
     html += '<div class="sr-new">\u2795 \u65b0\u589e\u91ab\u9662\u300c' + q + '\u300d</div>';
     rd.innerHTML = html;
@@ -1974,7 +1985,7 @@ document.addEventListener('input', function(e) {
   var matches = ranked.filter(function(h) { return h.hospital.toLowerCase().includes(q); });
   if (matches.length === 0) { resultsEl.style.display = 'none'; return; }
   resultsEl.innerHTML = matches.slice(0, 10).map(function(h) {
-    return '<div class="sr-item" data-id="' + h.id + '">' + h.hospital + ' <span class="sr-region">' + h.region + ' · ' + h.s15 + '萬</span></div>';
+    return '<div class="sr-item" data-id="' + h.id + '">' + escapeHtml(h.hospital) + ' <span class="sr-region">' + h.region + ' · ' + h.s15 + '萬</span></div>';
   }).join('');
   resultsEl.style.display = 'block';
 });
@@ -2039,7 +2050,7 @@ function showRankResult(hosp) {
     var rowCls = isMe ? 'rank-bar-row rank-bar-selected' : 'rank-bar-row';
     var barColor = isMe ? '#2563eb' : '#cbd5e1';
     return '<div class="' + rowCls + '" id="rank-bar-' + i + '">' +
-      '<div class="rank-bar-name" title="' + h.hospital + '">' + (i + 1) + '. ' + h.hospital + '</div>' +
+      '<div class="rank-bar-name" title="' + escapeHtml(h.hospital) + '">' + (i + 1) + '. ' + escapeHtml(h.hospital) + '</div>' +
       '<div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div>' +
       '<div class="rank-bar-val">' + h.s15 + '萬</div></div>';
   }).join('');
@@ -2060,7 +2071,7 @@ function showRankResult(hosp) {
     var cls = isMe ? 'rank-neighbor-row rank-neighbor-me' : 'rank-neighbor-row';
     neighborsHtml += '<div class="' + cls + '">' +
       '<div class="rank-neighbor-rank">第' + (i + 1) + '名</div>' +
-      '<div class="rank-neighbor-name">' + ranked[i].hospital + '</div>' +
+      '<div class="rank-neighbor-name">' + escapeHtml(ranked[i].hospital) + '</div>' +
       '<div class="rank-neighbor-salary">' + ranked[i].s15 + '萬</div></div>';
   }
   neighborsEl.innerHTML = neighborsHtml;
@@ -2287,7 +2298,7 @@ function showRankResult(hosp) {
       },
       plugins:[quadrantPlugin, labelPlugin]
     });
-    const dl=document.getElementById('scatterHospList'); if(dl) dl.innerHTML=[...new Set(pts.map(p=>p.hospital))].sort().map(n=>`<option value="${n}"></option>`).join('');
+    const dl=document.getElementById('scatterHospList'); if(dl) dl.innerHTML=[...new Set(pts.map(p=>p.hospital))].sort().map(n=>`<option value="${escapeHtml(n)}"></option>`).join('');
     document.querySelectorAll('.metric-btn').forEach(b=>b.classList.toggle('active', b.dataset.metric===kind));
     const si=document.getElementById('scatterSearch'); if(si&&si.value.trim()) searchHosp(si.value);
   }
@@ -2305,7 +2316,7 @@ function showRankResult(hosp) {
     if (!sResult) return;
     if (!q){ sResult.textContent=''; }
     else if (!m.length){ sResult.textContent='查無此醫院（此指標無此院資料，或尚未有人上傳薪資）'; }
-    else if (m.length===1){ const p=m[0]; sResult.innerHTML=`<b>${p.hospital}</b>：薪資 ${p.x.toFixed(1)} 萬、${S.tip} ${p.raw}${S.unit} → <b>${quadName(p)}</b>`; }
+    else if (m.length===1){ const p=m[0]; sResult.innerHTML=`<b>${escapeHtml(p.hospital)}</b>：薪資 ${p.x.toFixed(1)} 萬、${S.tip} ${p.raw}${S.unit} → <b>${quadName(p)}</b>`; }
     else { sResult.textContent=`找到 ${m.length} 家，已在圖上標出`; }
   }
   const sInput = document.getElementById('scatterSearch');
@@ -2322,7 +2333,7 @@ function showRankResult(hosp) {
     });
     document.querySelectorAll('.map-wrap').forEach(w=>w.classList.toggle('dim', !!region));
     const ch = Chart.getChart('scatterChart');
-    if (ch){ const idx=pts.findIndex(p=>p.region===region); ch.setActiveElements(idx>=0?[{datasetIndex:0,index:idx}]:[]); ch.update(); }
+    if (ch){ const idx=S.pts.findIndex(p=>p.region===region); ch.setActiveElements(idx>=0?[{datasetIndex:0,index:idx}]:[]); ch.update(); }
   }
   const congWrap = document.getElementById('congMapWrap');
   congWrap.addEventListener('mousemove', e=>{
@@ -2335,7 +2346,7 @@ function showRankResult(hosp) {
       const hs = d.hospitals
         .map(h=>({ name:h.hospital, sal:(h.s15||h.s14||h.s12||h.s16||h.s10)||null }))
         .filter(x=>x.sal).sort((a,b)=>b.sal-a.sal);
-      const shown = hs.slice(0,8).map(x=>`　• ${x.name} ${x.sal}萬`).join('<br>');
+      const shown = hs.slice(0,8).map(x=>`　• ${escapeHtml(x.name)} ${x.sal}萬`).join('<br>');
       const more = hs.length>8 ? `<br>　…還有 ${hs.length-8} 家` : '';
       listHtml = `<br><span style="opacity:.8">有上傳薪資的醫院（${hs.length}）：</span><br>${shown}${more}`;
     } else {
