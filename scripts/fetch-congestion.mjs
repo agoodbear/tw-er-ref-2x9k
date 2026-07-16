@@ -106,9 +106,12 @@ const out = { sysdate, fetchedAt: new Date().toISOString(), hospitals, regions }
 writeFileSync(join(DATA, 'congestion-latest.json'), JSON.stringify(out, null, 2));
 
 // 時間序列歷史（給「近 7 天平均」用），上限 ~3000 筆防爆
+// 同 sysdate 去重：手動補跑＋launchd 同一小時各跑一次時，覆蓋末筆而非重複 append（避免未來平均重複加權）
 const histPath = join(DATA, 'congestion-history.json');
 const hist = existsSync(histPath) ? JSON.parse(readFileSync(histPath, 'utf8')) : [];
-hist.push({ sysdate, regions: regions.map(r => ({ region: r.region, avgScore: r.avgScore, n: r.n })) });
+const entry = { sysdate, regions: regions.map(r => ({ region: r.region, avgScore: r.avgScore, n: r.n })) };
+if (hist.length && hist[hist.length - 1].sysdate === sysdate) hist[hist.length - 1] = entry;
+else hist.push(entry);
 writeFileSync(histPath, JSON.stringify(hist.slice(-3000), null, 2));
 
 console.log(`OK ${sysdate} — ${hospitals.length} 家醫院 / ${ranked.length} 家有通報 / ${regions.length} 區`);
