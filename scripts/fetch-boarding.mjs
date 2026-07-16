@@ -14,9 +14,12 @@ const BASE = 'https://med.nhi.gov.tw/ihqe0000';
 const UA = { 'User-Agent': 'Mozilla/5.0' };
 const num = v => (v === null || v === undefined || v === '') ? null : Number(v);
 
-// 1) 找最新季度（S17 回傳 099Q1…的清單，取最後一筆）
+// 1) 找最新季度（S17 回傳 099Q1…的清單）
+// 防禦：清單 ascending 屬官方 API 未文件化行為，不依賴——自行取 DataTimeID 字典序最大
+//（'099Q1'<'114Q3'，三位年+固定寬度季，字典序＝時間序）
 const years = await (await fetch(`${BASE}/IHQE0020S17.ashx?q5id=2&ind=1652`, { headers: UA })).json();
-const latest = years[years.length - 1];           // { DataTimeID:'114Q3', DataTimeName:'114年第三季' }
+if (!Array.isArray(years) || !years.length) throw new Error('S17 季度清單空回應（官方 API 行為可能已變）');
+const latest = years.reduce((a, b) => (String(b.DataTimeID) > String(a.DataTimeID) ? b : a));  // { DataTimeID:'114Q3', DataTimeName:'114年第三季' }
 const quarter = latest.DataTimeID;
 
 // 2) 抓該季全國資料
@@ -35,7 +38,8 @@ const hospitals = rows.map(r => ({
   d: num(r.DENOMINATOR ?? r.D)   // 急診轉住院總案件數
 })).filter(h => h.ratio !== null);
 
-const nationalAvg = num(rows[0].INDEX3);  // 全國平均 %
+const nationalAvg = num(rows[0].INDEX3);  // 全國平均 %（依賴 rows[0] 帶 INDEX3 的未文件化行為）
+if (nationalAvg === null) console.warn('⚠️ rows[0].INDEX3 取不到全國平均（官方 API 行為可能已變），nationalAvg 將為 null');
 
 const out = {
   quarter,

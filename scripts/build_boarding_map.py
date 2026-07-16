@@ -13,7 +13,8 @@ req=urllib.request.Request(SB+'/rest/v1/dashboard_data?select=hospital',headers=
 sal=[r['hospital'] for r in json.loads(urllib.request.urlopen(req,timeout=20).read())]
 
 # 薪資名 → 48hr official name 裡的 distinctive 子字串（或完整官方名以消歧）
-KEY = {
+# （改名 NAME_KEY：原本叫 KEY 會 shadow 上面的 Supabase KEY，易誤讀）
+NAME_KEY = {
  '草屯佑民醫院':'佑民','竹山秀傳醫院':'竹山秀傳','埔里基督教醫院':'埔里基督教','台中榮總埔里分院':'埔里分院',
  '光田醫院':'光田綜合','衛福部豐原醫院':'豐原','部立台中醫院':'衛生福利部臺中醫院','台中慈濟醫院':'台中慈濟',
  '童綜合醫院':'童綜合醫療','台中市立老人復健綜合醫院':'老人復健','振興醫院':'振興醫院',
@@ -36,7 +37,7 @@ KEY = {
 
 out={}; ambiguous=[]; absent=[]; nokey=[]
 for s in sal:
-    k=KEY.get(s)
+    k=NAME_KEY.get(s)
     if not k: nokey.append(s); continue
     exact=[h for h in bd if h['name']==k]
     sub=[h for h in bd if k in h['name']]
