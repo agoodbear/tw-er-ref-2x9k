@@ -1509,7 +1509,7 @@ function renderTaiwanMap(d) {
       const count = rd ? rd.hospitals.length : 0;
       const avg = rd && rd.salaries.length ? (rd.salaries.reduce((a,b) => a+b, 0) / rd.salaries.length).toFixed(1) : null;
       const hospList = rd ? rd.hospitals.map(h => escapeHtml(h.hospital)).join('、') : '無資料';
-      tooltip.innerHTML = `<div class="tt-title">${region}</div><div>醫院數：${count} 家</div><div>平均薪資（15班）：<span class="tt-salary">${avg ? avg + '萬' : '—'}</span></div><div class="tt-hospitals">${hospList}</div>`;
+      tooltip.innerHTML = `<div class="tt-title">${region}</div><div>醫院數：${count} 家</div><div>平均薪資（15班，無則取最接近班數）：<span class="tt-salary">${avg ? avg + '萬' : '—'}</span></div><div class="tt-hospitals">${hospList}</div>`;
       tooltip.style.display = 'block';
     });
 
@@ -2294,7 +2294,7 @@ function showRankResult(hosp) {
       ]},
       options:{ maintainAspectRatio:false,
         plugins:{ legend:{display:false}, tooltip:{ filter:it=>it.datasetIndex===0, callbacks:{ label:c=>`${c.raw.hospital}（${c.raw.region}）：薪資 ${c.raw.x.toFixed(1)}萬、${m.tip} ${c.raw.raw}${m.unit}${c.raw.levelTip||''}` } } },
-        scales:{ x:{ title:{display:true,text:'各醫院 15班月薪（萬）'} }, y:{ min:0, title:{display:true,text:m.axis}, ticks:{ callback:v=>{ const o=m.sqrt?v*v:v; return (o<10?Math.round(o*10)/10:Math.round(o))+m.unit; } } } }
+        scales:{ x:{ title:{display:true,text:'各醫院 15班月薪（萬；無15班則取最接近班數）'} }, y:{ min:0, title:{display:true,text:m.axis}, ticks:{ callback:v=>{ const o=m.sqrt?v*v:v; return (o<10?Math.round(o*10)/10:Math.round(o))+m.unit; } } } }
       },
       plugins:[quadrantPlugin, labelPlugin]
     });
