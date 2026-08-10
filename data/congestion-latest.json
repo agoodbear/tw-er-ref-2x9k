@@ -1,6 +1,6 @@
 {
-  "sysdate": "2026-08-11 04:00",
-  "fetchedAt": "2026-08-10T20:05:06.348Z",
+  "sysdate": "2026-08-11 05:00",
+  "fetchedAt": "2026-08-10T21:05:08.528Z",
   "hospitals": [
     {
       "id": "0101020017",
@@ -11,11 +11,11 @@
       "wait_admit": 4,
       "wait_icu": 0,
       "wait_push": 0,
-      "wait_see": 1,
+      "wait_see": 0,
       "full": false,
-      "score": 5,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 47,
+      "score": 4,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 48,
       "rankTotal": 55
     },
     {
@@ -30,7 +30,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-08-11T04:00:27"
+      "txt_date": "2026-08-11T05:00:52"
     },
     {
       "id": "0131060029",
@@ -40,11 +40,11 @@
       "level": "區域醫院",
       "wait_admit": 6,
       "wait_icu": 3,
-      "wait_push": 8,
-      "wait_see": 0,
+      "wait_push": 6,
+      "wait_see": 2,
       "full": false,
       "score": 17,
-      "txt_date": "2026-08-11T04:00:28",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 37,
       "rankTotal": 55
     },
@@ -54,14 +54,14 @@
       "region": "台北",
       "areaCode": "01",
       "level": "醫學中心",
-      "wait_admit": 82,
-      "wait_icu": 2,
-      "wait_push": 28,
+      "wait_admit": 86,
+      "wait_icu": 1,
+      "wait_push": 0,
       "wait_see": 0,
-      "full": true,
-      "score": 112,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 3,
+      "full": false,
+      "score": 87,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 4,
       "rankTotal": 55
     },
     {
@@ -76,8 +76,8 @@
       "wait_see": 0,
       "full": false,
       "score": 0,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 53,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 54,
       "rankTotal": 55
     },
     {
@@ -89,10 +89,10 @@
       "wait_admit": 28,
       "wait_icu": 0,
       "wait_push": 0,
-      "wait_see": 0,
+      "wait_see": 1,
       "full": true,
-      "score": 28,
-      "txt_date": "2026-08-11T04:00:28",
+      "score": 29,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 27,
       "rankTotal": 55
     },
@@ -102,13 +102,13 @@
       "region": "台北",
       "areaCode": "01",
       "level": "醫學中心",
-      "wait_admit": 49,
+      "wait_admit": 50,
       "wait_icu": 0,
       "wait_push": 0,
       "wait_see": 1,
       "full": false,
-      "score": 50,
-      "txt_date": "2026-08-11T04:00:27",
+      "score": 51,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 11,
       "rankTotal": 55
     },
@@ -118,14 +118,14 @@
       "region": "台北",
       "areaCode": "01",
       "level": "醫學中心",
-      "wait_admit": 34,
-      "wait_icu": 1,
+      "wait_admit": 33,
+      "wait_icu": 0,
       "wait_push": 0,
-      "wait_see": 1,
+      "wait_see": 0,
       "full": false,
-      "score": 36,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 19,
+      "score": 33,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 22,
       "rankTotal": 55
     },
     {
@@ -136,12 +136,12 @@
       "level": "醫學中心",
       "wait_admit": 18,
       "wait_icu": 0,
-      "wait_push": 0,
+      "wait_push": 1,
       "wait_see": 0,
       "full": false,
-      "score": 18,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 35,
+      "score": 19,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 34,
       "rankTotal": 55
     },
     {
@@ -156,7 +156,7 @@
       "wait_see": 4,
       "full": false,
       "score": 59,
-      "txt_date": "2026-08-11T04:00:27",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 9,
       "rankTotal": 55
     },
@@ -172,7 +172,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-08-11T04:00:27"
+      "txt_date": "2026-08-11T05:00:52"
     },
     {
       "id": "1101150011",
@@ -186,7 +186,7 @@
       "wait_see": 0,
       "full": false,
       "score": 35,
-      "txt_date": "2026-08-11T04:00:27",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 20,
       "rankTotal": 55
     },
@@ -202,7 +202,7 @@
       "wait_see": 0,
       "full": false,
       "score": 1,
-      "txt_date": "2026-08-11T04:00:27",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 52,
       "rankTotal": 55
     },
@@ -214,12 +214,12 @@
       "level": "區域醫院",
       "wait_admit": 30,
       "wait_icu": 0,
-      "wait_push": 10,
-      "wait_see": 0,
+      "wait_push": 9,
+      "wait_see": 1,
       "full": true,
       "score": 40,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 15,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 16,
       "rankTotal": 55
     },
     {
@@ -228,13 +228,13 @@
       "region": "新北",
       "areaCode": "31",
       "level": "醫學中心",
-      "wait_admit": 52,
+      "wait_admit": 53,
       "wait_icu": 1,
-      "wait_push": 7,
+      "wait_push": 6,
       "wait_see": 1,
       "full": false,
       "score": 61,
-      "txt_date": "2026-08-11T04:00:28",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 8,
       "rankTotal": 55
     },
@@ -247,11 +247,11 @@
       "wait_admit": 31,
       "wait_icu": 1,
       "wait_push": 0,
-      "wait_see": 0,
+      "wait_see": 1,
       "full": false,
-      "score": 32,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 24,
+      "score": 33,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 23,
       "rankTotal": 55
     },
     {
@@ -260,14 +260,14 @@
       "region": "新北",
       "areaCode": "31",
       "level": "醫學中心",
-      "wait_admit": 17,
+      "wait_admit": 16,
       "wait_icu": 2,
       "wait_push": 0,
       "wait_see": 0,
       "full": false,
-      "score": 19,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 34,
+      "score": 18,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 35,
       "rankTotal": 55
     },
     {
@@ -279,11 +279,11 @@
       "wait_admit": 35,
       "wait_icu": 1,
       "wait_push": 0,
-      "wait_see": 2,
+      "wait_see": 1,
       "full": true,
-      "score": 38,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 17,
+      "score": 37,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 19,
       "rankTotal": 55
     },
     {
@@ -298,7 +298,7 @@
       "wait_see": 0,
       "full": false,
       "score": 18,
-      "txt_date": "2026-08-11T04:00:28",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 36,
       "rankTotal": 55
     },
@@ -311,11 +311,11 @@
       "wait_admit": 9,
       "wait_icu": 0,
       "wait_push": 0,
-      "wait_see": 8,
+      "wait_see": 6,
       "full": true,
-      "score": 17,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 38,
+      "score": 15,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 41,
       "rankTotal": 55
     },
     {
@@ -324,14 +324,14 @@
       "region": "台北",
       "areaCode": "01",
       "level": "區域醫院",
-      "wait_admit": 27,
+      "wait_admit": 29,
       "wait_icu": 0,
       "wait_push": 0,
       "wait_see": 0,
       "full": false,
-      "score": 27,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 29,
+      "score": 29,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 28,
       "rankTotal": 55
     },
     {
@@ -340,14 +340,14 @@
       "region": "台北",
       "areaCode": "01",
       "level": "醫學中心",
-      "wait_admit": 30,
+      "wait_admit": 29,
       "wait_icu": 3,
       "wait_push": 0,
-      "wait_see": 1,
+      "wait_see": 2,
       "full": false,
       "score": 34,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 22,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 21,
       "rankTotal": 55
     },
     {
@@ -358,11 +358,11 @@
       "level": "醫學中心",
       "wait_admit": 62,
       "wait_icu": 0,
-      "wait_push": 7,
-      "wait_see": 1,
+      "wait_push": 6,
+      "wait_see": 0,
       "full": false,
-      "score": 70,
-      "txt_date": "2026-08-11T04:00:28",
+      "score": 68,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 7,
       "rankTotal": 55
     },
@@ -378,7 +378,7 @@
       "wait_see": 2,
       "full": true,
       "score": 25,
-      "txt_date": "2026-08-11T04:00:28",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 30,
       "rankTotal": 55
     },
@@ -391,10 +391,10 @@
       "wait_admit": 46,
       "wait_icu": 2,
       "wait_push": 0,
-      "wait_see": 1,
+      "wait_see": 2,
       "full": true,
-      "score": 49,
-      "txt_date": "2026-08-11T04:00:28",
+      "score": 50,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 12,
       "rankTotal": 55
     },
@@ -406,12 +406,12 @@
       "level": "醫學中心",
       "wait_admit": 35,
       "wait_icu": 0,
-      "wait_push": 0,
-      "wait_see": 0,
-      "full": false,
-      "score": 35,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 21,
+      "wait_push": 20,
+      "wait_see": 2,
+      "full": true,
+      "score": 57,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 10,
       "rankTotal": 55
     },
     {
@@ -423,10 +423,10 @@
       "wait_admit": 9,
       "wait_icu": 0,
       "wait_push": 0,
-      "wait_see": 0,
+      "wait_see": 1,
       "full": false,
-      "score": 9,
-      "txt_date": "2026-08-11T04:00:28",
+      "score": 10,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 45,
       "rankTotal": 55
     },
@@ -439,11 +439,11 @@
       "wait_admit": 19,
       "wait_icu": 3,
       "wait_push": 0,
-      "wait_see": 1,
+      "wait_see": 0,
       "full": false,
-      "score": 23,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 31,
+      "score": 22,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 32,
       "rankTotal": 55
     },
     {
@@ -452,14 +452,14 @@
       "region": "新竹",
       "areaCode": "12",
       "level": "區域醫院",
-      "wait_admit": 0,
+      "wait_admit": 1,
       "wait_icu": 0,
       "wait_push": 0,
       "wait_see": 0,
       "full": false,
-      "score": 0,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 54,
+      "score": 1,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 53,
       "rankTotal": 55
     },
     {
@@ -470,11 +470,11 @@
       "level": "醫學中心",
       "wait_admit": 134,
       "wait_icu": 1,
-      "wait_push": 18,
-      "wait_see": 1,
+      "wait_push": 14,
+      "wait_see": 0,
       "full": true,
-      "score": 154,
-      "txt_date": "2026-08-11T04:00:28",
+      "score": 149,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 1,
       "rankTotal": 55
     },
@@ -490,7 +490,7 @@
       "wait_see": 0,
       "full": false,
       "score": 12,
-      "txt_date": "2026-08-11T04:00:28",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 42,
       "rankTotal": 55
     },
@@ -506,8 +506,8 @@
       "wait_see": 2,
       "full": false,
       "score": 17,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 39,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 38,
       "rankTotal": 55
     },
     {
@@ -522,7 +522,7 @@
       "wait_see": 0,
       "full": false,
       "score": 0,
-      "txt_date": "2026-08-11T04:00:28",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 55,
       "rankTotal": 55
     },
@@ -538,8 +538,8 @@
       "wait_see": 0,
       "full": false,
       "score": 29,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 26,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 29,
       "rankTotal": 55
     },
     {
@@ -551,11 +551,11 @@
       "wait_admit": 4,
       "wait_icu": 0,
       "wait_push": 0,
-      "wait_see": 0,
+      "wait_see": 1,
       "full": false,
-      "score": 4,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 48,
+      "score": 5,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 47,
       "rankTotal": 55
     },
     {
@@ -564,13 +564,13 @@
       "region": "台中",
       "areaCode": "03",
       "level": "區域醫院",
-      "wait_admit": 6,
+      "wait_admit": 7,
       "wait_icu": 0,
       "wait_push": 0,
       "wait_see": 0,
       "full": false,
-      "score": 6,
-      "txt_date": "2026-08-11T04:00:27",
+      "score": 7,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 46,
       "rankTotal": 55
     },
@@ -586,7 +586,7 @@
       "wait_see": 0,
       "full": false,
       "score": 12,
-      "txt_date": "2026-08-11T04:00:28",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 43,
       "rankTotal": 55
     },
@@ -602,7 +602,7 @@
       "wait_see": 0,
       "full": false,
       "score": 32,
-      "txt_date": "2026-08-11T04:00:27",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 25,
       "rankTotal": 55
     },
@@ -615,11 +615,11 @@
       "wait_admit": 42,
       "wait_icu": 2,
       "wait_push": 0,
-      "wait_see": 0,
+      "wait_see": 1,
       "full": false,
-      "score": 44,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 13,
+      "score": 45,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 14,
       "rankTotal": 55
     },
     {
@@ -634,7 +634,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-08-11T04:00:27"
+      "txt_date": "2026-08-11T05:00:52"
     },
     {
       "id": "1137020511",
@@ -648,8 +648,8 @@
       "wait_see": 0,
       "full": false,
       "score": 16,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 40,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 39,
       "rankTotal": 55
     },
     {
@@ -664,7 +664,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-08-11T04:00:27"
+      "txt_date": "2026-08-11T05:00:52"
     },
     {
       "id": "1317040011",
@@ -672,13 +672,13 @@
       "region": "台中",
       "areaCode": "03",
       "level": "醫學中心",
-      "wait_admit": 21,
+      "wait_admit": 20,
       "wait_icu": 0,
       "wait_push": 0,
       "wait_see": 0,
       "full": false,
-      "score": 21,
-      "txt_date": "2026-08-11T04:00:27",
+      "score": 20,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 33,
       "rankTotal": 55
     },
@@ -688,13 +688,13 @@
       "region": "台中",
       "areaCode": "03",
       "level": "醫學中心",
-      "wait_admit": 27,
+      "wait_admit": 28,
       "wait_icu": 5,
       "wait_push": 0,
       "wait_see": 6,
       "full": false,
-      "score": 38,
-      "txt_date": "2026-08-11T04:00:27",
+      "score": 39,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 18,
       "rankTotal": 55
     },
@@ -707,11 +707,11 @@
       "wait_admit": 0,
       "wait_icu": 0,
       "wait_push": 0,
-      "wait_see": 2,
+      "wait_see": 3,
       "full": false,
-      "score": 2,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 50,
+      "score": 3,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 49,
       "rankTotal": 55
     },
     {
@@ -726,7 +726,7 @@
       "wait_see": 1,
       "full": false,
       "score": 2,
-      "txt_date": "2026-08-11T04:00:27",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 51,
       "rankTotal": 55
     },
@@ -736,14 +736,14 @@
       "region": "台南",
       "areaCode": "05",
       "level": "醫學中心",
-      "wait_admit": 71,
+      "wait_admit": 72,
       "wait_icu": 8,
-      "wait_push": 25,
-      "wait_see": 1,
+      "wait_push": 26,
+      "wait_see": 2,
       "full": true,
-      "score": 105,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 4,
+      "score": 108,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 3,
       "rankTotal": 55
     },
     {
@@ -758,8 +758,8 @@
       "wait_see": 0,
       "full": false,
       "score": 16,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 41,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 40,
       "rankTotal": 55
     },
     {
@@ -768,14 +768,14 @@
       "region": "嘉義",
       "areaCode": "22",
       "level": "區域醫院",
-      "wait_admit": 48,
+      "wait_admit": 49,
       "wait_icu": 0,
       "wait_push": 0,
-      "wait_see": 5,
+      "wait_see": 1,
       "full": false,
-      "score": 53,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 10,
+      "score": 50,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 13,
       "rankTotal": 55
     },
     {
@@ -784,14 +784,14 @@
       "region": "嘉義",
       "areaCode": "40",
       "level": "區域醫院",
-      "wait_admit": 21,
+      "wait_admit": 22,
       "wait_icu": 7,
       "wait_push": 0,
-      "wait_see": 0,
+      "wait_see": 1,
       "full": true,
-      "score": 28,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 28,
+      "score": 30,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 26,
       "rankTotal": 55
     },
     {
@@ -806,8 +806,8 @@
       "wait_see": 0,
       "full": false,
       "score": 23,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 32,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 31,
       "rankTotal": 55
     },
     {
@@ -816,13 +816,13 @@
       "region": "台南",
       "areaCode": "05",
       "level": "醫學中心",
-      "wait_admit": 86,
+      "wait_admit": 84,
       "wait_icu": 0,
-      "wait_push": 0,
-      "wait_see": 0,
+      "wait_push": 1,
+      "wait_see": 2,
       "full": true,
-      "score": 86,
-      "txt_date": "2026-08-11T04:00:27",
+      "score": 87,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 5,
       "rankTotal": 55
     },
@@ -838,8 +838,8 @@
       "wait_see": 0,
       "full": false,
       "score": 33,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 23,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 24,
       "rankTotal": 55
     },
     {
@@ -851,10 +851,10 @@
       "wait_admit": 73,
       "wait_icu": 1,
       "wait_push": 0,
-      "wait_see": 0,
+      "wait_see": 1,
       "full": false,
-      "score": 74,
-      "txt_date": "2026-08-11T04:00:28",
+      "score": 75,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 6,
       "rankTotal": 55
     },
@@ -870,8 +870,8 @@
       "wait_see": 0,
       "full": false,
       "score": 40,
-      "txt_date": "2026-08-11T04:00:27",
-      "rank": 16,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 17,
       "rankTotal": 55
     },
     {
@@ -886,7 +886,7 @@
       "wait_see": 0,
       "full": false,
       "score": 11,
-      "txt_date": "2026-08-11T04:00:28",
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 44,
       "rankTotal": 55
     },
@@ -898,11 +898,11 @@
       "level": "醫學中心",
       "wait_admit": 96,
       "wait_icu": 7,
-      "wait_push": 30,
+      "wait_push": 28,
       "wait_see": 3,
       "full": true,
-      "score": 136,
-      "txt_date": "2026-08-11T04:00:27",
+      "score": 134,
+      "txt_date": "2026-08-11T05:00:52",
       "rank": 2,
       "rankTotal": 55
     },
@@ -918,8 +918,8 @@
       "wait_see": 0,
       "full": true,
       "score": 42,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 14,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 15,
       "rankTotal": 55
     },
     {
@@ -934,8 +934,8 @@
       "wait_see": 0,
       "full": false,
       "score": 3,
-      "txt_date": "2026-08-11T04:00:28",
-      "rank": 49,
+      "txt_date": "2026-08-11T05:00:52",
+      "rank": 50,
       "rankTotal": 55
     }
   ],
@@ -943,7 +943,7 @@
     {
       "region": "桃園",
       "n": 2,
-      "avgScore": 101.5,
+      "avgScore": 99.5,
       "hospitals": [
         "部立桃園",
         "林口長庚"
@@ -952,7 +952,7 @@
     {
       "region": "台南",
       "n": 2,
-      "avgScore": 95.5,
+      "avgScore": 97.5,
       "hospitals": [
         "成大醫院",
         "永康奇美"
@@ -961,7 +961,7 @@
     {
       "region": "高雄",
       "n": 4,
-      "avgScore": 70.8,
+      "avgScore": 70.5,
       "hospitals": [
         "高雄榮總",
         "高雄長庚",
@@ -988,7 +988,7 @@
     {
       "region": "新北",
       "n": 8,
-      "avgScore": 34.9,
+      "avgScore": 34.3,
       "hospitals": [
         "部立臺北",
         "亞東",
@@ -1003,7 +1003,7 @@
     {
       "region": "嘉義",
       "n": 3,
-      "avgScore": 34.7,
+      "avgScore": 34.3,
       "hospitals": [
         "嘉基",
         "嘉義長庚",
@@ -1013,7 +1013,7 @@
     {
       "region": "台北",
       "n": 11,
-      "avgScore": 34.3,
+      "avgScore": 32,
       "hospitals": [
         "聯醫仁愛",
         "臺大",
@@ -1031,7 +1031,7 @@
     {
       "region": "彰化",
       "n": 3,
-      "avgScore": 24,
+      "avgScore": 24.3,
       "hospitals": [
         "秀傳",
         "彰基",
@@ -1041,7 +1041,7 @@
     {
       "region": "宜蘭",
       "n": 2,
-      "avgScore": 23,
+      "avgScore": 23.5,
       "hospitals": [
         "陽交大附醫",
         "博愛"
@@ -1050,7 +1050,7 @@
     {
       "region": "新竹",
       "n": 4,
-      "avgScore": 16.8,
+      "avgScore": 22.5,
       "hospitals": [
         "臺大新竹",
         "東元",
@@ -1061,7 +1061,7 @@
     {
       "region": "台中",
       "n": 8,
-      "avgScore": 16.8,
+      "avgScore": 17.1,
       "hospitals": [
         "中榮",
         "向上光田",
