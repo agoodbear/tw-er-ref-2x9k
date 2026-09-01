@@ -1,366 +1,360 @@
 {
   "meta": {
-    "quarter": "114Q3",
-    "quarterName": "114年第三季",
-    "nationalAvg": 6.03,
+    "quarter": "114Q4",
+    "quarterName": "114年第四季",
+    "nationalAvg": 4.91,
     "source": "med.nhi.gov.tw/ihqe0000 (ind=1652)",
-    "matched": 59,
-    "salaryTotal": 66
+    "matched": 58,
+    "salaryTotal": 71
   },
   "hospitals": {
+    "部立台南醫院新化分院": {
+      "ratio": 0.99,
+      "official": "衛生福利部臺南醫院新化分院",
+      "level": "地區醫院",
+      "quarter": "114Q4"
+    },
+    "衛生福利部苗栗醫院": {
+      "ratio": 0.2,
+      "official": "衛生福利部苗栗醫院",
+      "level": "區域醫院",
+      "quarter": "114Q4"
+    },
     "新北永和耕莘醫院": {
       "ratio": 0,
       "official": "天主教耕莘醫療財團法人永和耕莘醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "衛福部台北醫院": {
-      "ratio": 0.79,
+      "ratio": 1.42,
       "official": "衛生福利部臺北醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "部立桃園醫院": {
-      "ratio": 6.4,
+      "ratio": 5.31,
       "official": "衛生福利部桃園醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
-    "衛生福利部苗栗醫院": {
+    "竹山秀傳醫院": {
       "ratio": 0,
-      "official": "衛生福利部苗栗醫院",
-      "level": "區域醫院",
-      "quarter": "114Q3"
-    },
-    "部立台南醫院新化分院": {
-      "ratio": 0,
-      "official": "衛生福利部臺南醫院新化分院",
+      "official": "竹山秀傳醫療社團法人竹山秀傳醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "台北市立聯合醫院和平院區": {
-      "ratio": 2.34,
+      "ratio": 1.12,
       "official": "臺北市立聯合醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "光田醫院": {
       "ratio": 0,
       "official": "光田醫療社團法人光田綜合醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "衛福部豐原醫院": {
-      "ratio": 0,
+      "ratio": 0.03,
       "official": "衛生福利部豐原醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "部立台中醫院": {
       "ratio": 0,
       "official": "衛生福利部臺中醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "台中慈濟醫院": {
-      "ratio": 0.4,
+      "ratio": 0.29,
       "official": "佛教慈濟醫療財團法人台中慈濟醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "埔里基督教醫院": {
-      "ratio": 0.75,
+      "ratio": 0,
       "official": "埔基醫療財團法人埔里基督教醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "羅東博愛醫院": {
-      "ratio": 2.75,
+      "ratio": 2.14,
       "official": "醫療財團法人羅許基金會羅東博愛醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "屏東枋寮醫院": {
       "ratio": 0,
       "official": "枋寮醫療社團法人枋寮醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "屏東潮州安泰醫院": {
       "ratio": 0,
       "official": "安泰醫療社團法人潮州安泰醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "員林基督教醫院": {
-      "ratio": 0.24,
+      "ratio": 1.2,
       "official": "彰化基督教醫療財團法人員林基督教醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "彰濱秀傳醫院": {
       "ratio": 0,
       "official": "秀傳醫療財團法人彰濱秀傳紀念醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "漢銘基督教醫院": {
       "ratio": 0,
       "official": "彰化基督教醫療財團法人漢銘基督教醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
-    },
-    "樂生醫院": {
-      "ratio": 2.53,
-      "official": "衛生福利部樂生療養院",
-      "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "汐止國泰醫院": {
-      "ratio": 4.36,
+      "ratio": 7.04,
       "official": "國泰醫療財團法人汐止國泰綜合醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
+    },
+    "高醫岡山醫院": {
+      "ratio": 5.98,
+      "official": "財團法人私立高雄醫學大學附設高醫岡山醫院",
+      "level": "地區醫院",
+      "quarter": "114Q4"
     },
     "中壢長榮醫院": {
       "ratio": 0,
       "official": "中壢長榮醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
-    "屏東基督教醫院": {
-      "ratio": 2.05,
-      "official": "屏基醫療財團法人屏東基督教醫院",
-      "level": "區域醫院",
-      "quarter": "114Q3"
+    "草屯佑民醫院": {
+      "ratio": 0,
+      "official": "佑民醫療社團法人佑民醫院",
+      "level": "地區醫院",
+      "quarter": "114Q4"
     },
     "楊梅天成醫院": {
       "ratio": 0,
       "official": "天成醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
-    "高醫岡山醫院": {
-      "ratio": 14.3,
-      "official": "財團法人私立高雄醫學大學附設高醫岡山醫院",
+    "台南郭綜合醫院": {
+      "ratio": 0.22,
+      "official": "郭綜合醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "為恭紀念醫院": {
-      "ratio": 0.43,
+      "ratio": 0.37,
       "official": "為恭醫療財團法人為恭紀念醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "虎尾若瑟醫院": {
       "ratio": 0,
       "official": "天主教若瑟醫療財團法人若瑟醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "高雄市立民生醫院": {
-      "ratio": 0.15,
+      "ratio": 0,
       "official": "高雄市立民生醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
+    },
+    "屏東基督教醫院": {
+      "ratio": 2.16,
+      "official": "屏基醫療財團法人屏東基督教醫院",
+      "level": "區域醫院",
+      "quarter": "114Q4"
+    },
+    "台中榮總嘉義分院": {
+      "ratio": 0.23,
+      "official": "臺中榮民總醫院嘉義分院",
+      "level": "區域醫院",
+      "quarter": "114Q4"
+    },
+    "臺大醫院雲林分院": {
+      "ratio": 7.55,
+      "official": "國立臺灣大學醫學院附設醫院雲林分院",
+      "level": "區域醫院",
+      "quarter": "114Q4"
+    },
+    "台北榮總新竹分院": {
+      "ratio": 0.44,
+      "official": "臺北榮民總醫院新竹分院",
+      "level": "地區醫院",
+      "quarter": "114Q4"
     },
     "振興醫院": {
       "ratio": 0,
       "official": "振興醫療財團法人振興醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
-    },
-    "台中榮總嘉義分院": {
-      "ratio": 0,
-      "official": "臺中榮民總醫院嘉義分院",
-      "level": "區域醫院",
-      "quarter": "114Q3"
-    },
-    "臺大醫院雲林分院": {
-      "ratio": 18.27,
-      "official": "國立臺灣大學醫學院附設醫院雲林分院",
-      "level": "區域醫院",
-      "quarter": "114Q3"
-    },
-    "台北榮總新竹分院": {
-      "ratio": 0,
-      "official": "臺北榮民總醫院新竹分院",
-      "level": "地區醫院",
-      "quarter": "114Q3"
-    },
-    "草屯佑民醫院": {
-      "ratio": 0.27,
-      "official": "佑民醫療社團法人佑民醫院",
-      "level": "地區醫院",
-      "quarter": "114Q3"
-    },
-    "竹山秀傳醫院": {
-      "ratio": 0.17,
-      "official": "竹山秀傳醫療社團法人竹山秀傳醫院",
-      "level": "地區醫院",
-      "quarter": "114Q3"
-    },
-    "台南郭綜合醫院": {
-      "ratio": 0.21,
-      "official": "郭綜合醫院",
-      "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "台北榮總鳳林分院": {
       "ratio": 0,
       "official": "臺北榮民總醫院鳳林分院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "台中榮總埔里分院": {
       "ratio": 0,
       "official": "臺中榮民總醫院埔里分院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "桃園聖保祿醫院": {
-      "ratio": 7.78,
+      "ratio": 3.25,
       "official": "沙爾德聖保祿修女會醫療財團法人聖保祿醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "高雄聖功醫院": {
       "ratio": 0,
       "official": "天主教聖功醫療財團法人聖功醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "台北榮總玉里分院": {
-      "ratio": 0.77,
+      "ratio": 0,
       "official": "臺北榮民總醫院玉里分院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "宜蘭陽大附醫": {
-      "ratio": 1.19,
+      "ratio": 0.24,
       "official": "國立陽明交通大學附設醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "門諾醫院": {
-      "ratio": 0.6,
+      "ratio": 0.35,
       "official": "臺灣基督教門諾會醫療財團法人門諾醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "國泰醫院總院": {
-      "ratio": 1.54,
+      "ratio": 1.01,
       "official": "國泰醫療財團法人國泰綜合醫院",
       "level": "醫學中心",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "國軍花蓮總醫院": {
-      "ratio": 0.99,
+      "ratio": 0,
       "official": "國軍花蓮總醫院附設民眾診療服務處",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "中醫北港": {
       "ratio": 0,
       "official": "中國醫藥大學北港附設醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "輔大醫院": {
-      "ratio": 27.24,
+      "ratio": 22.04,
       "official": "輔仁大學學校財團法人輔仁大學附設醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "台東馬偕紀念醫院": {
-      "ratio": 0.75,
+      "ratio": 0.15,
       "official": "台灣基督長老教會馬偕醫療財團法人台東馬偕紀念醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
-    },
-    "雙和醫院": {
-      "ratio": 15.41,
-      "official": "衛生福利部雙和醫院〈委託臺北醫學大學興建經營〉",
-      "level": "醫學中心",
-      "quarter": "114Q3"
-    },
-    "馬偕醫院": {
-      "ratio": 7.43,
-      "official": "台灣基督長老教會馬偕醫療財團法人馬偕紀念醫院",
-      "level": "醫學中心",
-      "quarter": "114Q3"
-    },
-    "成大醫院": {
-      "ratio": 13.21,
-      "official": "國立成功大學醫學院附設醫院",
-      "level": "醫學中心",
-      "quarter": "114Q3"
-    },
-    "澄清醫院": {
-      "ratio": 2,
-      "official": "澄清綜合醫院中港分院",
-      "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "臺大醫院新竹分院": {
-      "ratio": 10.56,
+      "ratio": 10.16,
       "official": "國立臺灣大學醫學院附設醫院新竹臺大分院新竹醫院",
       "level": "醫學中心",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
+    },
+    "雙和醫院": {
+      "ratio": 13.38,
+      "official": "衛生福利部雙和醫院〈委託臺北醫學大學興建經營〉",
+      "level": "醫學中心",
+      "quarter": "114Q4"
+    },
+    "成大醫院": {
+      "ratio": 18.83,
+      "official": "國立成功大學醫學院附設醫院",
+      "level": "醫學中心",
+      "quarter": "114Q4"
+    },
+    "澄清醫院": {
+      "ratio": 0.92,
+      "official": "澄清綜合醫院中港分院",
+      "level": "區域醫院",
+      "quarter": "114Q4"
+    },
+    "馬偕醫院": {
+      "ratio": 7.57,
+      "official": "台灣基督長老教會馬偕醫療財團法人馬偕紀念醫院",
+      "level": "醫學中心",
+      "quarter": "114Q4"
     },
     "台北市立聯合醫院中興院區": {
-      "ratio": 2.34,
+      "ratio": 1.12,
       "official": "臺北市立聯合醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "中醫大新竹": {
-      "ratio": 8.33,
+      "ratio": 1.98,
       "official": "中國醫藥大學新竹附設醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "童綜合醫院": {
       "ratio": 0,
       "official": "童綜合醫療社團法人童綜合醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "天主教聖馬爾定醫院": {
       "ratio": 0,
       "official": "天主教中華聖母修女會醫療財團法人天主教聖馬爾定醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "聯新國際醫院": {
-      "ratio": 5.63,
+      "ratio": 6.99,
       "official": "聯新國際醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "嘉義基督教醫院": {
-      "ratio": 7.68,
+      "ratio": 5.95,
       "official": "戴德森醫療財團法人嘉義基督教醫院",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "台南市立醫院": {
-      "ratio": 14.57,
+      "ratio": 7.15,
       "official": "台南市立醫院(委託秀傳醫療社團法人經營)",
       "level": "區域醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "枋寮醫院": {
       "ratio": 0,
       "official": "枋寮醫療社團法人枋寮醫院",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     },
     "台中市立老人復健綜合醫院": {
-      "ratio": 0,
+      "ratio": 0.28,
       "official": "臺中市立老人復健綜合醫院(委託財團法人中國醫藥大學興建經營)",
       "level": "地區醫院",
-      "quarter": "114Q3"
+      "quarter": "114Q4"
     }
   }
 }
