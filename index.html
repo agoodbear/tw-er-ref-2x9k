@@ -434,6 +434,12 @@
     .metric-btn { padding: 7px 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); border-radius: 8px; font-size: .82rem; cursor: pointer; transition: all .15s; }
     .metric-btn:hover { border-color: #dc2626; }
     .metric-btn.active { background: #dc2626; color: #fff; border-color: #dc2626; font-weight: 700; }
+    .basis-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .basis-head h2 { margin-bottom: 0; }
+    .basis-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
+    .basis-btn { padding: 5px 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); border-radius: 8px; font-size: .8rem; cursor: pointer; transition: all .15s; }
+    .basis-btn:hover { border-color: #2563eb; }
+    .basis-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; font-weight: 700; }
     #corrSummary .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
     .crk-row { display: grid; grid-template-columns: 50px 1fr 56px 1.5fr; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: .82rem; }
     .crk-row:last-child { border-bottom: none; }
@@ -712,7 +718,14 @@
   </div>
 
   <div class="card" style="margin-bottom:20px">
-    <h2>📊 15班月薪比較（萬元）</h2>
+    <div class="basis-head">
+      <h2 id="salaryChartTitle">📊 15班月薪比較（萬元）</h2>
+      <div class="basis-toggle">
+        <button class="basis-btn active" data-basis="month">月薪（15班）</button>
+        <button class="basis-btn" data-basis="shift">每班薪資</button>
+        <button class="basis-btn" data-basis="hour">時薪</button>
+      </div>
+    </div>
     <div class="chart-wrap"><canvas id="salaryChart"></canvas></div>
   </div>
 
@@ -1360,37 +1373,104 @@ function renderTable(d) {
 
 let barChart, trendChart;
 
+// 斜線底紋：標出「不是 15/16 班」的替代數字，一眼跟實心的 15 班分開
+function stripePattern(color) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 8;
+  const g = c.getContext('2d');
+  g.fillStyle = color + '22';
+  g.fillRect(0, 0, 8, 8);
+  g.strokeStyle = color + 'cc';
+  g.lineWidth = 2;
+  g.beginPath(); g.moveTo(-2, 10); g.lineTo(10, -2); g.stroke();
+  return g.createPattern(c, 'repeat');
+}
+
 function renderCharts(d) {
-  const barData = d.filter(x => x.s15 || x.s16)
-    .map(x => ({
-      hospital: x.hospital,
-      label: x.hospital.replace('醫院','院').replace('台北市立聯合醫院','聯醫'),
-      s15: x.s15 || null,
-      s16: x.s16 || null,
-      color: regionColors[x.region] || '#94a3b8',
-      region: x.region
-    }))
-    .sort(regionSortFn);
+  drawBarChart(d);
+  // Color the Taiwan map
+  renderTaiwanMap(d);
+}
+
+// 長條圖三種口徑：月薪（15班）／每班薪資（月薪÷班數）／時薪（再÷每班小時）
+// 月薪模式跟地圖同一套：15/16 班照畫；兩者都沒有的醫院改畫最接近班數（14→12→10）並另列一組
+let barBasis = 'month';
+let lastBarInput = [];
+const BAR_TITLES = {
+  month: '📊 15班月薪比較（萬元）',
+  shift: '📊 每班薪資比較（萬元／班）',
+  hour:  '📊 時薪比較（元／小時）'
+};
+
+// 換算每班／時薪用的月薪基準：優先序跟地圖、表格排序一致
+function salaryBasis(x) {
+  for (const n of [15, 14, 12, 16, 10]) if (x['s' + n]) return { n, month: x['s' + n] };
+  return null;
+}
+
+function drawBarChart(d) {
+  lastBarInput = d;
+  document.getElementById('salaryChartTitle').textContent = BAR_TITLES[barBasis];
+  const perUnit = barBasis !== 'month';
+  const barData = d
+    .map(x => {
+      const has1516 = !!(x.s15 || x.s16);
+      const altShift = has1516 ? null : (x.s14 ? 14 : x.s12 ? 12 : x.s10 ? 10 : null);
+      const base = salaryBasis(x);
+      const hours = x.shift || 12;
+      return {
+        hospital: x.hospital,
+        label: x.hospital.replace('醫院','院').replace('台北市立聯合醫院','聯醫'),
+        s15: x.s15 || null,
+        s16: x.s16 || null,
+        altShift,
+        alt: altShift ? x['s' + altShift] : null,
+        base, hours,
+        perShift: base ? Math.round(base.month / base.n * 100) / 100 : null,
+        perHour: base ? Math.round(base.month * 10000 / base.n / hours) : null,
+        color: regionColors[x.region] || '#94a3b8',
+        region: x.region
+      };
+    })
+    .filter(x => perUnit ? x.base : (x.s15 || x.s16 || x.alt))
+    .sort(perUnit
+      ? (a, b) => {
+          const ra = regionOrder.indexOf(a.region), rb = regionOrder.indexOf(b.region);
+          const oa = ra === -1 ? 99 : ra, ob = rb === -1 ? 99 : rb;
+          return oa !== ob ? oa - ob : b.perHour - a.perHour;
+        }
+      : regionSortFn);
 
   const barCtx = document.getElementById('salaryChart').getContext('2d');
   if (barChart) barChart.destroy();
+  const solid = { backgroundColor: barData.map(x => x.color + 'cc'), borderColor: barData.map(x => x.color), borderWidth: 1, borderRadius: 4 };
+  const hatched = { backgroundColor: barData.map(x => stripePattern(x.color)), borderColor: barData.map(x => x.color), borderWidth: 1, borderRadius: 4 };
+  let datasets;
+  if (barBasis === 'month') {
+    datasets = [
+      { label: '15班月薪', data: barData.map(x => x.s15), ...solid },
+      { label: '16班月薪', data: barData.map(x => x.s16),
+        backgroundColor: barData.map(x => x.color + '55'),
+        borderColor: barData.map(x => x.color + 'aa'),
+        borderWidth: 1, borderRadius: 4 }
+    ];
+    if (barData.some(x => x.alt)) datasets.push({ label: '無15/16班→最接近班數', data: barData.map(x => x.alt), ...hatched });
+  } else if (barBasis === 'shift') {
+    // 8 小時班的「每班」天生比 12 小時班短，用斜線標出來，提醒改看時薪
+    datasets = [{ label: '每班薪資（12小時班）', data: barData.map(x => x.hours >= 12 ? x.perShift : null), ...solid }];
+    if (barData.some(x => x.hours < 12)) datasets.push({ label: '8小時班（班較短，看時薪較準）', data: barData.map(x => x.hours < 12 ? x.perShift : null), ...hatched });
+  } else {
+    datasets = [{ label: '時薪', data: barData.map(x => x.perHour), ...solid }];
+  }
   barChart = new Chart(barCtx, {
     type: 'bar',
     data: {
       labels: barData.map(x => x.label),
-      datasets: [
-        { label: '15班月薪', data: barData.map(x => x.s15),
-          backgroundColor: barData.map(x => x.color + 'cc'),
-          borderColor: barData.map(x => x.color),
-          borderWidth: 1, borderRadius: 4 },
-        { label: '16班月薪', data: barData.map(x => x.s16),
-          backgroundColor: barData.map(x => x.color + '55'),
-          borderColor: barData.map(x => x.color + 'aa'),
-          borderWidth: 1, borderRadius: 4 }
-      ]
+      datasets
     },
     options: {
       responsive: true, maintainAspectRatio: false,
+      datasets: { bar: { skipNull: true } },
       plugins: {
         legend: { labels: { color: '#475569', font: { size: 11 } } },
         tooltip: {
@@ -1404,13 +1484,24 @@ function renderCharts(d) {
               const idx = ctx[0].dataIndex;
               return barData[idx].hospital + '（' + barData[idx].region + '）';
             },
-            label: ctx => ctx.raw ? `${ctx.dataset.label}: ${ctx.raw}萬` : null
+            label: ctx => {
+              if (!ctx.raw) return null;
+              const x = barData[ctx.dataIndex];
+              if (barBasis === 'shift') return `每班 ${x.perShift}萬（${x.base.n}班 ${x.base.month}萬 ÷ ${x.base.n}；${x.hours}小時班）`;
+              if (barBasis === 'hour') return `時薪 ${x.perHour.toLocaleString()}元（${x.base.n}班 ${x.base.month}萬 ÷ ${x.base.n}班 ÷ ${x.hours}小時）`;
+              if (ctx.datasetIndex === 2) return `${x.altShift}班月薪（無15/16班資料）: ${ctx.raw}萬`;
+              return `${ctx.dataset.label}: ${ctx.raw}萬`;
+            }
           }
         }
       },
       scales: {
         x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45, minRotation: 30 }, grid: { color: '#e2e8f0' } },
-        y: { ticks: { color: '#64748b', callback: v => v + '萬' }, grid: { color: '#e2e8f0' }, min: 0, max: 70 }
+        y: barBasis === 'month'
+          ? { ticks: { color: '#64748b', callback: v => v + '萬' }, grid: { color: '#e2e8f0' }, min: 0, max: 70 }
+          : barBasis === 'shift'
+            ? { ticks: { color: '#64748b', callback: v => v + '萬' }, grid: { color: '#e2e8f0' }, min: 0 }
+            : { ticks: { color: '#64748b', callback: v => v.toLocaleString() + '元' }, grid: { color: '#e2e8f0' }, min: 0 }
       },
       onClick: function(evt, elements) {
         if (!elements.length) return;
@@ -1434,10 +1525,14 @@ function renderCharts(d) {
       }
     }
   });
-
-  // Color the Taiwan map
-  renderTaiwanMap(d);
 }
+
+// 月薪／每班／時薪切換：沿用目前篩選（地區按鈕或點地圖）重畫
+document.querySelectorAll('.basis-btn').forEach(b => b.addEventListener('click', () => {
+  barBasis = b.dataset.basis;
+  document.querySelectorAll('.basis-btn').forEach(x => x.classList.toggle('active', x === b));
+  drawBarChart(lastBarInput);
+}));
 
 // ─────────────────────────────────────────────
 // Taiwan Map Heatmap
@@ -1543,33 +1638,7 @@ function renderTaiwanMap(d) {
       document.querySelectorAll('.tw-county').forEach(p => p.classList.remove('active-county'));
       path.classList.add('active-county');
       // Re-render bar chart only (don't re-render map to avoid resetting colors)
-      const barData2 = filtered.filter(x => x.s15 || x.s16)
-        .map(x => ({
-          hospital: x.hospital,
-          label: x.hospital.replace('醫院','院').replace('台北市立聯合醫院','聯醫'),
-          s15: x.s15 || null, s16: x.s16 || null,
-          color: regionColors[x.region] || '#94a3b8', region: x.region
-        }));
-      const barCtx = document.getElementById('salaryChart').getContext('2d');
-      if (barChart) barChart.destroy();
-      barChart = new Chart(barCtx, {
-        type: 'bar',
-        data: {
-          labels: barData2.map(x => x.label),
-          datasets: [
-            { label: '15班月薪', data: barData2.map(x => x.s15), backgroundColor: barData2.map(x => x.color + 'cc'), borderColor: barData2.map(x => x.color), borderWidth: 1, borderRadius: 4 },
-            { label: '16班月薪', data: barData2.map(x => x.s16), backgroundColor: barData2.map(x => x.color + '55'), borderColor: barData2.map(x => x.color + 'aa'), borderWidth: 1, borderRadius: 4 }
-          ]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#475569', font: { size: 11 } } } },
-          scales: {
-            x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45, minRotation: 30 }, grid: { color: '#e2e8f0' } },
-            y: { ticks: { color: '#64748b', callback: v => v + '萬' }, grid: { color: '#e2e8f0' }, min: 0, max: 70 }
-          }
-        }
-      });
+      drawBarChart(filtered);
     });
   }
 }
