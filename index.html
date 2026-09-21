@@ -443,6 +443,13 @@
     #corrSummary .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
     .crk-row { display: grid; grid-template-columns: 50px 1fr 56px 1.5fr; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: .82rem; }
     .crk-row:last-child { border-bottom: none; }
+    .crk-bar { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+    .crk-time { text-align: right; line-height: 1.25; }
+    .crk-time-label { font-size: .75rem; color: var(--text-muted); }
+    .crk-time-big { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text); }
+    .crk-time-sub { font-size: .75rem; color: var(--text-muted); }
+    .crk-time.stale .crk-time-big, .crk-time.stale .crk-time-sub { color: #b45309; }
+    @media (max-width: 600px) { .crk-time { text-align: left; } .crk-time-big { font-size: 1.3rem; } }
     .crk-no { font-weight: 800; color: #dc2626; }
     .crk-name { font-weight: 600; }
     .crk-name small { display: block; color: var(--text-muted); font-weight: 400; font-size: .72rem; }
@@ -833,7 +840,14 @@
 
   <div class="card" style="margin-bottom:20px">
     <h2>🚑 急診壅塞・全國排名</h2>
-    <input id="congSearch" placeholder="搜尋醫院名稱…" style="width:100%;max-width:280px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;background:var(--surface);color:var(--text)">
+    <div class="crk-bar">
+      <input id="congSearch" placeholder="搜尋醫院名稱…" style="width:100%;max-width:280px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text)">
+      <div id="congSysdate" class="crk-time">
+        <div class="crk-time-label">壅塞紀錄時間</div>
+        <div class="crk-time-big">—</div>
+        <div class="crk-time-sub">載入中…</div>
+      </div>
+    </div>
     <div id="congRankTable" style="max-height:480px;overflow-y:auto;border:1px solid var(--border);border-radius:10px"></div>
   </div>
 
@@ -2159,8 +2173,26 @@ function showRankResult(hosp) {
     cong = await (await fetch('data/congestion-latest.json', {cache:'no-store'})).json();
   } catch(e){ console.warn('壅塞資料載入失敗：', e); return; }
 
+  // 排名表右上角的壅塞紀錄時間：sysdate 是健保署回傳的台灣時間字串（YYYY-MM-DD HH:MM），直接拆字顯示、不經時區換算
+  // 超過 3 小時沒更新就轉警示色（代表每小時抓取停了）
   const sysEl = document.getElementById('congSysdate');
-  if (sysEl) sysEl.textContent = cong.sysdate || '—';
+  if (sysEl) {
+    const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(cong.sysdate || '');
+    const big = sysEl.querySelector('.crk-time-big'), sub = sysEl.querySelector('.crk-time-sub');
+    const n = cong.hospitals.filter(h => h.score != null).length;
+    if (m) {
+      const [, y, mo, d, hh, mm] = m;
+      const wd = '日一二三四五六'[new Date(Date.UTC(+y, +mo - 1, +d)).getUTCDay()];
+      big.textContent = `${+mo}/${+d}（${wd}）${hh}:${mm}`;
+      big.title = `${y}-${mo}-${d} ${hh}:${mm}（台灣時間）`;
+      const mins = Math.max(0, Math.round((Date.now() - Date.UTC(+y, +mo - 1, +d, +hh - 8, +mm)) / 60000));
+      const ago = mins < 60 ? `${mins} 分鐘前` : `${Math.floor(mins / 60)} 小時 ${mins % 60} 分鐘前`;
+      sub.textContent = `${y} 年・${ago}・每小時更新・共 ${n} 家`;
+      if (mins > 180) { sysEl.classList.add('stale'); sub.textContent = `⚠️ 已超過 3 小時未更新（${ago}）`; }
+    } else {
+      sub.textContent = '資料時間不明';
+    }
+  }
 
   // 1) 克隆薪資地圖 → 壅塞地圖（path id: map-X → cmap-X，避免重複 id）
   const src = document.getElementById('twMap');
