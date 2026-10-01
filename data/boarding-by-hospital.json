@@ -5,18 +5,24 @@
     "nationalAvg": 4.91,
     "source": "med.nhi.gov.tw/ihqe0000 (ind=1652)",
     "matched": 58,
-    "salaryTotal": 71
+    "salaryTotal": 72
   },
   "hospitals": {
-    "部立台南醫院新化分院": {
-      "ratio": 0.99,
-      "official": "衛生福利部臺南醫院新化分院",
-      "level": "地區醫院",
+    "振興醫院": {
+      "ratio": 0,
+      "official": "振興醫療財團法人振興醫院",
+      "level": "區域醫院",
       "quarter": "114Q4"
     },
     "衛生福利部苗栗醫院": {
       "ratio": 0.2,
       "official": "衛生福利部苗栗醫院",
+      "level": "區域醫院",
+      "quarter": "114Q4"
+    },
+    "部立桃園醫院": {
+      "ratio": 5.31,
+      "official": "衛生福利部桃園醫院",
       "level": "區域醫院",
       "quarter": "114Q4"
     },
@@ -29,12 +35,6 @@
     "衛福部台北醫院": {
       "ratio": 1.42,
       "official": "衛生福利部臺北醫院",
-      "level": "區域醫院",
-      "quarter": "114Q4"
-    },
-    "部立桃園醫院": {
-      "ratio": 5.31,
-      "official": "衛生福利部桃園醫院",
       "level": "區域醫院",
       "quarter": "114Q4"
     },
@@ -152,6 +152,12 @@
       "level": "地區醫院",
       "quarter": "114Q4"
     },
+    "部立台南醫院新化分院": {
+      "ratio": 0.99,
+      "official": "衛生福利部臺南醫院新化分院",
+      "level": "地區醫院",
+      "quarter": "114Q4"
+    },
     "為恭紀念醫院": {
       "ratio": 0.37,
       "official": "為恭醫療財團法人為恭紀念醫院",
@@ -192,12 +198,6 @@
       "ratio": 0.44,
       "official": "臺北榮民總醫院新竹分院",
       "level": "地區醫院",
-      "quarter": "114Q4"
-    },
-    "振興醫院": {
-      "ratio": 0,
-      "official": "振興醫療財團法人振興醫院",
-      "level": "區域醫院",
       "quarter": "114Q4"
     },
     "台北榮總鳳林分院": {
