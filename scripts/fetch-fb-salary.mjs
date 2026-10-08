@@ -132,7 +132,27 @@ async function fetchPostTexts() {
     }
     log('   ✅ 已進入社團頁面');
 
-    const scrollRounds = Math.min(Math.ceil(DAYS * 3), 40);
+    // 捲動深度看「日期」不看固定次數：舊版固定 DAYS*3 次（上限 40），FB 排序非嚴格時序、
+    // 一次捲 600px 約一篇，2026-10-05 跑 --days 7 只捲到 5 天前就停（窗口後段整段沒看到）。
+    // 改成：看到 ≥3 篇比窗口更舊的貼文才停；連續 10 輪沒新內容（到底／卡住）也停；硬上限 DAYS*8（≤150）。
+    const scrollRounds = Math.min(Math.ceil(DAYS * 8), 150);
+    const OLDER_NEEDED = 3, STALL_LIMIT = 10;
+    let olderSeen = 0, stall = 0, maxAge = 0;
+    const olderKeys = new Set();   // 同一篇的「截斷版」與「展開版」會是兩段，用開頭 30 字合併計數
+    const ageDays = t => {
+      if (!t) return null;
+      if (/分鐘|小時/.test(t)) return 0;
+      if (t === '昨天') return 1;
+      let m = t.match(/(\d+)\s*天/); if (m) return +m[1];
+      const now = new Date();
+      m = t.match(/(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日/);
+      if (m) {
+        let d = new Date(m[1] ? +m[1] : now.getFullYear(), +m[2] - 1, +m[3]);
+        if (!m[1] && d > now) d.setFullYear(d.getFullYear() - 1);   // 跨年：12 月的貼文在 1 月看
+        return Math.floor((now - d) / 86400e3);
+      }
+      return null;
+    };
     // 去重 key = 全文 hash。virtual scroll 重複讀到同一篇（全文相同）→ 同 hash 去掉；
     // 不同醫院但同模板開頭（前 100 字相同、內文薪資不同）→ 全文不同 → 不同 hash → 兩篇都留。
     // （舊版用 text.slice(0,100) 當 key，會把同模板徵才文誤判成同一篇而漏掉第二筆薪資）
@@ -185,10 +205,13 @@ async function fetchPostTexts() {
         return results;
       });
 
+      const before = posts.length;
       for (const post of visiblePosts) {
         const key = createHash('sha1').update(post.text).digest('hex');
         if (!seenHashes.has(key)) {
           seenHashes.add(key);
+          const age = ageDays(post.timeText);
+          if (age != null) { maxAge = Math.max(maxAge, age); if (age > DAYS) { olderKeys.add(post.text.slice(0, 30)); olderSeen = olderKeys.size; } }
           // 在文字前面加上時間標記，讓 AI 可以參考
           const withTime = post.timeText
             ? `[貼文時間：${post.timeText}]\n${post.text}`
@@ -200,8 +223,12 @@ async function fetchPostTexts() {
       // Step C: 捲動
       await page.evaluate(() => window.scrollBy(0, 600));
       await sleep(2000);
-      process.stdout.write(`\r   📜 捲動 ${i + 1}/${scrollRounds}，已收集 ${posts.length} 段文字...`);
+      process.stdout.write(`\r   📜 捲動 ${i + 1}/${scrollRounds}，已收集 ${posts.length} 段文字（最舊 ${maxAge} 天）...`);
+      stall = posts.length === before ? stall + 1 : 0;
+      if (olderSeen >= OLDER_NEEDED) { console.log(''); log(`   ⏹️ 已看到 ${olderSeen} 篇超過 ${DAYS} 天的貼文，窗口已涵蓋`); break; }
+      if (stall >= STALL_LIMIT) { console.log(''); log(`   ⏹️ 連續 ${STALL_LIMIT} 輪沒有新內容，停止捲動`); break; }
     }
+    if (olderSeen < OLDER_NEEDED) log(`   ⚠️ 捲到上限仍未完整涵蓋 ${DAYS} 天（最舊只到 ${maxAge} 天前）`);
     console.log('');
     log(`   ✅ 共收集 ${posts.length} 段不重複文字`);
 
