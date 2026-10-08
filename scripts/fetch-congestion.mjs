@@ -102,7 +102,28 @@ const regions = Object.values(agg).map(r => ({
   hospitals: r.hospitals
 })).sort((a, b) => b.avgScore - a.avgScore);
 
-const out = { sysdate, fetchedAt: new Date().toISOString(), hospitals, regions };
+// ── 近 7 天平均（散點圖縱軸用；單一時點太吵，一個尖峰就能讓一家醫院換象限）──
+// 每家醫院的逐時分數另存 congestion-hosp-history.json（緊湊格式、只留 8 天），
+// 區平均沿用 congestion-history.json 的 regions。視窗＝本次 sysdate 往前 168 小時。
+// 覆蓋率 < 50%（84 個小時點）就不給 avg7d，前端退回當下數字並標示。
+const WINDOW_H = 168, MIN_N = 84;
+const tsOf = sd => Date.parse(sd.replace(' ', 'T') + ':00+08:00');
+const nowTs = tsOf(sysdate);
+const hhPath = join(DATA, 'congestion-hosp-history.json');
+let hh = existsSync(hhPath) ? JSON.parse(readFileSync(hhPath, 'utf8')) : [];
+const hEntry = { sysdate, s: Object.fromEntries(hospitals.filter(h => h.score !== null).map(h => [h.id, h.score])) };
+if (hh.length && hh[hh.length - 1].sysdate === sysdate) hh[hh.length - 1] = hEntry; else hh.push(hEntry);
+hh = hh.filter(e => nowTs - tsOf(e.sysdate) < 8 * 24 * 3600e3);
+writeFileSync(hhPath, JSON.stringify(hh));
+const inWin = e => { const d = nowTs - tsOf(e.sysdate); return d >= 0 && d < WINDOW_H * 3600e3; };
+const r1 = v => Math.round(v * 10) / 10;
+const hWin = hh.filter(inWin);
+for (const h of hospitals) {
+  const v = hWin.map(e => e.s[h.id]).filter(x => x != null);
+  h.n7d = v.length;
+  h.avg7d = v.length >= MIN_N ? r1(v.reduce((a, b) => a + b, 0) / v.length) : null;
+}
+const out = { sysdate, fetchedAt: new Date().toISOString(), window7d: { hours: WINDOW_H, minN: MIN_N, snapshots: hWin.length }, hospitals, regions };
 writeFileSync(join(DATA, 'congestion-latest.json'), JSON.stringify(out, null, 2));
 
 // 時間序列歷史（給「近 7 天平均」用），上限 ~3000 筆防爆
@@ -114,6 +135,15 @@ if (hist.length && hist[hist.length - 1].sysdate === sysdate) hist[hist.length -
 else hist.push(entry);
 writeFileSync(histPath, JSON.stringify(hist.slice(-3000), null, 2));
 
-console.log(`OK ${sysdate} — ${hospitals.length} 家醫院 / ${ranked.length} 家有通報 / ${regions.length} 區`);
+// 區平均的近 7 天值（regions 已排序，直接補欄位後重寫 latest）
+const rWin = hist.filter(inWin);
+for (const r of regions) {
+  const v = rWin.map(e => e.regions.find(x => x.region === r.region)?.avgScore).filter(x => x != null);
+  r.n7d = v.length;
+  r.avg7d = v.length >= MIN_N ? r1(v.reduce((a, b) => a + b, 0) / v.length) : null;
+}
+writeFileSync(join(DATA, 'congestion-latest.json'), JSON.stringify(out, null, 2));
+
+console.log(`OK ${sysdate} — ${hospitals.length} 家醫院 / ${ranked.length} 家有通報 / ${regions.length} 區 / 7 天視窗 ${hWin.length} 個時點、${hospitals.filter(h => h.avg7d != null).length} 家有 avg7d`);
 console.log('滯留人數 Top5：', ranked.slice(0, 5).map(h => `${h.name}(${h.score})`).join('、'));
 console.log('各區平均 Top5：', regions.slice(0, 5).map(r => `${r.region}(${r.avgScore},n=${r.n})`).join('、'));

@@ -25,9 +25,9 @@ main() {
     exit 0
   fi
 
-  # 3) 只動這兩個資料檔；有變動才 commit/push
-  if [ -n "$(git status --porcelain data/congestion-latest.json data/congestion-history.json)" ]; then
-    git add data/congestion-latest.json data/congestion-history.json
+  # 3) 只動這三個資料檔；有變動才 commit/push
+  if [ -n "$(git status --porcelain data/congestion-latest.json data/congestion-history.json data/congestion-hosp-history.json)" ]; then
+    git add data/congestion-latest.json data/congestion-history.json data/congestion-hosp-history.json
     git commit -m "chore(congestion): 每小時更新急診壅塞資料 [skip ci]" >>"$LOG" 2>&1
     if git push origin main >>"$LOG" 2>&1; then
       echo "$TS ✅ 更新並 push" >>"$LOG"

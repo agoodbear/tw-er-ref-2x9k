@@ -6,13 +6,12 @@ data/*
 !data/boarding-latest.json
 !data/boarding-by-hospital.json
 !data/realtime-namemap.json
+!data/congestion-hosp-history.json
 .fb-cookies.json
 .DS_Store
+__pycache__/
 
-# 壅塞分頁正式版已併進 index.html，以下為一次性 preview / 開發 scaffolding，不進版控
-salary-vs-congestion.html
-salary-vs-congestion.template.html
-scripts/build-preview.py
+# 一次性開發 scaffolding，不進版控（舊 preview 頁 salary-vs-congestion.html 已併進 index.html 並於 2026-10-08 移除）
 scripts/_match-dryrun.mjs
 scripts/_verify-scatter.mjs
 scripts/fb-expand-test.mjs
