@@ -16,6 +16,7 @@
  *
  * Usage:
  *   node scripts/fetch-fb-salary.mjs [--days 7] [--dry-run]
+ *   node scripts/fetch-fb-salary.mjs --from-raw data/raw-YYYY-MM-DD.json   # 解析失敗時從 raw 檔補跑 Step 2+3
  *   node scripts/fetch-fb-salary.mjs --export-cookies
  */
 
@@ -44,6 +45,9 @@ const DAYS = parseInt(args.find((_, i, a) => a[i - 1] === '--days') || '7');
 const DRY_RUN = args.includes('--dry-run');
 const GROUP_URL = args.find((_, i, a) => a[i - 1] === '--group') || DEFAULT_GROUP;
 const EXPORT_COOKIES = args.includes('--export-cookies');
+// --from-raw <file>：跳過爬取，直接從已存的 raw-YYYY-MM-DD.json 跑解析＋寫入
+// （AI 解析逾時等 Step 2/3 失敗時的補跑路，raw 檔 Step 1 一定會落地）
+const FROM_RAW = args.find((_, i, a) => a[i - 1] === '--from-raw') || null;
 
 console.log(`\n🏥 急診薪資爬取 Pipeline v3（Scroll + Read + Expand）`);
 console.log(`   社團：${GROUP_URL}`);
@@ -64,7 +68,7 @@ async function exportCookiesInteractive() {
   log('🍪 互動式 Cookie 擷取...');
   const browser = await chromium.launch({
     headless: false,
-    args: ['--disable-blink-features=AutomationControlled']
+    args: ['--disable-blink-features=AutomationControlled', '--mute-audio']
   });
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
@@ -107,7 +111,7 @@ async function fetchPostTexts() {
 
   const browser = await chromium.launch({
     headless: false,
-    args: ['--disable-blink-features=AutomationControlled']
+    args: ['--disable-blink-features=AutomationControlled', '--mute-audio']
   });
 
   const context = await browser.newContext({
@@ -282,7 +286,8 @@ ${postsText}`;
 
       const result = execSync(
         `cat "${tmpFile}" | claude -p --output-format json`,
-        { encoding: 'utf-8', timeout: 180000, maxBuffer: 10 * 1024 * 1024 }
+        // 480s：2026-08-04 實測 180s 會 ETIMEDOUT（claude -p 慢時 3 分鐘不夠）
+        { encoding: 'utf-8', timeout: 480000, maxBuffer: 10 * 1024 * 1024 }
       );
 
       let parsed;
@@ -308,7 +313,7 @@ ${postsText}`;
 
       return parsed;
     } catch (err) {
-      const isRetryable = err.message.includes('500') || err.message.includes('Internal') || err.message.includes('overloaded');
+      const isRetryable = err.message.includes('500') || err.message.includes('Internal') || err.message.includes('overloaded') || err.message.includes('ETIMEDOUT');
       if (isRetryable && attempt < 3) {
         log(`   ⚠️ API 錯誤（${attempt}/3），30 秒後重試...`);
         await new Promise(r => setTimeout(r, 30000));
@@ -498,7 +503,13 @@ const MAX_RETRIES = 2;       // 最多重試 2 次（含首次共 3 次）
 const RETRY_DELAY = 3600000; // 1 小時 = 3,600,000 ms
 
 async function run() {
-  const posts = await fetchPostTexts();
+  let posts;
+  if (FROM_RAW) {
+    posts = JSON.parse(readFileSync(FROM_RAW, 'utf-8'));
+    log(`📂 --from-raw：讀入 ${FROM_RAW}（${posts.length} 段，跳過爬取）`);
+  } else {
+    posts = await fetchPostTexts();
+  }
   const entries = await parsePostsWithAI(posts);
   const result = await writeToSupabase(entries);
 
