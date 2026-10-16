@@ -134,8 +134,9 @@ async function fetchPostTexts() {
 
     // 捲動深度看「日期」不看固定次數：舊版固定 DAYS*3 次（上限 40），FB 排序非嚴格時序、
     // 一次捲 600px 約一篇，2026-10-05 跑 --days 7 只捲到 5 天前就停（窗口後段整段沒看到）。
-    // 改成：看到 ≥3 篇比窗口更舊的貼文才停；連續 10 輪沒新內容（到底／卡住）也停；硬上限 DAYS*8（≤150）。
-    const scrollRounds = Math.min(Math.ceil(DAYS * 8), 150);
+    // 改成：看到 ≥3 篇比窗口更舊的貼文才停；連續 10 輪沒新內容（到底／卡住）也停；硬上限 DAYS*20（≤200）。
+    // 2026-10-16：DAYS*8=56 輪在 10-12 只捲到 4 天前就撞上限（feed 載入慢，56 輪只收 45 段），放寬到 DAYS*20。
+    const scrollRounds = Math.min(Math.ceil(DAYS * 20), 200);
     const OLDER_NEEDED = 3, STALL_LIMIT = 10;
     let olderSeen = 0, stall = 0, maxAge = 0;
     const olderKeys = new Set();   // 同一篇的「截斷版」與「展開版」會是兩段，用開頭 30 字合併計數
@@ -228,7 +229,14 @@ async function fetchPostTexts() {
       if (olderSeen >= OLDER_NEEDED) { console.log(''); log(`   ⏹️ 已看到 ${olderSeen} 篇超過 ${DAYS} 天的貼文，窗口已涵蓋`); break; }
       if (stall >= STALL_LIMIT) { console.log(''); log(`   ⏹️ 連續 ${STALL_LIMIT} 輪沒有新內容，停止捲動`); break; }
     }
-    if (olderSeen < OLDER_NEEDED) log(`   ⚠️ 捲到上限仍未完整涵蓋 ${DAYS} 天（最舊只到 ${maxAge} 天前）`);
+    if (olderSeen < OLDER_NEEDED) {
+      // maxAge 會被零星置頂／推薦舊文拉高（10-12 只捲到 4 天前，卻因一篇 9/15 顯示「最舊 27 天」），
+      // 改用「第 3 舊」當實際涵蓋天數；COVERAGE_INCOMPLETE 這行給 v2 wrapper 抓去寫進 notes。
+      const ages = posts.map(p => ageDays((p.match(/^\[貼文時間：(.*?)\]/) || [])[1])).filter(a => a != null).sort((a, b) => b - a);
+      const covered = ages[Math.min(OLDER_NEEDED - 1, ages.length - 1)] ?? 0;
+      log(`   ⚠️ 捲到上限仍未完整涵蓋 ${DAYS} 天（實際約涵蓋 ${covered} 天，零星最舊 ${maxAge} 天）`);
+      log(`   COVERAGE_INCOMPLETE covered=${covered} days=${DAYS}`);
+    }
     console.log('');
     log(`   ✅ 共收集 ${posts.length} 段不重複文字`);
 
