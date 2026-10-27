@@ -1,19 +1,24 @@
 name: 急診壅塞每小時更新
 
-# 每小時抓健保署急診即時訊息 → 更新 data/congestion-latest.json + history
+# 每小時更新 data/congestion-latest.json + history + hosp-history。
 #
-# ⚠️ 2026-06-27：每小時排程已移到 Bear 的 Mac（launchd com.ersalary.congestion-hourly，scripts/cron-congestion.sh）。
-#   原因：GitHub runner 在境外（Azure 美國），健保署 API(info.nhi.gov.tw) 會偶發 ECONNRESET 重置境外/資料中心 IP 連線，
-#   壞時段持續數十分鐘、重試補不到（最近 40 次有 6 次失敗、寄失敗信）。台灣 IP（Bear Mac）打就 100% OK。
-#   這裡只保留 workflow_dispatch 當「Mac 沒開機時」的手動備援（境外仍可能失敗，但能臨時補資料）。
+# ⚠️ 2026-06-27：GitHub 排程 cron 已停用。境外 runner 直連 info.nhi.gov.tw 會偶發 ECONNRESET。
+#   雲端主路徑：Cloudflare Worker 自己抓健保署，用 repository_dispatch（event type congestion-raw）
+#   把原始 JSON 放在 client_payload.raw；太大時改放 client_payload.raw_url（https，GET 即原始 JSON）。
+#   另附 trigger_source（cf-worker）與 fetched_at。本 workflow 只負責寫檔、跑腳本、commit、記 Supabase。
+#   workflow_dispatch 仍由 runner 直連健保署（手動備援，境外仍可能失敗）。
+#   Mac launchd（scripts/cron-congestion.sh）是備援：本小時雲端已成功就略過。
 on:
   # schedule:
   #   - cron: '5 * * * *'   # 已停用，改由 Mac launchd 跑（見上）
-  workflow_dispatch: {}   # 手動備援
+  workflow_dispatch: {}   # 手動備援（runner 自己打健保署）
+  repository_dispatch:
+    types: [congestion-raw]
 
 permissions:
   contents: write
 
+# 同一個 repo 的壅塞 workflow 不重疊：後來的排隊，不取消進行中的那次。
 concurrency:
   group: congestion
   cancel-in-progress: false
@@ -21,21 +26,176 @@ concurrency:
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # pull --rebase 需要遠端新 commit，不能只用預設的 depth 1
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: 整點與觸發來源
+        id: meta
+        run: |
+          echo "scheduled_at=$(date -u +%Y-%m-%dT%H:00:00Z)" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_EVENT_NAME" = "repository_dispatch" ]; then
+            src="$(jq -r '.client_payload.trigger_source // "cf-worker"' "$GITHUB_EVENT_PATH")"
+            src="$(printf '%s' "$src" | tr -cd '[:alnum:]._:-' | cut -c1-64)"
+            [ -n "$src" ] || src="cf-worker"
+            echo "source=$src" >> "$GITHUB_OUTPUT"
+          else
+            echo "source=manual" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 抓壅塞資料
-        run: node scripts/fetch-congestion.mjs
+        id: process
+        run: |
+          set +e
+          args=()
+          if [ "$GITHUB_EVENT_NAME" = "repository_dispatch" ]; then
+            has_raw="$(jq -r 'if .client_payload.raw != null then "yes" else "no" end' "$GITHUB_EVENT_PATH")"
+            raw_url="$(jq -r '.client_payload.raw_url // empty' "$GITHUB_EVENT_PATH")"
+            if [ "$has_raw" = "yes" ]; then
+              jq -c '.client_payload.raw' "$GITHUB_EVENT_PATH" > "$RUNNER_TEMP/congestion-raw.json"
+              args+=(--raw-file "$RUNNER_TEMP/congestion-raw.json")
+            elif [ -n "$raw_url" ]; then
+              args+=(--raw-url "$raw_url")
+            else
+              echo "repository_dispatch 缺少 raw 與 raw_url" | tee "$RUNNER_TEMP/fetch-out.txt"
+              echo "repository_dispatch 缺少 raw 與 raw_url" > "$RUNNER_TEMP/fetch-error.txt"
+              echo "status=skipped" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          if [ "${#args[@]}" -eq 0 ]; then
+            node scripts/fetch-congestion.mjs > "$RUNNER_TEMP/fetch-out.txt" 2>&1
+          else
+            node scripts/fetch-congestion.mjs "${args[@]}" > "$RUNNER_TEMP/fetch-out.txt" 2>&1
+          fi
+          code=$?
+          set -e
+          cat "$RUNNER_TEMP/fetch-out.txt"
+          if [ "$code" -ne 0 ]; then
+            tail -n 20 "$RUNNER_TEMP/fetch-out.txt" > "$RUNNER_TEMP/fetch-error.txt"
+            exit "$code"
+          fi
+          jq -r '"sysdate=\(.sysdate) hospitals=\(.hospitals | length)"' data/congestion-latest.json > "$RUNNER_TEMP/cron-notes.txt"
+          echo "status=success" >> "$GITHUB_OUTPUT"
+
       - name: Commit if changed
+        id: commit
+        if: steps.process.outcome == 'success' && steps.process.outputs.status != 'skipped'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -n "$(git status --porcelain data/congestion-latest.json data/congestion-history.json)" ]; then
-            git add data/congestion-latest.json data/congestion-history.json
+          # repository_dispatch 的 checkout 有時是 detached HEAD；先回到 main，工作區的資料檔會留著。
+          git checkout main
+          if [ -n "$(git status --porcelain data/congestion-latest.json data/congestion-history.json data/congestion-hosp-history.json)" ]; then
+            git add data/congestion-latest.json data/congestion-history.json data/congestion-hosp-history.json
             git commit -m "chore(congestion): 每小時更新急診壅塞資料 [skip ci]"
-            git push
+            # Mac launchd 可能同時 push。rebase 後再推，失敗就 abort 重試幾次。
+            ok=0
+            for i in 1 2 3; do
+              git rebase --abort >/dev/null 2>&1 || true
+              if git pull --rebase origin main && git push origin HEAD:main; then
+                ok=1
+                break
+              fi
+              echo "第 ${i}/3 次 pull --rebase + push 失敗"
+              git rebase --abort >/dev/null 2>&1 || true
+              if [ "$i" -lt 3 ]; then
+                sleep $((i * 5))
+              fi
+            done
+            if [ "$ok" -ne 1 ]; then
+              echo "pull --rebase/push 重試後仍失敗"
+              exit 1
+            fi
           else
             echo "無變化，略過 commit"
           fi
+
+      - name: 記錄 log_cron_run
+        if: always()
+        env:
+          PROCESS_OUTCOME: ${{ steps.process.outcome }}
+          PROCESS_STATUS: ${{ steps.process.outputs.status }}
+          COMMIT_OUTCOME: ${{ steps.commit.outcome }}
+          TRIGGER_SOURCE: ${{ steps.meta.outputs.source }}
+          SCHEDULED_AT: ${{ steps.meta.outputs.scheduled_at }}
+        run: |
+          set +e
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "SUPABASE_URL 或 SUPABASE_ANON_KEY 未設定，略過 log_cron_run"
+            exit 0
+          fi
+
+          status="success"
+          err=""
+          notes=""
+          if [ -f "$RUNNER_TEMP/cron-notes.txt" ]; then
+            notes="$(head -n 1 "$RUNNER_TEMP/cron-notes.txt")"
+          fi
+
+          if [ "$PROCESS_STATUS" = "skipped" ]; then
+            status="skipped"
+            notes=""
+            if [ -f "$RUNNER_TEMP/fetch-error.txt" ]; then
+              err="$(tr '\n' ' ' < "$RUNNER_TEMP/fetch-error.txt" | cut -c1-500)"
+            else
+              err="skipped"
+            fi
+          elif [ "$PROCESS_OUTCOME" != "success" ]; then
+            status="failed"
+            notes=""
+            if [ -f "$RUNNER_TEMP/fetch-error.txt" ]; then
+              err="$(tr '\n' ' ' < "$RUNNER_TEMP/fetch-error.txt" | cut -c1-500)"
+            else
+              err="process step ${PROCESS_OUTCOME}"
+            fi
+          elif [ "$COMMIT_OUTCOME" = "failure" ]; then
+            status="failed"
+            err="commit/push failed"
+          fi
+
+          src="${TRIGGER_SOURCE:-}"
+          if [ -z "$src" ]; then
+            if [ "$GITHUB_EVENT_NAME" = "repository_dispatch" ]; then
+              src="cf-worker"
+            else
+              src="manual"
+            fi
+          fi
+          sched="${SCHEDULED_AT:-$(date -u +%Y-%m-%dT%H:00:00Z)}"
+          base="${SUPABASE_URL%/}"
+          body="$(jq -n \
+            --arg status "$status" \
+            --arg src "$src" \
+            --arg sched "$sched" \
+            --arg err "$err" \
+            --arg notes "$notes" \
+            '{
+              p_task_name: "er-congestion",
+              p_status: $status,
+              p_trigger_source: $src,
+              p_scheduled_at: $sched,
+              p_error_msg: (if $err == "" then null else $err end),
+              p_notes: (if $notes == "" then null else $notes end)
+            }')" || {
+            echo "組 log_cron_run body 失敗，略過"
+            exit 0
+          }
+          if curl -fsS --max-time 20 -o /dev/null -X POST "$base/rest/v1/rpc/log_cron_run" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$body"; then
+            echo "log_cron_run $status ok"
+          else
+            echo "log_cron_run 失敗（不影響 job）"
+          fi
+          exit 0

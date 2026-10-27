@@ -2,6 +2,12 @@
 // 抓健保署「重度級急救責任醫院急診即時訊息」→ 產生急診壅塞資料
 // 來源（已逆向）：POST https://info.nhi.gov.tw/api/inae4000/inae4001s01/SQL0002
 // 免認證、無 CAPTCHA、每小時整點更新，回傳全國 ~59 家急救責任醫院。
+//
+// 沒有額外輸入時，行為與以前相同：自己 POST 健保署（含重試）。
+// Cloudflare Worker 改由 repository_dispatch 送原始回應時：
+//   --raw-file <path>   或環境變數 CONGESTION_RAW_FILE  直接處理該 JSON 檔
+//   --raw-url  <https>  或環境變數 CONGESTION_RAW_URL   先 GET 該 URL 再處理
+// 兩者都給時以檔案為準。歷史、同 sysdate 去重、7 日平均都走下面同一段。
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -59,12 +65,57 @@ async function fetchWithRetry(url, opts, tries = 4) {
   throw lastErr;
 }
 
-const res = await fetchWithRetry(API, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
-  body: JSON.stringify({ AREA_NO: '', CONT_TYPE: '' })
-});
-const json = await res.json();
+function cliFlag(flag) {
+  const pref = flag + '=';
+  for (let i = 2; i < process.argv.length; i++) {
+    const a = process.argv[i];
+    if (a === flag) {
+      const v = process.argv[i + 1];
+      if (v === undefined || v.startsWith('--')) {
+        console.error(`${flag} 需要一個參數`);
+        process.exit(1);
+      }
+      return v;
+    }
+    if (a.startsWith(pref)) return a.slice(pref.length);
+  }
+  return '';
+}
+
+function parseRawText(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  let parsed = JSON.parse(text);
+  // repository_dispatch 若把 body 再包成字串，解開一層
+  if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+  return parsed;
+}
+
+const rawFile = cliFlag('--raw-file') || process.env.CONGESTION_RAW_FILE || '';
+const rawUrl = cliFlag('--raw-url') || process.env.CONGESTION_RAW_URL || '';
+
+let json;
+if (rawFile) {
+  json = parseRawText(readFileSync(rawFile, 'utf8'));
+} else if (rawUrl) {
+  let url;
+  try { url = new URL(rawUrl); } catch { url = null; }
+  if (!url || (url.protocol !== 'https:' && url.protocol !== 'http:')) {
+    console.error('raw url 必須是 http(s)：' + rawUrl);
+    process.exit(1);
+  }
+  const res = await fetchWithRetry(rawUrl, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' }
+  });
+  json = parseRawText(await res.text());
+} else {
+  const res = await fetchWithRetry(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+    body: JSON.stringify({ AREA_NO: '', CONT_TYPE: '' })
+  });
+  json = await res.json();
+}
 const sysdate = json.sysdate;
 const rows = json.data || [];
 
