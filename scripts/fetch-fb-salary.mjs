@@ -586,6 +586,12 @@ async function main() {
     } catch (err) {
       console.error(`\n❌ Pipeline 失敗（第 ${attempt} 次）: ${err.message}`);
 
+      // 2026-10-31：瀏覽器不見／cookie 過期不是暫時性錯誤，等 1 小時也不會好，還會撞 wrapper 30 分鐘逾時而看不到真因。
+      if (/Executable doesn't exist|Cookie 已過期/.test(err.message)) {
+        console.error('❌ 非暫時性錯誤，不重試。瀏覽器不見：cd scripts && npx playwright install chromium');
+        process.exit(1);
+      }
+
       if (attempt <= MAX_RETRIES) {
         const nextTime = new Date(Date.now() + RETRY_DELAY).toLocaleTimeString('zh-TW');
         log(`⏳ 將在 1 小時後自動重試（預計 ${nextTime}）...`);
