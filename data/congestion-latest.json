@@ -1,6 +1,6 @@
 {
-  "sysdate": "2026-10-31 19:45",
-  "fetchedAt": "2026-10-31T11:47:33.107Z",
+  "sysdate": "2026-10-31 20:00",
+  "fetchedAt": "2026-10-31T12:07:31.367Z",
   "window7d": {
     "hours": 168,
     "minN": 84,
@@ -19,7 +19,7 @@
       "wait_see": 0,
       "full": false,
       "score": 0,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 55,
       "rankTotal": 55,
       "n7d": 269,
@@ -37,7 +37,7 @@
       "wait_see": 1,
       "full": false,
       "score": 16,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 20,
       "rankTotal": 55,
       "n7d": 269,
@@ -55,7 +55,7 @@
       "wait_see": 1,
       "full": false,
       "score": 62,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 2,
       "rankTotal": 55,
       "n7d": 269,
@@ -73,7 +73,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "n7d": 0,
       "avg7d": null
     },
@@ -89,7 +89,7 @@
       "wait_see": 2,
       "full": false,
       "score": 6,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 36,
       "rankTotal": 55,
       "n7d": 269,
@@ -107,11 +107,11 @@
       "wait_see": 2,
       "full": false,
       "score": 45,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 4,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 42.1
+      "avg7d": 42.2
     },
     {
       "id": "0601160016",
@@ -125,11 +125,11 @@
       "wait_see": 2,
       "full": false,
       "score": 18,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 17,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 26.4
+      "avg7d": 26.3
     },
     {
       "id": "1101020018",
@@ -143,7 +143,7 @@
       "wait_see": 1,
       "full": false,
       "score": 5,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 38,
       "rankTotal": 55,
       "n7d": 269,
@@ -161,7 +161,7 @@
       "wait_see": 5,
       "full": false,
       "score": 45,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 5,
       "rankTotal": 55,
       "n7d": 269,
@@ -179,7 +179,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "n7d": 0,
       "avg7d": null
     },
@@ -195,7 +195,7 @@
       "wait_see": 1,
       "full": true,
       "score": 14,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 25,
       "rankTotal": 55,
       "n7d": 269,
@@ -213,7 +213,7 @@
       "wait_see": 1,
       "full": false,
       "score": 11,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 27,
       "rankTotal": 55,
       "n7d": 269,
@@ -231,7 +231,7 @@
       "wait_see": 0,
       "full": false,
       "score": 8,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 30,
       "rankTotal": 55,
       "n7d": 269,
@@ -249,11 +249,11 @@
       "wait_see": 2,
       "full": false,
       "score": 23,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 14,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 44.1
+      "avg7d": 44
     },
     {
       "id": "1131050515",
@@ -267,11 +267,11 @@
       "wait_see": 0,
       "full": false,
       "score": 1,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 51,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 18.4
+      "avg7d": 18.3
     },
     {
       "id": "1131100010",
@@ -285,7 +285,7 @@
       "wait_see": 0,
       "full": false,
       "score": 17,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 18,
       "rankTotal": 55,
       "n7d": 269,
@@ -303,7 +303,7 @@
       "wait_see": 2,
       "full": false,
       "score": 31,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 9,
       "rankTotal": 55,
       "n7d": 269,
@@ -321,11 +321,11 @@
       "wait_see": 3,
       "full": false,
       "score": 3,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 45,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 5.3
+      "avg7d": 5.2
     },
     {
       "id": "1231050017",
@@ -339,7 +339,7 @@
       "wait_see": 5,
       "full": false,
       "score": 15,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 24,
       "rankTotal": 55,
       "n7d": 269,
@@ -357,7 +357,7 @@
       "wait_see": 3,
       "full": false,
       "score": 9,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 29,
       "rankTotal": 55,
       "n7d": 269,
@@ -375,11 +375,11 @@
       "wait_see": 6,
       "full": false,
       "score": 21,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 15,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 27.8
+      "avg7d": 27.7
     },
     {
       "id": "1331040513",
@@ -393,7 +393,7 @@
       "wait_see": 3,
       "full": false,
       "score": 28,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 12,
       "rankTotal": 55,
       "n7d": 269,
@@ -411,7 +411,7 @@
       "wait_see": 4,
       "full": true,
       "score": 32,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 8,
       "rankTotal": 55,
       "n7d": 269,
@@ -429,7 +429,7 @@
       "wait_see": 8,
       "full": true,
       "score": 35,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 7,
       "rankTotal": 55,
       "n7d": 269,
@@ -447,11 +447,11 @@
       "wait_see": 1,
       "full": false,
       "score": 16,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 21,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 23.4
+      "avg7d": 23.5
     },
     {
       "id": "0933050018",
@@ -465,7 +465,7 @@
       "wait_see": 1,
       "full": false,
       "score": 3,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 46,
       "rankTotal": 55,
       "n7d": 269,
@@ -483,7 +483,7 @@
       "wait_see": 0,
       "full": false,
       "score": 4,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 42,
       "rankTotal": 55,
       "n7d": 269,
@@ -501,7 +501,7 @@
       "wait_see": 1,
       "full": false,
       "score": 5,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 39,
       "rankTotal": 55,
       "n7d": 269,
@@ -519,7 +519,7 @@
       "wait_see": 4,
       "full": false,
       "score": 75,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 1,
       "rankTotal": 55,
       "n7d": 269,
@@ -537,7 +537,7 @@
       "wait_see": 0,
       "full": false,
       "score": 3,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 47,
       "rankTotal": 55,
       "n7d": 269,
@@ -555,7 +555,7 @@
       "wait_see": 1,
       "full": false,
       "score": 6,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 37,
       "rankTotal": 55,
       "n7d": 269,
@@ -573,7 +573,7 @@
       "wait_see": 3,
       "full": false,
       "score": 4,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 43,
       "rankTotal": 55,
       "n7d": 269,
@@ -591,11 +591,11 @@
       "wait_see": 3,
       "full": false,
       "score": 7,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 32,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 22.4
+      "avg7d": 22.3
     },
     {
       "id": "0936050029",
@@ -609,7 +609,7 @@
       "wait_see": 1,
       "full": false,
       "score": 1,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 52,
       "rankTotal": 55,
       "n7d": 269,
@@ -627,7 +627,7 @@
       "wait_see": 1,
       "full": false,
       "score": 1,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 53,
       "rankTotal": 55,
       "n7d": 269,
@@ -645,7 +645,7 @@
       "wait_see": 0,
       "full": false,
       "score": 5,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 40,
       "rankTotal": 55,
       "n7d": 269,
@@ -663,7 +663,7 @@
       "wait_see": 1,
       "full": false,
       "score": 5,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 41,
       "rankTotal": 55,
       "n7d": 269,
@@ -681,7 +681,7 @@
       "wait_see": 0,
       "full": false,
       "score": 1,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 54,
       "rankTotal": 55,
       "n7d": 269,
@@ -699,7 +699,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "n7d": 0,
       "avg7d": null
     },
@@ -715,7 +715,7 @@
       "wait_see": 0,
       "full": false,
       "score": 2,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 49,
       "rankTotal": 55,
       "n7d": 269,
@@ -733,7 +733,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "n7d": 0,
       "avg7d": null
     },
@@ -749,7 +749,7 @@
       "wait_see": 3,
       "full": false,
       "score": 17,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 19,
       "rankTotal": 55,
       "n7d": 269,
@@ -767,7 +767,7 @@
       "wait_see": 12,
       "full": false,
       "score": 31,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 10,
       "rankTotal": 55,
       "n7d": 269,
@@ -785,7 +785,7 @@
       "wait_see": 4,
       "full": false,
       "score": 4,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 44,
       "rankTotal": 55,
       "n7d": 269,
@@ -803,7 +803,7 @@
       "wait_see": 1,
       "full": false,
       "score": 2,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 50,
       "rankTotal": 55,
       "n7d": 269,
@@ -821,11 +821,11 @@
       "wait_see": 4,
       "full": false,
       "score": 50,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 3,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 59.4
+      "avg7d": 59.5
     },
     {
       "id": "0439010518",
@@ -839,11 +839,11 @@
       "wait_see": 0,
       "full": false,
       "score": 11,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 28,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 15.5
+      "avg7d": 15.4
     },
     {
       "id": "1122010012",
@@ -857,7 +857,7 @@
       "wait_see": 6,
       "full": false,
       "score": 21,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 16,
       "rankTotal": 55,
       "n7d": 269,
@@ -875,7 +875,7 @@
       "wait_see": 6,
       "full": false,
       "score": 7,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 33,
       "rankTotal": 55,
       "n7d": 269,
@@ -893,7 +893,7 @@
       "wait_see": 2,
       "full": false,
       "score": 7,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 34,
       "rankTotal": 55,
       "n7d": 269,
@@ -911,7 +911,7 @@
       "wait_see": 12,
       "full": false,
       "score": 30,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 11,
       "rankTotal": 55,
       "n7d": 269,
@@ -929,11 +929,11 @@
       "wait_see": 3,
       "full": false,
       "score": 16,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 22,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 28.3
+      "avg7d": 28.4
     },
     {
       "id": "0943030019",
@@ -947,7 +947,7 @@
       "wait_see": 0,
       "full": false,
       "score": 3,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 48,
       "rankTotal": 55,
       "n7d": 269,
@@ -965,11 +965,11 @@
       "wait_see": 2,
       "full": false,
       "score": 39,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 6,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 50
+      "avg7d": 50.1
     },
     {
       "id": "1142120001",
@@ -983,7 +983,7 @@
       "wait_see": 0,
       "full": false,
       "score": 16,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 23,
       "rankTotal": 55,
       "n7d": 269,
@@ -1001,7 +1001,7 @@
       "wait_see": 0,
       "full": false,
       "score": 7,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 35,
       "rankTotal": 55,
       "n7d": 269,
@@ -1019,7 +1019,7 @@
       "wait_see": 3,
       "full": false,
       "score": 28,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 13,
       "rankTotal": 55,
       "n7d": 269,
@@ -1037,11 +1037,11 @@
       "wait_see": 1,
       "full": false,
       "score": 14,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 26,
       "rankTotal": 55,
       "n7d": 269,
-      "avg7d": 26.9
+      "avg7d": 26.8
     },
     {
       "id": "1146010014",
@@ -1055,7 +1055,7 @@
       "wait_see": 5,
       "full": false,
       "score": 8,
-      "txt_date": "2026-10-31T19:45:04",
+      "txt_date": "2026-10-31T20:00:03",
       "rank": 31,
       "rankTotal": 55,
       "n7d": 269,
@@ -1096,7 +1096,7 @@
         "高醫"
       ],
       "n7d": 269,
-      "avg7d": 39.5
+      "avg7d": 39.6
     },
     {
       "region": "台北",
@@ -1132,7 +1132,7 @@
         "輔大"
       ],
       "n7d": 269,
-      "avg7d": 27.8
+      "avg7d": 27.7
     },
     {
       "region": "花蓮",
@@ -1142,7 +1142,7 @@
         "花蓮慈濟"
       ],
       "n7d": 269,
-      "avg7d": 26.9
+      "avg7d": 26.8
     },
     {
       "region": "嘉義",
@@ -1164,7 +1164,7 @@
         "臺大雲林"
       ],
       "n7d": 269,
-      "avg7d": 15.5
+      "avg7d": 15.4
     },
     {
       "region": "台中",
@@ -1247,7 +1247,7 @@
         "大千"
       ],
       "n7d": 269,
-      "avg7d": 4.5
+      "avg7d": 4.6
     },
     {
       "region": "南投",
