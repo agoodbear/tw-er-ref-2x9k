@@ -12,19 +12,38 @@ if (!existsSync(DATA)) mkdirSync(DATA, { recursive: true });
 
 const BASE = 'https://med.nhi.gov.tw/ihqe0000';
 const UA = { 'User-Agent': 'Mozilla/5.0' };
+// 健保署偶爾 520／ECONNRESET：只重試 5xx、網路錯誤、逾時、壞 JSON，退避 5s/15s/30s；4xx 直接放棄。
+const BACKOFF_MS = [5000, 15000, 30000];
+async function fetchJson(url) {
+  let last;
+  for (let i = 0; i <= BACKOFF_MS.length; i++) {
+    let retryable = true;
+    try {
+      const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(20000) });
+      if (!r.ok) { retryable = r.status >= 500; throw new Error(`健保署 ${r.status}`); }
+      return JSON.parse(await r.text());
+    } catch (e) {
+      last = e;
+      console.warn(`第 ${i + 1} 次失敗：${e.cause?.code || e.message}`);
+      if (!retryable) break;
+      if (i < BACKOFF_MS.length) await new Promise(r => setTimeout(r, BACKOFF_MS[i]));
+    }
+  }
+  throw last;
+}
 const num = v => (v === null || v === undefined || v === '') ? null : Number(v);
 
 // 1) 找最新季度（S17 回傳 099Q1…的清單）
 // 防禦：清單 ascending 屬官方 API 未文件化行為，不依賴——自行取 DataTimeID 字典序最大
 //（'099Q1'<'114Q3'，三位年+固定寬度季，字典序＝時間序）
-const years = await (await fetch(`${BASE}/IHQE0020S17.ashx?q5id=2&ind=1652`, { headers: UA })).json();
+const years = await fetchJson(`${BASE}/IHQE0020S17.ashx?q5id=2&ind=1652`);
 if (!Array.isArray(years) || !years.length) throw new Error('S17 季度清單空回應（官方 API 行為可能已變）');
 const latest = years.reduce((a, b) => (String(b.DataTimeID) > String(a.DataTimeID) ? b : a));  // { DataTimeID:'114Q3', DataTimeName:'114年第三季' }
 const quarter = latest.DataTimeID;
 
 // 2) 抓該季全國資料
 const url = `${BASE}/IHQE0020S12.ashx?year=${quarter}&city=&name=&hosp=&special=&q5id=2&ind=1652&bc=`;
-const rows = await (await fetch(url, { headers: UA })).json();
+const rows = await fetchJson(url);
 if (!Array.isArray(rows) || !rows.length) throw new Error('48hr API 回傳空資料 quarter=' + quarter);
 
 const LEVEL = { '1': '醫學中心', '2': '區域醫院', '3': '地區醫院' };

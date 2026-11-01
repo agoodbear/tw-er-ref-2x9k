@@ -2,10 +2,16 @@ name: 48hr 暫留比率更新
 
 # 醫療品質資訊公開網 ind=1652「急診轉住院暫留>48小時比率」每季出一次、且有數月落差。
 # 每月 1 號檢查最新季度；只有「真的出新一季」時才 commit（對照表內容變了才推），不留垃圾 commit。
+# 2026-11-01 起：GitHub runner 連健保署一直 ECONNRESET，改由 Cloudflare Worker（cloud-routines 的 cf-trigger，
+# 每月 1–7 號 UTC 02:22）抓資料、有變才派這支，資料放 input payload（gzip+base64 的 boarding-latest.json）。
+# 手動跑且 payload 空白＝跟以前一樣在 runner 上自己抓（有重試，但可能被擋）。
 on:
-  schedule:
-    - cron: '20 2 1 * *'   # 每月 1 號 UTC 02:20（台灣 10:20）
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      payload:
+        description: "gzip+base64 的 boarding-latest.json（Worker 帶入；空白＝runner 自己抓）"
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -25,7 +31,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: 抓最新季度 48hr 資料
+      - name: 寫入 Worker 抓到的 48hr 資料
+        if: ${{ inputs.payload != '' }}
+        env:
+          PAYLOAD: ${{ inputs.payload }}
+        run: node scripts/write-boarding-payload.mjs
+      - name: 抓最新季度 48hr 資料（runner 自己抓）
+        if: ${{ inputs.payload == '' }}
         run: node scripts/fetch-boarding.mjs
       - name: 重建薪資↔48hr 對照表
         run: python3 scripts/build_boarding_map.py
@@ -37,7 +49,7 @@ jobs:
           if [ -n "$(git status --porcelain data/boarding-by-hospital.json)" ]; then
             git add data/boarding-latest.json data/boarding-by-hospital.json
             git commit -m "chore(boarding): 更新 48hr 暫留比率（新一季）[skip ci]"
-            git push
+            git pull --rebase -q origin main && git push
           else
             echo "無新季度，略過"
           fi
