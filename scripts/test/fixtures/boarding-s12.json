@@ -1,0 +1,134 @@
+[
+  {
+    "HOSP_ID": "0601160016",
+    "HOSP_NAME": "臺北榮民總醫院",
+    "SPECIAL_ID": "1",
+    "SPECIAL_NAME": "醫學中心",
+    "AREA_NAME": "臺北市北投區",
+    "INDEX1": "3.48",
+    "NUMERATOR": "197",
+    "DENOMINATOR": "5667",
+    "INDEX3": "4.6"
+  },
+  {
+    "HOSP_ID": "1101100011",
+    "HOSP_NAME": "台灣基督長老教會馬偕醫療財團法人馬偕紀念醫院",
+    "SPECIAL_ID": "1",
+    "SPECIAL_NAME": "醫學中心",
+    "AREA_NAME": "臺北市中山區",
+    "INDEX1": "8.19",
+    "NUMERATOR": "464",
+    "DENOMINATOR": "5665",
+    "INDEX3": "4.6"
+  },
+  {
+    "HOSP_ID": "1131010011",
+    "HOSP_NAME": "醫療財團法人徐元智先生醫藥基金會亞東紀念醫院",
+    "SPECIAL_ID": "1",
+    "SPECIAL_NAME": "醫學中心",
+    "AREA_NAME": "新北市板橋區",
+    "INDEX1": "3.19",
+    "NUMERATOR": "169",
+    "DENOMINATOR": "5293",
+    "INDEX3": "4.6"
+  },
+  {
+    "HOSP_ID": "0401180014",
+    "HOSP_NAME": "國立臺灣大學醫學院附設醫院",
+    "SPECIAL_ID": "1",
+    "SPECIAL_NAME": "醫學中心",
+    "AREA_NAME": "臺北市中正區",
+    "INDEX1": "19.52",
+    "NUMERATOR": "1011",
+    "DENOMINATOR": "5180",
+    "INDEX3": "4.6"
+  },
+  {
+    "HOSP_ID": "0501110514",
+    "HOSP_NAME": "三軍總醫院附設民眾診療服務處",
+    "SPECIAL_ID": "1",
+    "SPECIAL_NAME": "醫學中心",
+    "AREA_NAME": "臺北市內湖區",
+    "INDEX1": "14.46",
+    "NUMERATOR": "594",
+    "DENOMINATOR": "4108",
+    "INDEX3": "4.6"
+  },
+  {
+    "HOSP_ID": "1331040513",
+    "HOSP_NAME": "衛生福利部雙和醫院〈委託臺北醫學大學興建經營〉",
+    "SPECIAL_ID": "1",
+    "SPECIAL_NAME": "醫學中心",
+    "AREA_NAME": "新北市中和區",
+    "INDEX1": "5.15",
+    "NUMERATOR": "204",
+    "DENOMINATOR": "3959",
+    "INDEX3": "4.6"
+  },
+  {
+    "HOSP_ID": "1131050515",
+    "HOSP_NAME": "佛教慈濟醫療財團法人台北慈濟醫院",
+    "SPECIAL_ID": "1",
+    "SPECIAL_NAME": "醫學中心",
+    "AREA_NAME": "新北市新店區",
+    "INDEX1": "2.39",
+    "NUMERATOR": "67",
+    "DENOMINATOR": "2805",
+    "INDEX3": "4.6"
+  },
+  {
+    "HOSP_ID": "1101150011",
+    "HOSP_NAME": "新光醫療財團法人新光吳火獅紀念醫院",
+    "SPECIAL_ID": "1",
+    "SPECIAL_NAME": "醫學中心",
+    "AREA_NAME": "臺北市士林區",
+    "INDEX1": "6.17",
+    "NUMERATOR": "150",
+    "DENOMINATOR": "2431",
+    "INDEX3": "4.6"
+  },
+  {
+    "HOSP_ID": "1301200010",
+    "HOSP_NAME": "臺北市立萬芳醫院－委託臺北醫學大學辦理",
+    "SPECIAL_ID": "1",
+    "SPECIAL_NAME": "醫學中心",
+    "AREA_NAME": "臺北市文山區",
+    "INDEX1": "10.46",
+    "NUMERATOR": "205",
+    "DENOMINATOR": "1960",
+    "INDEX3": "4.6"
+  },
+  {
+    "HOSP_ID": "1101020018",
+    "HOSP_NAME": "國泰醫療財團法人國泰綜合醫院",
+    "SPECIAL_ID": "1",
+    "SPECIAL_NAME": "醫學中心",
+    "AREA_NAME": "臺北市大安區",
+    "INDEX1": "1.87",
+    "NUMERATOR": "24",
+    "DENOMINATOR": "1281",
+    "INDEX3": "4.6"
+  },
+  {
+    "HOSP_ID": "0101090517",
+    "HOSP_NAME": "臺北市立聯合醫院",
+    "SPECIAL_ID": "2",
+    "SPECIAL_NAME": "區域醫院",
+    "AREA_NAME": "臺北市大同區",
+    "INDEX1": "0.95",
+    "NUMERATOR": "46",
+    "DENOMINATOR": "4853",
+    "INDEX3": "4.6"
+  },
+  {
+    "HOSP_ID": "1111060015",
+    "HOSP_NAME": "長庚醫療財團法人基隆長庚紀念醫院",
+    "SPECIAL_ID": "2",
+    "SPECIAL_NAME": "區域醫院",
+    "AREA_NAME": "基隆市安樂區",
+    "INDEX1": "7.58",
+    "NUMERATOR": "233",
+    "DENOMINATOR": "3073",
+    "INDEX3": "4.6"
+  }
+]

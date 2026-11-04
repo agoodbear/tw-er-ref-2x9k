@@ -1,0 +1,1 @@
+﻿"{\"sysdate\":\"2026-11-04 09:00\",\"data\":[{\"hosP_ID\":\"B1\",\"hosP_NAME\":\"包裝醫院\",\"areA_NO_N\":\"03\",\"conT_TYPE\":\"1\",\"waiT_SEE_CNT\":\"2\",\"waiT_GENERAL_CNT\":\"3\",\"waiT_BED_CNT\":\"0\",\"waiT_ICU_CNT\":\"0\",\"inform\":\"N\",\"txT_DATE\":\"2026-11-04T09:00:00\"}]}"

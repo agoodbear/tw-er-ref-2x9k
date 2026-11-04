@@ -1,0 +1,1 @@
+{"type":"result","subtype":"success","is_error":false,"result":"以下是結果：\n```json\n[{\"hospital\":\"部立桃園醫院\",\"region\":\"桃園\",\"level\":\"部立醫院\",\"s10\":null,\"s12\":null,\"s14\":null,\"s15\":45,\"s16\":null,\"visits\":1050,\"note\":\"固定班薪制\",\"source_date\":\"2026-11-02\"}]\n```"}
