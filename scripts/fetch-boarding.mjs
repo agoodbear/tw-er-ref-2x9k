@@ -2,72 +2,33 @@
 // 抓醫療品質資訊公開網「急診轉住院暫留急診超過48小時案件比率」(ind=1652)
 // 來源（已逆向）：med.nhi.gov.tw/ihqe0000/IHQE0020S12.ashx，免認證，每季更新。
 // 用途：per-hospital 結構性壅塞指標（標準化 %），給薪資×壅塞散點圖 y 軸。
+// 解析邏輯在 lib/boarding.mjs（有離線單元測試）。
 import { writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { fetchJsonWithRetry } from './lib/http.mjs';
+import { pickLatestQuarter, parseBoardingRows, buildBoardingOutput } from './lib/boarding.mjs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dir, '..', 'data');
 if (!existsSync(DATA)) mkdirSync(DATA, { recursive: true });
 
 const BASE = 'https://med.nhi.gov.tw/ihqe0000';
-const UA = { 'User-Agent': 'Mozilla/5.0' };
-// 健保署偶爾 520／ECONNRESET：只重試 5xx、網路錯誤、逾時、壞 JSON，退避 5s/15s/30s；4xx 直接放棄。
-const BACKOFF_MS = [5000, 15000, 30000];
-async function fetchJson(url) {
-  let last;
-  for (let i = 0; i <= BACKOFF_MS.length; i++) {
-    let retryable = true;
-    try {
-      const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(20000) });
-      if (!r.ok) { retryable = r.status >= 500; throw new Error(`健保署 ${r.status}`); }
-      return JSON.parse(await r.text());
-    } catch (e) {
-      last = e;
-      console.warn(`第 ${i + 1} 次失敗：${e.cause?.code || e.message}`);
-      if (!retryable) break;
-      if (i < BACKOFF_MS.length) await new Promise(r => setTimeout(r, BACKOFF_MS[i]));
-    }
-  }
-  throw last;
-}
-const num = v => (v === null || v === undefined || v === '') ? null : Number(v);
+// 健保署偶爾 520／ECONNRESET：只重試 5xx/429、網路錯誤、逾時、壞 JSON，退避 5s/15s/30s；其他 4xx 直接放棄。
+const opts = { init: { headers: { 'User-Agent': 'Mozilla/5.0' } }, backoffMs: [5000, 15000, 30000], label: '健保署' };
 
 // 1) 找最新季度（S17 回傳 099Q1…的清單）
-// 防禦：清單 ascending 屬官方 API 未文件化行為，不依賴——自行取 DataTimeID 字典序最大
-//（'099Q1'<'114Q3'，三位年+固定寬度季，字典序＝時間序）
-const years = await fetchJson(`${BASE}/IHQE0020S17.ashx?q5id=2&ind=1652`);
-if (!Array.isArray(years) || !years.length) throw new Error('S17 季度清單空回應（官方 API 行為可能已變）');
-const latest = years.reduce((a, b) => (String(b.DataTimeID) > String(a.DataTimeID) ? b : a));  // { DataTimeID:'114Q3', DataTimeName:'114年第三季' }
+const years = await fetchJsonWithRetry(`${BASE}/IHQE0020S17.ashx?q5id=2&ind=1652`, opts);
+const latest = pickLatestQuarter(years);  // { DataTimeID:'114Q3', DataTimeName:'114年第三季' }
 const quarter = latest.DataTimeID;
 
 // 2) 抓該季全國資料
 const url = `${BASE}/IHQE0020S12.ashx?year=${quarter}&city=&name=&hosp=&special=&q5id=2&ind=1652&bc=`;
-const rows = await fetchJson(url);
-if (!Array.isArray(rows) || !rows.length) throw new Error('48hr API 回傳空資料 quarter=' + quarter);
+const rows = await fetchJsonWithRetry(url, opts);
+const { hospitals, nationalAvg, warnings } = parseBoardingRows(rows, quarter);
+for (const w of warnings) console.warn('⚠️ ' + w);
 
-const LEVEL = { '1': '醫學中心', '2': '區域醫院', '3': '地區醫院' };
-const hospitals = rows.map(r => ({
-  hosp_id: r.HOSP_ID,
-  name: r.HOSP_NAME,
-  level: r.SPECIAL_NAME || LEVEL[r.SPECIAL_ID] || r.SPECIAL_ID,
-  area: r.AREA_NAME,
-  ratio: num(r.INDEX1),          // 該院 48hr 暫留比率 %
-  n: num(r.NUMERATOR ?? r.N),    // 暫留>48h 案件數
-  d: num(r.DENOMINATOR ?? r.D)   // 急診轉住院總案件數
-})).filter(h => h.ratio !== null);
-
-const nationalAvg = num(rows[0].INDEX3);  // 全國平均 %（依賴 rows[0] 帶 INDEX3 的未文件化行為）
-if (nationalAvg === null) console.warn('⚠️ rows[0].INDEX3 取不到全國平均（官方 API 行為可能已變），nationalAvg 將為 null');
-
-const out = {
-  quarter,
-  quarterName: latest.DataTimeName,
-  nationalAvg,
-  fetchedAt: new Date().toISOString(),
-  source: 'med.nhi.gov.tw/ihqe0000 (ind=1652)',
-  hospitals
-};
+const out = buildBoardingOutput({ latest, hospitals, nationalAvg });
 writeFileSync(join(DATA, 'boarding-latest.json'), JSON.stringify(out, null, 2));
 
 const ranked = [...hospitals].sort((a, b) => b.ratio - a.ratio);
