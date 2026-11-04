@@ -198,8 +198,9 @@ describe('processCongestion()（整合，純函式）', () => {
     // 單一時點不足 MIN_N → avg7d 全 null
     assert.ok(latest.hospitals.every(h => h.avg7d === null));
   });
-  test('與 repo 內已 commit 的 congestion-latest.json 一致（除 fetchedAt / 7 日欄位）', () => {
-    const committed = JSON.parse(readFileSync(join(FX, '..', '..', '..', 'data', 'congestion-latest.json'), 'utf8'));
+  test('與 fixture 同一時點的 congestion-latest 快照一致（除 fetchedAt / 7 日欄位）', () => {
+    // 快照凍結在 fixtures/，不讀 repo 的 data/（data/ 每小時都會被排程改寫）
+    const committed = load('congestion-latest-expected.json');
     const { latest } = processCongestion(load('congestion-raw.json'));
     const strip = h => { const { n7d, avg7d, ...rest } = h; return rest; };
     assert.equal(latest.sysdate, committed.sysdate);

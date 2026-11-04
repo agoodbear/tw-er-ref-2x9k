@@ -9,6 +9,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
+FX = HERE / 'fixtures'
 
 spec = importlib.util.spec_from_file_location('build_boarding_map', HERE.parent / 'build_boarding_map.py')
 bbm = importlib.util.module_from_spec(spec)
@@ -59,11 +60,12 @@ class MatchHospitalsTest(unittest.TestCase):
 
 class BuildDocTest(unittest.TestCase):
     def setUp(self):
-        self.bd_doc = json.loads((ROOT / 'data' / 'boarding-latest.json').read_text())
-        self.committed = json.loads((ROOT / 'data' / 'boarding-by-hospital.json').read_text())
+        # 快照凍結在 fixtures/，不讀 repo 的 data/（data/ 會被排程改寫）
+        self.bd_doc = json.loads((FX / 'boarding-latest-snapshot.json').read_text())
+        self.committed = json.loads((FX / 'boarding-by-hospital-snapshot.json').read_text())
 
     def test_reproduces_committed_mapping(self):
-        # 以已 commit 的對照表當「已知會命中的薪資醫院」，重算結果必須一模一樣（離線回歸測試）
+        # 以同季快照的對照表當「已知會命中的薪資醫院」，重算結果必須一模一樣（離線回歸測試）
         sal = list(self.committed['hospitals'].keys())
         doc, amb, absent, nokey = bbm.build_doc(self.bd_doc, sal)
         self.assertEqual(doc['hospitals'], self.committed['hospitals'])

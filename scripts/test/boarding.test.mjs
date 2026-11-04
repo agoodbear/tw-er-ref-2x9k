@@ -37,8 +37,8 @@ describe('parseBoardingRows()', () => {
     assert.equal(hospitals.length, rows.length);
     assert.equal(nationalAvg, 4.6);
     assert.deepEqual(warnings, []);
-    const committed = JSON.parse(readFileSync(join(HERE, '..', '..', 'data', 'boarding-latest.json'), 'utf8'));
-    assert.deepEqual(hospitals, committed.hospitals.slice(0, rows.length), '與已 commit 的輸出一致');
+    const committed = load('boarding-latest-snapshot.json');
+    assert.deepEqual(hospitals, committed.hospitals.slice(0, rows.length), '與同季快照的輸出一致');
   });
   test('ratio 缺／非數字的醫院被濾掉（不是當 0）', () => {
     const rows = [
@@ -78,9 +78,9 @@ describe('buildBoardingOutput()', () => {
 });
 
 describe('decodeBoardingPayload()', () => {
-  const good = JSON.parse(readFileSync(join(HERE, '..', '..', 'data', 'boarding-latest.json'), 'utf8'));
+  const good = load('boarding-latest-snapshot.json');
 
-  test('repo 現有資料 round-trip 通過', () => {
+  test('真實快照 round-trip 通過', () => {
     assert.deepEqual(decodeBoardingPayload(encode(good)), good);
   });
   test('空 payload', () => {
