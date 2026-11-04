@@ -27,6 +27,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
 import { randomInt, createHash } from 'crypto';
+import { ageDays, parseAIResult, findHospital, isSameSalary } from './lib/salary.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -140,20 +141,7 @@ async function fetchPostTexts() {
     const OLDER_NEEDED = 3, STALL_LIMIT = 10;
     let olderSeen = 0, stall = 0, maxAge = 0;
     const olderKeys = new Set();   // 同一篇的「截斷版」與「展開版」會是兩段，用開頭 30 字合併計數
-    const ageDays = t => {
-      if (!t) return null;
-      if (/分鐘|小時/.test(t)) return 0;
-      if (t === '昨天') return 1;
-      let m = t.match(/(\d+)\s*天/); if (m) return +m[1];
-      const now = new Date();
-      m = t.match(/(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日/);
-      if (m) {
-        let d = new Date(m[1] ? +m[1] : now.getFullYear(), +m[2] - 1, +m[3]);
-        if (!m[1] && d > now) d.setFullYear(d.getFullYear() - 1);   // 跨年：12 月的貼文在 1 月看
-        return Math.floor((now - d) / 86400e3);
-      }
-      return null;
-    };
+    // ageDays（相對時間 → 天數）在 lib/salary.mjs，有單元測試
     // 去重 key = 全文 hash。virtual scroll 重複讀到同一篇（全文相同）→ 同 hash 去掉；
     // 不同醫院但同模板開頭（前 100 字相同、內文薪資不同）→ 全文不同 → 不同 hash → 兩篇都留。
     // （舊版用 text.slice(0,100) 當 key，會把同模板徵才文誤判成同一篇而漏掉第二筆薪資）
@@ -325,20 +313,7 @@ ${postsText}`;
         { encoding: 'utf-8', timeout: 480000, maxBuffer: 10 * 1024 * 1024 }
       );
 
-      let parsed;
-      try {
-        const wrapper = JSON.parse(result);
-        const content = wrapper.result || wrapper;
-        if (typeof content === 'string') {
-          const match = content.match(/\[[\s\S]*\]/);
-          parsed = match ? JSON.parse(match[0]) : [];
-        } else {
-          parsed = Array.isArray(content) ? content : [];
-        }
-      } catch {
-        const match = result.match(/\[[\s\S]*\]/);
-        parsed = match ? JSON.parse(match[0]) : [];
-      }
+      const parsed = parseAIResult(result);  // lib/salary.mjs，有單元測試
 
       log(`   ✅ AI 提取到 ${parsed.length} 筆薪資資料`);
 
@@ -412,28 +387,13 @@ async function writeToSupabase(entries) {
     try {
       const inputName = entry.hospital;
 
-      let hospital = hospitals.find(h => {
-        // 完全匹配
-        if (h.name === inputName) return true;
-        // aliases 匹配（Supabase 維護）
-        if (h.aliases && h.aliases.some(a => a === inputName)) return true;
-        // 模糊匹配：去掉「醫院」後互相包含
-        const n1 = h.name.replace(/醫院/g, '');
-        const n2 = inputName.replace(/醫院/g, '');
-        if (n1.length > 2 && n2.length > 2 && (n1.includes(n2) || n2.includes(n1))) return true;
-        return false;
-      });
+      // 完全匹配 → aliases（Supabase 維護）→ 去掉「醫院」後互相包含；見 lib/salary.mjs
+      let hospital = findHospital(hospitals, inputName);
 
       if (hospital) {
         const current = currentData.find(d => d.hospital === hospital.name);
         if (current) {
-          const same = (
-            ((!entry.s15 && !current.s15) || entry.s15 == current.s15) &&
-            ((!entry.s16 && !current.s16) || entry.s16 == current.s16) &&
-            ((!entry.s14 && !current.s14) || entry.s14 == current.s14) &&
-            ((!entry.s12 && !current.s12) || entry.s12 == current.s12) &&
-            ((!entry.s10 && !current.s10) || entry.s10 == current.s10)
-          );
+          const same = isSameSalary(entry, current);
           if (same) {
             // 薪資數字沒變，但若這篇貼文較新 → 只 refresh source_date（新鮮度），note 保留原版（規則 C）
             const latest = latestReportByHosp[hospital.id];

@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 # 建「薪資醫院 → 48hr 暫留比率」對照表（手工 curated key，唯一命中才採用，絕不亂猜）
 # 輸出 data/boarding-by-hospital.json = { 薪資醫院名: {ratio, official, level, quarter} }
+# 比對邏輯在 match_hospitals()／build_doc()（純函式，有離線單元測試 scripts/test/test_build_boarding_map.py）；
+# 網路（Supabase 讀薪資醫院清單，唯讀）與寫檔只在 main()。
 import json, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-bd_doc = json.loads((ROOT/'data'/'boarding-latest.json').read_text())
-bd = bd_doc['hospitals']; quarter = bd_doc['quarter']
-
 SB='https://gjpvzqlsfimuqwditeqf.supabase.co'; KEY='sb_publishable_P0gPzbp1mg8pgYJumikvTg_RJj8PHYS'
-req=urllib.request.Request(SB+'/rest/v1/dashboard_data?select=hospital',headers={'apikey':KEY,'Authorization':'Bearer '+KEY})
-sal=[r['hospital'] for r in json.loads(urllib.request.urlopen(req,timeout=20).read())]
+
+
+def fetch_salary_hospitals():
+    req=urllib.request.Request(SB+'/rest/v1/dashboard_data?select=hospital',headers={'apikey':KEY,'Authorization':'Bearer '+KEY})
+    return [r['hospital'] for r in json.loads(urllib.request.urlopen(req,timeout=20).read())]
 
 # 薪資名 → 48hr official name 裡的 distinctive 子字串（或完整官方名以消歧）
 # （改名 NAME_KEY：原本叫 KEY 會 shadow 上面的 Supabase KEY，易誤讀）
@@ -35,28 +37,48 @@ NAME_KEY = {
  '高雄路竹秀傳醫院':'路竹','高醫岡山醫院':'高醫岡山醫院','高雄聖功醫院':'聖功',
 }
 
-out={}; ambiguous=[]; absent=[]; nokey=[]
-for s in sal:
-    k=NAME_KEY.get(s)
-    if not k: nokey.append(s); continue
-    exact=[h for h in bd if h['name']==k]
-    sub=[h for h in bd if k in h['name']]
-    pick = exact[0] if len(exact)==1 else (sub[0] if len(sub)==1 else None)
-    if pick:
-        out[s]={'ratio':pick['ratio'],'official':pick['name'],'level':pick['level'],'quarter':quarter}
-    elif len(sub)>1:
-        ambiguous.append((s,k,[h['name'] for h in sub]))
-    else:
-        absent.append((s,k))
+def match_hospitals(sal, bd, name_key=NAME_KEY):
+    """回傳 (out, ambiguous, absent, nokey)。唯一命中才採用：完整名唯一 > 子字串唯一；多命中不猜。"""
+    out={}; ambiguous=[]; absent=[]; nokey=[]
+    for s in sal:
+        k=name_key.get(s)
+        if not k: nokey.append(s); continue
+        exact=[h for h in bd if h['name']==k]
+        sub=[h for h in bd if k in h['name']]
+        pick = exact[0] if len(exact)==1 else (sub[0] if len(sub)==1 else None)
+        if pick:
+            out[s]={'ratio':pick['ratio'],'official':pick['name'],'level':pick['level'],'quarter':None}
+        elif len(sub)>1:
+            ambiguous.append((s,k,[h['name'] for h in sub]))
+        else:
+            absent.append((s,k))
+    return out, ambiguous, absent, nokey
 
-doc={'meta':{'quarter':quarter,'quarterName':bd_doc.get('quarterName'),
-              'nationalAvg':bd_doc.get('nationalAvg'),'source':bd_doc.get('source'),
-              'matched':len(out),'salaryTotal':len(sal)},
-     'hospitals':out}
-(ROOT/'data'/'boarding-by-hospital.json').write_text(json.dumps(doc,ensure_ascii=False,indent=2))
-print(f"✅ 唯一命中 {len(out)} / {len(sal)} 家薪資醫院")
-print(f"\n⚠️ 多命中需消歧 ({len(ambiguous)}):")
-for s,k,c in ambiguous: print(f"  {s}（key={k}）→ {c}")
-print(f"\n❌ 零命中需修 key ({len(absent)}):")
-for s,k in absent: print(f"  {s}（key={k}）")
-print(f"\n— 未建 key ({len(nokey)}): {nokey}")
+
+def build_doc(bd_doc, sal, name_key=NAME_KEY):
+    quarter = bd_doc['quarter']
+    out, ambiguous, absent, nokey = match_hospitals(sal, bd_doc['hospitals'], name_key)
+    for v in out.values(): v['quarter'] = quarter
+    doc={'meta':{'quarter':quarter,'quarterName':bd_doc.get('quarterName'),
+                  'nationalAvg':bd_doc.get('nationalAvg'),'source':bd_doc.get('source'),
+                  'matched':len(out),'salaryTotal':len(sal)},
+         'hospitals':out}
+    return doc, ambiguous, absent, nokey
+
+
+def main():
+    bd_doc = json.loads((ROOT/'data'/'boarding-latest.json').read_text())
+    sal = fetch_salary_hospitals()
+    doc, ambiguous, absent, nokey = build_doc(bd_doc, sal)
+    out = doc['hospitals']
+    (ROOT/'data'/'boarding-by-hospital.json').write_text(json.dumps(doc,ensure_ascii=False,indent=2))
+    print(f"✅ 唯一命中 {len(out)} / {len(sal)} 家薪資醫院")
+    print(f"\n⚠️ 多命中需消歧 ({len(ambiguous)}):")
+    for s,k,c in ambiguous: print(f"  {s}（key={k}）→ {c}")
+    print(f"\n❌ 零命中需修 key ({len(absent)}):")
+    for s,k in absent: print(f"  {s}（key={k}）")
+    print(f"\n— 未建 key ({len(nokey)}): {nokey}")
+
+
+if __name__ == '__main__':
+    main()

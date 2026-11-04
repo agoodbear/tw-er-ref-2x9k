@@ -1,0 +1,32 @@
+name: 測試與 build 檢查
+
+# 只做離線檢查：單元測試（fixture，不連健保署／Supabase）＋ build 檢查（語法、資料檔結構、index.html）。
+# 不部署、不 commit、不碰任何資料庫。
+on:
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # 測試只用 Node 內建模組，不需要 npm install（避免每次 PR 都下載 playwright）
+      - name: 單元測試
+        run: npm test
+      - name: build 檢查
+        run: npm run build
+      - name: 相依套件安全檢查
+        run: npm audit --package-lock-only --audit-level=high

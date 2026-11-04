@@ -1,0 +1,23 @@
+{
+  "sysdate": "2026-11-04 08:00",
+  "data": [
+    { "hosP_ID": "A001", "hosP_NAME": "甲醫院", "areA_NO_N": "01", "conT_TYPE": "1",
+      "waiT_SEE_CNT": "10", "waiT_GENERAL_CNT": "20", "waiT_BED_CNT": "3", "waiT_ICU_CNT": "2",
+      "inform": "Y", "txT_DATE": "2026-11-04T08:00:00" },
+    { "hosP_ID": "A002", "hosP_NAME": "乙醫院（數字型）", "areA_NO_N": "01", "conT_TYPE": "2",
+      "waiT_SEE_CNT": 5, "waiT_GENERAL_CNT": 0, "waiT_BED_CNT": 0, "waiT_ICU_CNT": 0,
+      "inform": "N", "txT_DATE": "2026-11-04T08:00:00" },
+    { "hosP_ID": "A003", "hosP_NAME": "丙醫院（全部未通報）", "areA_NO_N": "07", "conT_TYPE": "1",
+      "waiT_SEE_CNT": null, "waiT_GENERAL_CNT": "", "waiT_BED_CNT": " ", "waiT_ICU_CNT": "-",
+      "inform": "N", "txT_DATE": null },
+    { "hosP_ID": "A004", "hosP_NAME": "丁醫院（部分缺）", "areA_NO_N": "07", "conT_TYPE": "3",
+      "waiT_SEE_CNT": "7", "waiT_GENERAL_CNT": null, "waiT_BED_CNT": "N/A", "waiT_ICU_CNT": "1",
+      "inform": "N", "txT_DATE": "2026-11-04T07:58:00" },
+    { "hosP_ID": "A005", "hosP_NAME": "戊醫院（未知縣市碼）", "areA_NO_N": "99", "conT_TYPE": "9",
+      "waiT_SEE_CNT": "40", "waiT_GENERAL_CNT": "0", "waiT_BED_CNT": "0", "waiT_ICU_CNT": "0",
+      "inform": "N", "txT_DATE": "2026-11-04T08:00:00" },
+    { "hosP_ID": "A006", "hosP_NAME": "己醫院（外島）", "areA_NO_N": "90", "conT_TYPE": "2",
+      "waiT_SEE_CNT": "1", "waiT_GENERAL_CNT": "1", "waiT_BED_CNT": "0", "waiT_ICU_CNT": "0",
+      "inform": "N", "txT_DATE": "2026-11-04T08:00:00" }
+  ]
+}
