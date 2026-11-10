@@ -1,95 +1,5 @@
 [
   {
-    "sysdate": "2026-07-14 20:00",
-    "regions": [
-      {
-        "region": "桃園",
-        "avgScore": 100.5,
-        "n": 2
-      },
-      {
-        "region": "台南",
-        "avgScore": 55,
-        "n": 2
-      },
-      {
-        "region": "高雄",
-        "avgScore": 53.3,
-        "n": 4
-      },
-      {
-        "region": "花蓮",
-        "avgScore": 44,
-        "n": 1
-      },
-      {
-        "region": "雲林",
-        "avgScore": 43,
-        "n": 1
-      },
-      {
-        "region": "基隆",
-        "avgScore": 36,
-        "n": 1
-      },
-      {
-        "region": "新北",
-        "avgScore": 34.3,
-        "n": 8
-      },
-      {
-        "region": "台北",
-        "avgScore": 31.1,
-        "n": 11
-      },
-      {
-        "region": "屏東",
-        "avgScore": 26,
-        "n": 1
-      },
-      {
-        "region": "彰化",
-        "avgScore": 23.7,
-        "n": 3
-      },
-      {
-        "region": "台東",
-        "avgScore": 22,
-        "n": 1
-      },
-      {
-        "region": "宜蘭",
-        "avgScore": 20,
-        "n": 2
-      },
-      {
-        "region": "嘉義",
-        "avgScore": 20,
-        "n": 3
-      },
-      {
-        "region": "台中",
-        "avgScore": 18.4,
-        "n": 8
-      },
-      {
-        "region": "苗栗",
-        "avgScore": 15,
-        "n": 2
-      },
-      {
-        "region": "新竹",
-        "avgScore": 13.3,
-        "n": 4
-      },
-      {
-        "region": "南投",
-        "avgScore": 2,
-        "n": 1
-      }
-    ]
-  },
-  {
     "sysdate": "2026-07-14 21:01",
     "regions": [
       {
@@ -269911,6 +269821,96 @@
   },
   {
     "sysdate": "2026-11-10 18:45",
+    "regions": [
+      {
+        "region": "桃園",
+        "avgScore": 55,
+        "n": 2
+      },
+      {
+        "region": "高雄",
+        "avgScore": 50.3,
+        "n": 4
+      },
+      {
+        "region": "台南",
+        "avgScore": 39,
+        "n": 2
+      },
+      {
+        "region": "基隆",
+        "avgScore": 37,
+        "n": 1
+      },
+      {
+        "region": "台北",
+        "avgScore": 31.2,
+        "n": 10
+      },
+      {
+        "region": "花蓮",
+        "avgScore": 31,
+        "n": 1
+      },
+      {
+        "region": "新北",
+        "avgScore": 20.8,
+        "n": 8
+      },
+      {
+        "region": "嘉義",
+        "avgScore": 17,
+        "n": 3
+      },
+      {
+        "region": "屏東",
+        "avgScore": 11.5,
+        "n": 2
+      },
+      {
+        "region": "台中",
+        "avgScore": 9.8,
+        "n": 8
+      },
+      {
+        "region": "雲林",
+        "avgScore": 9,
+        "n": 1
+      },
+      {
+        "region": "新竹",
+        "avgScore": 7.3,
+        "n": 4
+      },
+      {
+        "region": "台東",
+        "avgScore": 6,
+        "n": 1
+      },
+      {
+        "region": "苗栗",
+        "avgScore": 5.5,
+        "n": 2
+      },
+      {
+        "region": "彰化",
+        "avgScore": 4.7,
+        "n": 3
+      },
+      {
+        "region": "宜蘭",
+        "avgScore": 3,
+        "n": 2
+      },
+      {
+        "region": "南投",
+        "avgScore": 2,
+        "n": 1
+      }
+    ]
+  },
+  {
+    "sysdate": "2026-11-10 19:00",
     "regions": [
       {
         "region": "桃園",
