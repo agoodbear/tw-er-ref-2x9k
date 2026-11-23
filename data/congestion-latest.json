@@ -1,6 +1,6 @@
 {
-  "sysdate": "2026-11-24 05:45",
-  "fetchedAt": "2026-11-23T21:47:37.162Z",
+  "sysdate": "2026-11-24 06:00",
+  "fetchedAt": "2026-11-23T22:07:32.247Z",
   "window7d": {
     "hours": 168,
     "minN": 84,
@@ -19,7 +19,7 @@
       "wait_see": 0,
       "full": false,
       "score": 11,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 37,
       "rankTotal": 55,
       "n7d": 86,
@@ -37,11 +37,11 @@
       "wait_see": 0,
       "full": false,
       "score": 15,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 28,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 11.7
+      "avg7d": 11.8
     },
     {
       "id": "0401180014",
@@ -55,11 +55,11 @@
       "wait_see": 0,
       "full": false,
       "score": 63,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 4,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 62.4
+      "avg7d": 62.2
     },
     {
       "id": "0401180023",
@@ -73,7 +73,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "n7d": 0,
       "avg7d": null
     },
@@ -89,7 +89,7 @@
       "wait_see": 0,
       "full": false,
       "score": 4,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 43,
       "rankTotal": 55,
       "n7d": 86,
@@ -107,11 +107,11 @@
       "wait_see": 1,
       "full": false,
       "score": 39,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 11,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 42.6
+      "avg7d": 42.3
     },
     {
       "id": "0601160016",
@@ -125,11 +125,11 @@
       "wait_see": 1,
       "full": false,
       "score": 19,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 24,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 21.6
+      "avg7d": 21.5
     },
     {
       "id": "1101020018",
@@ -143,11 +143,11 @@
       "wait_see": 0,
       "full": false,
       "score": 12,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 34,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 19.4
+      "avg7d": 19.2
     },
     {
       "id": "1101100011",
@@ -161,11 +161,11 @@
       "wait_see": 1,
       "full": false,
       "score": 34,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 15,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 39.9
+      "avg7d": 39.8
     },
     {
       "id": "1101100020",
@@ -179,7 +179,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "n7d": 0,
       "avg7d": null
     },
@@ -195,11 +195,11 @@
       "wait_see": 1,
       "full": false,
       "score": 20,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 22,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 21
+      "avg7d": 20.9
     },
     {
       "id": "1101160017",
@@ -213,11 +213,11 @@
       "wait_see": 0,
       "full": false,
       "score": 0,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 50,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 6
+      "avg7d": 5.9
     },
     {
       "id": "1111060015",
@@ -231,11 +231,11 @@
       "wait_see": 0,
       "full": false,
       "score": 15,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 29,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 19.2
+      "avg7d": 19.3
     },
     {
       "id": "1131010011",
@@ -249,11 +249,11 @@
       "wait_see": 0,
       "full": false,
       "score": 42,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 10,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 49.4
+      "avg7d": 49
     },
     {
       "id": "1131050515",
@@ -267,11 +267,11 @@
       "wait_see": 2,
       "full": false,
       "score": 39,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 12,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 28.8
+      "avg7d": 29
     },
     {
       "id": "1131100010",
@@ -285,11 +285,11 @@
       "wait_see": 0,
       "full": false,
       "score": 17,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 25,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 23.3
+      "avg7d": 23.1
     },
     {
       "id": "1131130018",
@@ -303,11 +303,11 @@
       "wait_see": 0,
       "full": true,
       "score": 48,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 7,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 38.3
+      "avg7d": 38.4
     },
     {
       "id": "1134020019",
@@ -321,7 +321,7 @@
       "wait_see": 0,
       "full": false,
       "score": 5,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 41,
       "rankTotal": 55,
       "n7d": 86,
@@ -339,11 +339,11 @@
       "wait_see": 0,
       "full": false,
       "score": 22,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 18,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 27.6
+      "avg7d": 27.7
     },
     {
       "id": "1301170017",
@@ -357,11 +357,11 @@
       "wait_see": 1,
       "full": false,
       "score": 17,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 26,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 19.1
+      "avg7d": 19
     },
     {
       "id": "1301200010",
@@ -375,11 +375,11 @@
       "wait_see": 2,
       "full": false,
       "score": 21,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 20,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 24.9
+      "avg7d": 24.8
     },
     {
       "id": "1331040513",
@@ -393,11 +393,11 @@
       "wait_see": 1,
       "full": false,
       "score": 64,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 3,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 53.2
+      "avg7d": 53.5
     },
     {
       "id": "1331160010",
@@ -411,7 +411,7 @@
       "wait_see": 0,
       "full": true,
       "score": 21,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 21,
       "rankTotal": 55,
       "n7d": 86,
@@ -429,11 +429,11 @@
       "wait_see": 1,
       "full": true,
       "score": 44,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 9,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 41.1
+      "avg7d": 41
     },
     {
       "id": "0412040012",
@@ -447,7 +447,7 @@
       "wait_see": 0,
       "full": true,
       "score": 22,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 19,
       "rankTotal": 55,
       "n7d": 86,
@@ -465,11 +465,11 @@
       "wait_see": 0,
       "full": false,
       "score": 0,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 51,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 3.9
+      "avg7d": 3.8
     },
     {
       "id": "1112010519",
@@ -483,7 +483,7 @@
       "wait_see": 1,
       "full": false,
       "score": 3,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 44,
       "rankTotal": 55,
       "n7d": 86,
@@ -501,7 +501,7 @@
       "wait_see": 2,
       "full": false,
       "score": 3,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 45,
       "rankTotal": 55,
       "n7d": 86,
@@ -519,11 +519,11 @@
       "wait_see": 1,
       "full": false,
       "score": 101,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 1,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 103.5
+      "avg7d": 103.3
     },
     {
       "id": "1135050020",
@@ -537,7 +537,7 @@
       "wait_see": 0,
       "full": false,
       "score": 1,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 48,
       "rankTotal": 55,
       "n7d": 86,
@@ -555,7 +555,7 @@
       "wait_see": 0,
       "full": false,
       "score": 14,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 31,
       "rankTotal": 55,
       "n7d": 86,
@@ -573,7 +573,7 @@
       "wait_see": 0,
       "full": false,
       "score": 0,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 52,
       "rankTotal": 55,
       "n7d": 86,
@@ -591,11 +591,11 @@
       "wait_see": 0,
       "full": false,
       "score": 8,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 39,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 16.9
+      "avg7d": 16.7
     },
     {
       "id": "0936050029",
@@ -609,7 +609,7 @@
       "wait_see": 0,
       "full": false,
       "score": 0,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 53,
       "rankTotal": 55,
       "n7d": 86,
@@ -627,7 +627,7 @@
       "wait_see": 0,
       "full": false,
       "score": 3,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 46,
       "rankTotal": 55,
       "n7d": 86,
@@ -645,7 +645,7 @@
       "wait_see": 0,
       "full": false,
       "score": 13,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 33,
       "rankTotal": 55,
       "n7d": 86,
@@ -663,11 +663,11 @@
       "wait_see": 0,
       "full": false,
       "score": 0,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 54,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 3.7
+      "avg7d": 3.6
     },
     {
       "id": "1137010024",
@@ -681,11 +681,11 @@
       "wait_see": 1,
       "full": false,
       "score": 14,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 32,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 8.8
+      "avg7d": 8.9
     },
     {
       "id": "1137010042",
@@ -699,7 +699,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "n7d": 0,
       "avg7d": null
     },
@@ -715,7 +715,7 @@
       "wait_see": 0,
       "full": false,
       "score": 0,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 55,
       "rankTotal": 55,
       "n7d": 86,
@@ -733,7 +733,7 @@
       "wait_see": null,
       "full": false,
       "score": null,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "n7d": 0,
       "avg7d": null
     },
@@ -749,7 +749,7 @@
       "wait_see": 0,
       "full": false,
       "score": 11,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 38,
       "rankTotal": 55,
       "n7d": 86,
@@ -767,11 +767,11 @@
       "wait_see": 9,
       "full": false,
       "score": 20,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 23,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 23.8
+      "avg7d": 23.7
     },
     {
       "id": "1517061032",
@@ -785,11 +785,11 @@
       "wait_see": 5,
       "full": false,
       "score": 5,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 42,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 5.2
+      "avg7d": 5.3
     },
     {
       "id": "1536030075",
@@ -803,7 +803,7 @@
       "wait_see": 1,
       "full": false,
       "score": 2,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 47,
       "rankTotal": 55,
       "n7d": 86,
@@ -821,7 +821,7 @@
       "wait_see": 0,
       "full": false,
       "score": 55,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 6,
       "rankTotal": 55,
       "n7d": 86,
@@ -839,11 +839,11 @@
       "wait_see": 0,
       "full": false,
       "score": 12,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 35,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 11.1
+      "avg7d": 11
     },
     {
       "id": "1122010012",
@@ -857,11 +857,11 @@
       "wait_see": 1,
       "full": false,
       "score": 25,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 16,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 25.5
+      "avg7d": 25.6
     },
     {
       "id": "1140010510",
@@ -875,11 +875,11 @@
       "wait_see": 0,
       "full": false,
       "score": 7,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 40,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 15.7
+      "avg7d": 15.4
     },
     {
       "id": "1140030012",
@@ -893,7 +893,7 @@
       "wait_see": 1,
       "full": false,
       "score": 16,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 27,
       "rankTotal": 55,
       "n7d": 86,
@@ -911,11 +911,11 @@
       "wait_see": 0,
       "full": false,
       "score": 37,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 14,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 37.4
+      "avg7d": 37.3
     },
     {
       "id": "0602030026",
@@ -929,7 +929,7 @@
       "wait_see": 2,
       "full": false,
       "score": 48,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 8,
       "rankTotal": 55,
       "n7d": 86,
@@ -947,11 +947,11 @@
       "wait_see": 0,
       "full": false,
       "score": 12,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 36,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 8.4
+      "avg7d": 8.5
     },
     {
       "id": "1142100017",
@@ -965,11 +965,11 @@
       "wait_see": 1,
       "full": false,
       "score": 70,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 2,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 77
+      "avg7d": 76.8
     },
     {
       "id": "1142120001",
@@ -983,11 +983,11 @@
       "wait_see": 1,
       "full": false,
       "score": 15,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 30,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 18.4
+      "avg7d": 18.2
     },
     {
       "id": "1143010012",
@@ -1001,11 +1001,11 @@
       "wait_see": 0,
       "full": false,
       "score": 25,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 17,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 20.2
+      "avg7d": 20.5
     },
     {
       "id": "1302050014",
@@ -1019,11 +1019,11 @@
       "wait_see": 0,
       "full": false,
       "score": 63,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 5,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 59.4
+      "avg7d": 59.3
     },
     {
       "id": "1145010010",
@@ -1037,11 +1037,11 @@
       "wait_see": 0,
       "full": true,
       "score": 39,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 13,
       "rankTotal": 55,
       "n7d": 86,
-      "avg7d": 39.1
+      "avg7d": 39
     },
     {
       "id": "1146010014",
@@ -1055,7 +1055,7 @@
       "wait_see": 0,
       "full": false,
       "score": 1,
-      "txt_date": "2026-11-24T05:45:03",
+      "txt_date": "2026-11-24T06:00:03",
       "rank": 49,
       "rankTotal": 55,
       "n7d": 86,
@@ -1072,7 +1072,7 @@
         "林口長庚"
       ],
       "n7d": 86,
-      "avg7d": 72.3
+      "avg7d": 72.2
     },
     {
       "region": "高雄",
@@ -1096,7 +1096,7 @@
         "永康奇美"
       ],
       "n7d": 86,
-      "avg7d": 46.7
+      "avg7d": 46.6
     },
     {
       "region": "花蓮",
@@ -1106,7 +1106,7 @@
         "花蓮慈濟"
       ],
       "n7d": 86,
-      "avg7d": 39.1
+      "avg7d": 39
     },
     {
       "region": "新北",
@@ -1142,7 +1142,7 @@
         "萬芳"
       ],
       "n7d": 86,
-      "avg7d": 26.6
+      "avg7d": 26.5
     },
     {
       "region": "屏東",
@@ -1153,7 +1153,7 @@
         "屏基"
       ],
       "n7d": 86,
-      "avg7d": 14.3
+      "avg7d": 14.5
     },
     {
       "region": "嘉義",
@@ -1165,7 +1165,7 @@
         "大林慈濟"
       ],
       "n7d": 86,
-      "avg7d": 20.4
+      "avg7d": 20.3
     },
     {
       "region": "基隆",
@@ -1175,7 +1175,7 @@
         "基隆長庚"
       ],
       "n7d": 86,
-      "avg7d": 19.2
+      "avg7d": 19.3
     },
     {
       "region": "雲林",
@@ -1185,7 +1185,7 @@
         "臺大雲林"
       ],
       "n7d": 86,
-      "avg7d": 11.1
+      "avg7d": 11
     },
     {
       "region": "彰化",
@@ -1221,7 +1221,7 @@
         "新竹馬偕兒童醫院"
       ],
       "n7d": 86,
-      "avg7d": 8.6
+      "avg7d": 8.5
     },
     {
       "region": "台中",
